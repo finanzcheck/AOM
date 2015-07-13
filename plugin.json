@@ -1,0 +1,19 @@
+{
+  "name": "Advanced Online Marketing",
+  "version": "0.1.0",
+  "keywords": ["Criteo"],
+  "homepage": "",
+  "description": "The plugin integrates additional data (e.g. costs) from advertisers into Piwik and combines that data with individual visits, creating a whole bunch of new opportunities.",
+  "license": "GPL v3+",
+  "authors": [
+    {
+      "name": "Daniel Stonies",
+      "email": "daniel.stonies@googlemail.com",
+      "homepage": ""
+    }
+  ],
+  "require": {
+    "piwik": "2.12.0",
+    "php": "5.3.20"
+  }
+}
