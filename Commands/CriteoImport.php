@@ -57,15 +57,15 @@ class CriteoImport extends ConsoleCommand
         ]);
 
         $clientLogin = new \stdClass();
-        $clientLogin->username = $this->settings->username->getValue();
-        $clientLogin->password = $this->settings->password->getValue();
+        $clientLogin->username = $this->settings->criteoUsername->getValue();
+        $clientLogin->password = $this->settings->criteoPassword->getValue();
 
         // TODO: Use multiple try catch blocks instead?!
         try {
             $loginResponse = $soapClient->__soapCall('clientLogin', [$clientLogin]);
 
             $apiHeader = new \stdClass();
-            $apiHeader->appToken = $interval = $this->settings->appToken->getValue();
+            $apiHeader->appToken = $interval = $this->settings->criteoAppToken->getValue();
             $apiHeader->authToken = $loginResponse->clientLoginResult;
 
             //Create Soap Header, then set the Headers of Soap Client.
