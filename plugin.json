@@ -1,9 +1,9 @@
 {
   "name": "Advanced Online Marketing",
   "version": "0.1.0",
-  "keywords": ["Criteo"],
+  "keywords": ["AdWords, Criteo"],
   "homepage": "",
-  "description": "The plugin integrates additional data (e.g. costs) from advertisers into Piwik and combines that data with individual visits, creating a whole bunch of new opportunities.",
+  "description": "This plugin integrates additional data (e.g. costs) from advertisers into Piwik and combines that data with individual visits, creating a whole bunch of new opportunities.",
   "license": "GPL v3+",
   "authors": [
     {

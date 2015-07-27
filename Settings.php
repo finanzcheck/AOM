@@ -3,7 +3,6 @@
 namespace Piwik\Plugins\AOM;
 
 use Piwik\Settings\SystemSetting;
-use Piwik\Settings\UserSetting;
 
 class Settings extends \Piwik\Plugin\Settings
 {
@@ -11,10 +10,31 @@ class Settings extends \Piwik\Plugin\Settings
     public $adId;
 
     /** @var SystemSetting */
-    public $criteoAppToken;
+    public $adWordsIsActive;
+
+    /** @var SystemSetting */
+    public $adWordsDeveloperToken;
+
+    /** @var SystemSetting */
+    public $adWordsUserAgent;
+
+    /** @var SystemSetting */
+    public $adWordsClientCustomerId;
+
+    /** @var SystemSetting */
+    public $adWordsClientId;
+
+    /** @var SystemSetting */
+    public $adWordsClientSecret;
+
+    /** @var SystemSetting */
+    public $adWordsRefreshToken;
 
     /** @var SystemSetting */
     public $criteoIsActive;
+
+    /** @var SystemSetting */
+    public $criteoAppToken;
 
     /** @var SystemSetting */
     public $criteoUsername;
@@ -28,6 +48,17 @@ class Settings extends \Piwik\Plugin\Settings
 
         // Add generic fields
         $this->createAdIdSetting();
+
+        // Add fields for AdWords
+        $this->createAdWordsIsActiveSetting();
+        if($this->adWordsIsActive->getValue()) {
+            $this->createAdWordsDeveloperTokenSetting();
+            $this->createAdWordsUserAgentSetting();
+            $this->createAdWordsClientCustomerIdSetting();
+            $this->createAdWordsClientIdSetting();
+            $this->createAdWordsClientSecretSetting();
+            $this->createAdWordsRefreshTokenSetting();
+        }
 
         // Add fields for Criteo
         $this->createCriteoIsActiveSetting();
@@ -47,6 +78,79 @@ class Settings extends \Piwik\Plugin\Settings
         $this->adId->description = 'URL-Parameter used for tracking, e.g. "ad_id"';
 
         $this->addSetting($this->adId);
+    }
+
+    private function createAdWordsIsActiveSetting()
+    {
+        $this->adWordsIsActive = new SystemSetting('adWordsIsActive', 'Enable AdWords');
+        $this->adWordsIsActive->readableByCurrentUser = true;
+        $this->adWordsIsActive->type  = static::TYPE_BOOL;
+        $this->adWordsIsActive->uiControlType = static::CONTROL_CHECKBOX;
+        $this->adWordsIsActive->description   = 'Enable AdWords';
+        $this->adWordsIsActive->defaultValue  = false;
+
+
+        $this->addSetting($this->adWordsIsActive);
+    }
+
+    private function createAdWordsDeveloperTokenSetting()
+    {
+        $this->adWordsDeveloperToken = new SystemSetting('adWordsDeveloperToken', 'Developer Token');
+        $this->adWordsDeveloperToken->readableByCurrentUser = true;
+        $this->adWordsDeveloperToken->uiControlType = static::CONTROL_TEXT;
+        $this->adWordsDeveloperToken->description = 'Developer Token provided by AdWords, e.g. "FC3pR4t6t2euFQKVAtpkS5"';
+
+        $this->addSetting($this->adWordsDeveloperToken);
+    }
+
+    private function createAdWordsUserAgentSetting()
+    {
+        $this->adWordsUserAgent = new SystemSetting('adWordsUserAgent', 'User Agent');
+        $this->adWordsUserAgent->readableByCurrentUser = true;
+        $this->adWordsUserAgent->uiControlType = static::CONTROL_TEXT;
+        $this->adWordsUserAgent->description = 'User Agent, e.g. "Piwik for Acme Corporation"';
+
+        $this->addSetting($this->adWordsUserAgent);
+    }
+
+    private function createAdWordsClientCustomerIdSetting()
+    {
+        $this->adWordsClientCustomerId = new SystemSetting('adWordsClientCustomerId', 'Client Customer ID');
+        $this->adWordsClientCustomerId->readableByCurrentUser = true;
+        $this->adWordsClientCustomerId->uiControlType = static::CONTROL_TEXT;
+        $this->adWordsClientCustomerId->description = 'Client Customer ID, e.g. "613-741-8261"';
+
+        $this->addSetting($this->adWordsClientCustomerId);
+    }
+
+    private function createAdWordsClientIdSetting()
+    {
+        $this->adWordsClientId = new SystemSetting('adWordsClientId', 'Client ID');
+        $this->adWordsClientId->readableByCurrentUser = true;
+        $this->adWordsClientId->uiControlType = static::CONTROL_TEXT;
+        $this->adWordsClientId->description = 'Client ID';
+
+        $this->addSetting($this->adWordsClientId);
+    }
+
+    private function createAdWordsClientSecretSetting()
+    {
+        $this->adWordsClientSecret = new SystemSetting('adWordsClientSecret', 'Client Secret');
+        $this->adWordsClientSecret->readableByCurrentUser = true;
+        $this->adWordsClientSecret->uiControlType = static::CONTROL_TEXT;
+        $this->adWordsClientSecret->description = 'Client Secret';
+
+        $this->addSetting($this->adWordsClientSecret);
+    }
+
+    private function createAdWordsRefreshTokenSetting()
+    {
+        $this->adWordsRefreshToken = new SystemSetting('adWordsRefreshToken', 'Refresh Token');
+        $this->adWordsRefreshToken->readableByCurrentUser = true;
+        $this->adWordsRefreshToken->uiControlType = static::CONTROL_TEXT;
+        $this->adWordsRefreshToken->description = 'Refresh Token';
+
+        $this->addSetting($this->adWordsRefreshToken);
     }
 
     private function createCriteoIsActiveSetting()

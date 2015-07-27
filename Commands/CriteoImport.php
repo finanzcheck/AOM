@@ -41,6 +41,7 @@ class CriteoImport extends ConsoleCommand
 
         // Delete existing data for the specified period
         // TODO: this might be more complicated when we already merged / assigned data to visits!?!
+        // TODO: There might be more than 100000 rows?!
         Db::deleteAllRows(
             Common::prefixTable('aom_criteo'),
             'WHERE date >= ? AND date <= ?',
