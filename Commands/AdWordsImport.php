@@ -28,7 +28,8 @@ class AdWordsImport extends ConsoleCommand
         $this
             ->setName('aom:adwords:import')
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
-            ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD');
+            ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
+            ->setDescription('Import data from Google AdWords.');
 
         $this->settings = new Settings();
     }

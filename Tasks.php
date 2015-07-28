@@ -1,9 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * Tasks for AOM
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ *
  */
 
 namespace Piwik\Plugins\AOM;
@@ -12,7 +12,8 @@ class Tasks extends \Piwik\Plugin\Tasks
 {
     public function schedule()
     {
-        $this->daily('criteoImport');   // method will be executed once every day
+        $this->daily('criteoImport');
+        $this->daily('adwordsImport');
     }
 
     public function criteoImport()
@@ -25,5 +26,13 @@ class Tasks extends \Piwik\Plugin\Tasks
         $criteo->import($startDate, $endDate);
     }
 
+    public function adwordsImport()
+    {
+        //Reimport Last 3 days
+        $startDate = strftime("%Y-%m-%d", strtotime("-3 days"));
+        $endDate = strftime("%Y-%m-%d");
 
+        $adwords = new AdWords();
+        $adwords->import($startDate, $endDate);
+    }
 }

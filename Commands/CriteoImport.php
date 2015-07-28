@@ -26,6 +26,7 @@ class CriteoImport extends ConsoleCommand
     {
         $this
             ->setName('aom:criteo:import')
+            ->setDescription('Import data from Criteo.')
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD');
 
