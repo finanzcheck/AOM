@@ -8,8 +8,11 @@ and combines that data with individual visits, creating a whole bunch of new opp
 ## Installation / Update
 
 See http://piwik.org/faq/plugins/#faq_21.
-
 Run ``composer install`` to add dependencies, such as the Google AdWords SDK.
+
+Is recommended to setup auto archiving (http://piwik.org/docs/setup-auto-archiving/) to improve performance.
+
+
 
 ## Changelog
 
