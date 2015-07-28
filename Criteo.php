@@ -5,13 +5,9 @@ namespace Piwik\Plugins\AOM;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
-use Piwik\Plugin\ConsoleCommand;
 use SoapClient;
 use SoapFault;
 use SoapHeader;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Class Criteo
@@ -93,8 +89,8 @@ class Criteo {
             $scheduleReportJobParameters->reportJob->reportSelector = new \stdClass();
             $scheduleReportJobParameters->reportJob->reportType = 'Campaign';
             $scheduleReportJobParameters->reportJob->aggregationType = 'Daily';
-            $scheduleReportJobParameters->reportJob->startDate = $input->getOption('startDate');
-            $scheduleReportJobParameters->reportJob->endDate = $input->getOption('endDate');
+            $scheduleReportJobParameters->reportJob->startDate = $startDate;
+            $scheduleReportJobParameters->reportJob->endDate = $endDate;
             $scheduleReportJobParameters->reportJob->selectedColumns = [];
             $scheduleReportJobParameters->reportJob->isResultGzipped = false;
             $result = $soapClient->__soapCall('scheduleReportJob', [$scheduleReportJobParameters]);

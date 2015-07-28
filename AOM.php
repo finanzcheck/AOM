@@ -5,6 +5,14 @@ namespace Piwik\Plugins\AOM;
 use Piwik\Common;
 use Piwik\Db;
 
+
+/**
+ * Class AOM
+ * @package Piwik\Plugins\AOM
+ *
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ */
+
 class AOM extends \Piwik\Plugin
 {
     /**

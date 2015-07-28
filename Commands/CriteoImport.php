@@ -2,15 +2,9 @@
 
 namespace Piwik\Plugins\AOM\Commands;
 
-use Exception;
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\Criteo;
-use Piwik\Plugins\AOM\Settings;
-use SoapClient;
-use SoapFault;
-use SoapHeader;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
