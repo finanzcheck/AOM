@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * AOM - Piwik Advanced Online Marketing Plugin
+ *
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ */
 namespace Piwik\Plugins\AOM;
 
 use Exception;
@@ -9,16 +13,11 @@ use SoapClient;
 use SoapFault;
 use SoapHeader;
 
-/**
- * Class Criteo
- * @package Piwik\Plugins\AOM\
- *
- * @author Daniel Stonies <daniel.stonies@googlemail.com>
- *
- */
-
-class Criteo {
-    /** @var  Settings */
+class Criteo
+{
+    /**
+     * @var  Settings
+     */
     private $settings;
 
     public function __construct()
@@ -118,13 +117,23 @@ class Criteo {
 
             // TODO: Use MySQL transaction to improve performance!
             foreach ($xml->table->rows->row as $row) {
-                $sql = 'INSERT INTO ' . Common::prefixTable('aom_criteo') . ' (
-                        date, campaign_id, campaign, impressions, clicks, cost, conversions, conversions_value,
-                        conversions_post_view, conversions_post_view_value) VALUE ("' . $row['dateTime'] . '",
-                        "' . $row['campaignID'] . '", "' . $campaigns[(string) $row['campaignID']] . '",
-                        "' . $row['impressions'] . '", "' . $row['click'] . '", "' . $row['cost'] . '", "' . $row['sales'] . '"
-                        , "' . $row['orderValue'] . '", "' . $row['salesPostView'] . '", "' . $row['orderValuePostView'] . '")';
-                Db::exec($sql);
+                 Db::query(
+                    'INSERT INTO ' . Common::prefixTable('aom_criteo') . ' (date, campaign_id, campaign, '
+                    . 'impressions, clicks, cost, conversions, conversions_value, conversions_post_view, '
+                    . 'conversions_post_view_value) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        $row['dateTime'],
+                        $row['campaignID'],
+                        $campaigns[(string) $row['campaignID']],
+                        $row['impressions'],
+                        $row['click'],
+                        $row['cost'],
+                        $row['sales'],
+                        $row['orderValue'],
+                        $row['salesPostView'],
+                        $row['orderValuePostView'],
+                    ]
+                );
             }
 
             // TODO: Improve exception handling!
@@ -135,6 +144,4 @@ class Criteo {
             echo $soapClient->__getLastResponse();
         }
     }
-
-
 }

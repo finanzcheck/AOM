@@ -1,12 +1,9 @@
 <?php
 /**
- * Class AdWords
- * @package Piwik\Plugins\AOM\
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
- *
  */
-
 namespace Piwik\Plugins\AOM;
 
 use AdWordsUser;
@@ -14,8 +11,52 @@ use Piwik\Common;
 use Piwik\Db;
 use ReportUtils;
 
-class AdWords {
-    /** @var  Settings */
+class AdWords
+{
+    const CRITERIA_TYPE_AGE = 'age';
+    const CRITERIA_TYPE_KEYWORD = 'keyword';
+    const CRITERIA_TYPE_PLACEMENT = 'placement';
+    const CRITERIA_TYPE_USER_LIST = 'user_list';
+
+    /**
+     * @var array All supported criteria types
+     */
+    private $criteriaTypes = [
+        self::CRITERIA_TYPE_AGE,
+        self::CRITERIA_TYPE_KEYWORD,
+        self::CRITERIA_TYPE_PLACEMENT,
+        self::CRITERIA_TYPE_USER_LIST,
+    ];
+
+    const NETWORK_DISPLAY_NETWORK = 'Display Network';
+    const NETWORK_GOOGLE_SEARCH = 'Google Search';
+    const NETWORK_SEARCH_NETWORK = 'Search Network';
+
+    /**
+     * @var array All supported networks
+     */
+    private $networks = [
+        self::NETWORK_DISPLAY_NETWORK => 'd',
+        self::NETWORK_GOOGLE_SEARCH => 'g',
+        self::NETWORK_SEARCH_NETWORK => 's',
+    ];
+
+    const DEVICE_COMPUTERS = 'Computers';
+    const DEVICE_MOBILE_DEVICES_WITH_FULL_BROWSERS = 'Mobile devices with full browsers';
+    const DEVICE_TABLETS_WITH_FULL_BROWSERS = 'Tablets with full browsers';
+
+    /**
+     * @var array All supported devices
+     */
+    private $devices = [
+        self::DEVICE_COMPUTERS => 'c',
+        self::DEVICE_MOBILE_DEVICES_WITH_FULL_BROWSERS => 'm',
+        self::DEVICE_TABLETS_WITH_FULL_BROWSERS => 't',
+    ];
+
+    /**
+     * @var  Settings
+     */
     private $settings;
 
     public function __construct()
@@ -95,17 +136,54 @@ class AdWords {
         // TODO: Use MySQL transaction to improve performance!
         foreach ($xml->table->row as $row) {
 
-            // TODO: Validate currency and Timezone?!
+            // TODO: Validate currency and timezone?!
             // TODO: qualityScore, maxCPC, avgPosition?!
+            // TODO: Find correct place to log warning, errors, etc. and monitor them!
 
-            $sql = 'INSERT INTO ' . Common::prefixTable('aom_adwords') . ' (
-                        date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, keyword_placement, criteria_type,
-                        network, device, impressions, clicks, cost, conversions) VALUE ("' . $row['day'] . '",
-                        "' . $row['account'] . '", "' . $row['campaignID'] . '", "' . $row['campaign'] . '", "' . $row['adGroupID'] . '",
-                        "' . $row['adGroup'] . '", "' . $row['keywordID'] . '", "' . $row['keywordPlacement'] . '", "' . $row['criteriaType'] . '",
-                        "' . $row['network'] . '", "' . $row['device'] . '", "' . $row['impressions'] . '", "' . $row['clicks'] . '"
-                        , "' . ($row['cost'] / 1000000) . '", "' . $row['conversions'] . '")';
-            Db::exec($sql);
+            // Validation
+            if (!in_array(strtolower($row['criteriaType']), $this->criteriaTypes)) {
+                echo 'Criteria type "' . $row['criteriaType'] . '" not supported.';
+                continue;
+            } else {
+                $criteriaType = strtolower($row['criteriaType']);
+            }
+
+            if (!in_array($row['network'], array_keys($this->networks))) {
+                echo 'Network "' . $row['network'] . '" not supported.';
+                continue;
+            } else {
+                $network = $this->networks[$row['network']];
+            }
+
+            if (!in_array($row['device'], array_keys($this->devices))) {
+                echo 'Device "' . $row['device'] . '" not supported.';
+                continue;
+            } else {
+                $device = $this->devices[$row['device']];
+            }
+
+            Db::query(
+                'INSERT INTO ' . Common::prefixTable('aom_adwords') . ' (date, campaign_id, campaign, ad_group_id, '
+                . 'ad_group, keyword_id, keyword_placement, criteria_type network, device, impressions, clicks, cost, '
+                . 'conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $row['day'],
+                    $row['account'],
+                    $row['campaignID'],
+                    $row['campaign'],
+                    $row['adGroupID'],
+                    $row['adGroup'],
+                    $row['keywordID'],
+                    $row['keywordPlacement'],
+                    $criteriaType,
+                    $network,
+                    $device,
+                    $row['impressions'],
+                    $row['clicks'],
+                    ($row['cost'] / 1000000),
+                    $row['conversions'],
+                ]
+            );
         }
     }
 

@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * AOM - Piwik Advanced Online Marketing Plugin
+ *
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ */
 namespace Piwik\Plugins\AOM;
 
 use Exception;
@@ -116,8 +120,32 @@ class API extends \Piwik\Plugin\API
 
             // TODO: Check if AdWords is active
 
-            // TODO: Store 'm' instead of 'Mobile devices with full browsers' etc.?!
-            // TODO: Store 'd' instead of 'Display Network' etc.?!
+            // TODO: We must ensure that all query results return exactly one row! This must be checked!
+
+            // The ID of the keyword (labeled "kwd"), dynamic search ad ("dsa"), or remarketing list target ("aud")
+            // that triggered an ad. For example, if you add a remarketing list to your ad group (criterion ID "456")
+            // and target the keywords ID "123" the {targetid} would be replaced by "kwd-123:aud-456".
+
+            // Build where condition and arguments
+            if (false !== strrpos($ad[4], 'kwd')) { // Regular keyword
+                $where = 'campaign_id = ? AND ad_group_id = ? AND keyword_id = ? AND network = ? AND device = ?';
+                $arguments = [
+                    $ad[1],                                     // {campaignid}
+                    $ad[2],                                     // {adgroupid}
+                    substr($ad[4], strrpos($ad[4], '-' ) + 1),  // {targetid}, e.g. kwd-385125304
+                    $ad[6],                                     // {network}
+                    $ad[7],                                     // {device}
+                ];
+            } elseif ('' === $ad[4] && 'c' === $ad[6]) { // Content network
+                $where = 'campaign_id = ? AND ad_group_id = ? AND keyword_id = ? AND network = ? AND device = ?';
+                $arguments = [
+                    $ad[1],                                     // {campaignid}
+                    $ad[2],                                     // {adgroupid}
+                    substr($ad[4], strrpos($ad[4], '-' ) + 1),  // {targetid}, e.g. kwd-385125304
+                    $ad[6],                                     // {network}
+                    $ad[7],                                     // {device}
+                ];
+            }
 
             $sql = 'SELECT
                         campaign_id AS campaignId,
@@ -131,26 +159,11 @@ class API extends \Piwik\Plugin\API
                         device,
                         (cost / clicks) AS cpc
                     FROM ' . Common::prefixTable('aom_adwords') . '
-                    WHERE
-                        date = ? AND
-                        campaign_id = ? AND
-                        ad_group_id = ? AND
-                        keyword_id = ? AND
-                        network = ? AND
-                        device = ?';
+                    WHERE date = ? AND ' . $where;
 
             $visit['ad'] = Db::fetchRow(
                 $sql,
-                [
-                    date('Y-m-d', strtotime($visit['firstActionTime'])),
-                    $ad[1],                                     // {campaignid}
-                    $ad[2],                                     // {adgroupid}
-                    substr($ad[4], strrpos($ad[4], '-' ) + 1),  // {targetid}, e.g. kwd-385125304
-                    ('g' == $ad[6] ? 'Search Network' : 'Display Network'),
-                    ('m' == $ad[7]
-                        ? 'Mobile devices with full browsers'
-                        : ('c' == $ad[7] ? 'Computers' : 'Tablets with full browsers')),
-                ]
+                array_merge([date('Y-m-d', strtotime($visit['firstActionTime']))], $arguments)
             );
 
             return $visit;

@@ -1,16 +1,12 @@
 <?php
-
+/**
+ * AOM - Piwik Advanced Online Marketing Plugin
+ *
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ */
 namespace Piwik\Plugins\AOM;
 
 use Piwik\Settings\SystemSetting;
-
-/**
- * Class Settings
- * @package Piwik\Plugins\AOM\
- *
- * @author Daniel Stonies <daniel.stonies@googlemail.com>
- *
- */
 
 class Settings extends \Piwik\Plugin\Settings
 {

@@ -1,11 +1,9 @@
 <?php
 /**
- * Tasks for AOM
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
- *
  */
-
 namespace Piwik\Plugins\AOM;
 
 class Tasks extends \Piwik\Plugin\Tasks
@@ -18,7 +16,7 @@ class Tasks extends \Piwik\Plugin\Tasks
 
     public function criteoImport()
     {
-        //Reimport Last 3 days
+        // Reimport last 3 days
         $startDate = strftime("%Y-%m-%d", strtotime("-3 days"));
         $endDate = strftime("%Y-%m-%d");
 
@@ -28,7 +26,7 @@ class Tasks extends \Piwik\Plugin\Tasks
 
     public function adwordsImport()
     {
-        //Reimport Last 3 days
+        // Reimport last 3 days
         $startDate = strftime("%Y-%m-%d", strtotime("-3 days"));
         $endDate = strftime("%Y-%m-%d");
 
