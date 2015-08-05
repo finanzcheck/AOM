@@ -120,7 +120,7 @@ class Criteo
                  Db::query(
                     'INSERT INTO ' . Common::prefixTable('aom_criteo') . ' (date, campaign_id, campaign, '
                     . 'impressions, clicks, cost, conversions, conversions_value, conversions_post_view, '
-                    . 'conversions_post_view_value) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    . 'conversions_post_view_value) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [
                         $row['dateTime'],
                         $row['campaignID'],
