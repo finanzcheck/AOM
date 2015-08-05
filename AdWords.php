@@ -14,15 +14,17 @@ use ReportUtils;
 class AdWords
 {
     const CRITERIA_TYPE_AGE = 'age';
+    const CRITERIA_TYPE_GENDER = 'gender';
     const CRITERIA_TYPE_KEYWORD = 'keyword';
     const CRITERIA_TYPE_PLACEMENT = 'placement';
-    const CRITERIA_TYPE_USER_LIST = 'user_list';
+    const CRITERIA_TYPE_USER_LIST = 'user list';
 
     /**
      * @var array All supported criteria types
      */
     private $criteriaTypes = [
         self::CRITERIA_TYPE_AGE,
+        self::CRITERIA_TYPE_GENDER,
         self::CRITERIA_TYPE_KEYWORD,
         self::CRITERIA_TYPE_PLACEMENT,
         self::CRITERIA_TYPE_USER_LIST,
@@ -44,6 +46,7 @@ class AdWords
     const DEVICE_COMPUTERS = 'Computers';
     const DEVICE_MOBILE_DEVICES_WITH_FULL_BROWSERS = 'Mobile devices with full browsers';
     const DEVICE_TABLETS_WITH_FULL_BROWSERS = 'Tablets with full browsers';
+    const DEVICE_OTHER = 'Other';
 
     /**
      * @var array All supported devices
@@ -52,6 +55,7 @@ class AdWords
         self::DEVICE_COMPUTERS => 'c',
         self::DEVICE_MOBILE_DEVICES_WITH_FULL_BROWSERS => 'm',
         self::DEVICE_TABLETS_WITH_FULL_BROWSERS => 't',
+        self::DEVICE_OTHER => 'o',  // TODO: "other" exists, but is "o" correct?!
     ];
 
     /**
@@ -141,31 +145,31 @@ class AdWords
             // TODO: Find correct place to log warning, errors, etc. and monitor them!
 
             // Validation
-            if (!in_array(strtolower($row['criteriaType']), $this->criteriaTypes)) {
-                echo 'Criteria type "' . $row['criteriaType'] . '" not supported.';
+            if (!in_array(strtolower((string) $row['criteriaType']), $this->criteriaTypes)) {
+                var_dump('Criteria type "' . (string) $row['criteriaType'] . '" not supported.');
                 continue;
             } else {
-                $criteriaType = strtolower($row['criteriaType']);
+                $criteriaType = strtolower((string) $row['criteriaType']);
             }
 
-            if (!in_array($row['network'], array_keys($this->networks))) {
-                echo 'Network "' . $row['network'] . '" not supported.';
+            if (!in_array((string) $row['network'], array_keys($this->networks))) {
+                var_dump('Network "' . (string) $row['network'] . '" not supported.');
                 continue;
             } else {
-                $network = $this->networks[$row['network']];
+                $network = $this->networks[(string) $row['network']];
             }
 
-            if (!in_array($row['device'], array_keys($this->devices))) {
-                echo 'Device "' . $row['device'] . '" not supported.';
+            if (!in_array((string) $row['device'], array_keys($this->devices))) {
+                var_dump('Device "' . (string) $row['device'] . '" not supported.');
                 continue;
             } else {
-                $device = $this->devices[$row['device']];
+                $device = $this->devices[(string) $row['device']];
             }
 
             Db::query(
-                'INSERT INTO ' . Common::prefixTable('aom_adwords') . ' (date, campaign_id, campaign, ad_group_id, '
-                . 'ad_group, keyword_id, keyword_placement, criteria_type network, device, impressions, clicks, cost, '
-                . 'conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO ' . Common::prefixTable('aom_adwords') . ' (date, account, campaign_id, campaign, '
+                . 'ad_group_id, ad_group, keyword_id, keyword_placement, criteria_type, network, device, impressions, '
+                . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                     $row['day'],
                     $row['account'],

@@ -120,31 +120,31 @@ class API extends \Piwik\Plugin\API
 
             // TODO: Check if AdWords is active
 
-            // TODO: We must ensure that all query results return exactly one row! This must be checked!
-
             // The ID of the keyword (labeled "kwd"), dynamic search ad ("dsa"), or remarketing list target ("aud")
             // that triggered an ad. For example, if you add a remarketing list to your ad group (criterion ID "456")
             // and target the keywords ID "123" the {targetid} would be replaced by "kwd-123:aud-456".
 
             // Build where condition and arguments
-            if (false !== strrpos($ad[4], 'kwd')) { // Regular keyword
-                $where = 'campaign_id = ? AND ad_group_id = ? AND keyword_id = ? AND network = ? AND device = ?';
+
+            // TODO: We must improve detecting the various cases! This is currently full of bugs...
+
+            if (false !== strrpos($ad[4], 'kwd') && 'c' != $ad[6]) { // Regular keyword in "Google Search" or "Search Network"
+                $where = 'keyword_id = ? AND criteria_type = ? AND network != ? AND device = ?';
                 $arguments = [
-                    $ad[1],                                     // {campaignid}
-                    $ad[2],                                     // {adgroupid}
                     substr($ad[4], strrpos($ad[4], '-' ) + 1),  // {targetid}, e.g. kwd-385125304
-                    $ad[6],                                     // {network}
+                    'keyword',
+                    'c',
                     $ad[7],                                     // {device}
                 ];
-            } elseif ('' === $ad[4] && 'c' === $ad[6]) { // Content network
-                $where = 'campaign_id = ? AND ad_group_id = ? AND keyword_id = ? AND network = ? AND device = ?';
+            } elseif ('' === $ad[4] && 'c' === $ad[6]) { // Content network?
+                $where = 'criteria_type != ? AND network = ? AND device = ?';
                 $arguments = [
-                    $ad[1],                                     // {campaignid}
-                    $ad[2],                                     // {adgroupid}
-                    substr($ad[4], strrpos($ad[4], '-' ) + 1),  // {targetid}, e.g. kwd-385125304
-                    $ad[6],                                     // {network}
-                    $ad[7],                                     // {device}
+                    'keyword',
+                    $ad[6], // {network}
+                    $ad[7], // {device}
                 ];
+            } else {
+                return $visit;
             }
 
             $sql = 'SELECT
@@ -159,12 +159,26 @@ class API extends \Piwik\Plugin\API
                         device,
                         (cost / clicks) AS cpc
                     FROM ' . Common::prefixTable('aom_adwords') . '
-                    WHERE date = ? AND ' . $where;
+                    WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND ' . $where;
 
-            $visit['ad'] = Db::fetchRow(
+            $results = Db::fetchAll(
                 $sql,
-                array_merge([date('Y-m-d', strtotime($visit['firstActionTime']))], $arguments)
+                array_merge(
+                    [
+                        date('Y-m-d', strtotime($visit['firstActionTime'])),
+                        $ad[1], // {campaignid}
+                        $ad[2], // {adgroupid}
+                    ],
+                    $arguments
+                )
             );
+
+            // TODO: We must ensure that all query results return exactly one row! This must be checked!
+            if (count($results) > 1) {
+                var_dump($results);
+            } elseif (count($results) === 1) {
+                $visit['ad'] = $results[0];
+            }
 
             return $visit;
         }
