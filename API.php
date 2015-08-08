@@ -67,6 +67,7 @@ class API extends \Piwik\Plugin\API
     private function queryVisits($idSite, Range $period)
     {
         $sql = 'SELECT
+                    idvisitor AS visitorId,
                     idvisit AS visitId,
                     visit_first_action_time AS firstActionTime,
                     CASE referer_type
@@ -175,7 +176,7 @@ class API extends \Piwik\Plugin\API
 
             // TODO: We must ensure that all query results return exactly one row! This must be checked!
             if (count($results) > 1) {
-                var_dump($results);
+                // var_dump($results);
             } elseif (count($results) === 1) {
                 $visit['ad'] = $results[0];
             }
