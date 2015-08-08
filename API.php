@@ -67,7 +67,7 @@ class API extends \Piwik\Plugin\API
     private function queryVisits($idSite, Range $period)
     {
         $sql = 'SELECT
-                    idvisitor AS visitorId,
+                    conv(hex(idvisitor), 16, 10) as visitorId,
                     idvisit AS visitId,
                     visit_first_action_time AS firstActionTime,
                     CASE referer_type
