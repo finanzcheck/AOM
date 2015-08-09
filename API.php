@@ -23,6 +23,22 @@ use Piwik\Site;
 class API extends \Piwik\Plugin\API
 {
     /**
+     * @var AdWords
+     */
+    private $adWords;
+
+    /**
+     * @var Criteo
+     */
+    private $criteo;
+
+    public function __construct()
+    {
+        $this->adWords = new AdWords();
+        $this->criteo = new Criteo();
+    }
+
+    /**
      * Returns all visits with advanced marketing information within the given period.
      *
      * @param int $idSite Id Site
@@ -67,8 +83,9 @@ class API extends \Piwik\Plugin\API
     private function queryVisits($idSite, Range $period)
     {
         $sql = 'SELECT
-                    conv(hex(idvisitor), 16, 10) as visitorId,
+                    conv(hex(idvisitor), 16, 10) AS visitorId,
                     idvisit AS visitId,
+                    IF (custom_var_k1 = "cafe_session_id", custom_var_v1, NULL) AS cafeSessionId,
                     visit_first_action_time AS firstActionTime,
                     CASE referer_type
                         WHEN 1 THEN "direct"
@@ -118,95 +135,12 @@ class API extends \Piwik\Plugin\API
 
         // AdWords
         if ($ad[0] === 'adwords') {
-
-            // TODO: Check if AdWords is active
-
-            // The ID of the keyword (labeled "kwd"), dynamic search ad ("dsa"), or remarketing list target ("aud")
-            // that triggered an ad. For example, if you add a remarketing list to your ad group (criterion ID "456")
-            // and target the keywords ID "123" the {targetid} would be replaced by "kwd-123:aud-456".
-
-            // Build where condition and arguments
-
-            // TODO: We must improve detecting the various cases! This is currently full of bugs...
-
-            if (false !== strrpos($ad[4], 'kwd') && 'c' != $ad[6]) { // Regular keyword in "Google Search" or "Search Network"
-                $where = 'keyword_id = ? AND criteria_type = ? AND network != ? AND device = ?';
-                $arguments = [
-                    substr($ad[4], strrpos($ad[4], '-' ) + 1),  // {targetid}, e.g. kwd-385125304
-                    'keyword',
-                    'c',
-                    $ad[7],                                     // {device}
-                ];
-            } elseif ('' === $ad[4] && 'c' === $ad[6]) { // Content network?
-                $where = 'criteria_type != ? AND network = ? AND device = ?';
-                $arguments = [
-                    'keyword',
-                    $ad[6], // {network}
-                    $ad[7], // {device}
-                ];
-            } else {
-                return $visit;
-            }
-
-            $sql = 'SELECT
-                        campaign_id AS campaignId,
-                        campaign,
-                        ad_group_id AS adGroupId,
-                        ad_group AS adGroup,
-                        keyword_id AS keywordId,
-                        keyword_placement AS keywordPlacement,
-                        criteria_type AS criteriaType,
-                        network,
-                        device,
-                        (cost / clicks) AS cpc
-                    FROM ' . Common::prefixTable('aom_adwords') . '
-                    WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND ' . $where;
-
-            $results = Db::fetchAll(
-                $sql,
-                array_merge(
-                    [
-                        date('Y-m-d', strtotime($visit['firstActionTime'])),
-                        $ad[1], // {campaignid}
-                        $ad[2], // {adgroupid}
-                    ],
-                    $arguments
-                )
-            );
-
-            // TODO: We must ensure that all query results return exactly one row! This must be checked!
-            if (count($results) > 1) {
-                // var_dump($results);
-            } elseif (count($results) === 1) {
-                $visit['ad'] = $results[0];
-            }
-
-            return $visit;
+            $this->adWords->enrichVisit($visit, $ad);
         }
 
         // Criteo
         if ($ad[0] === 'criteo') {
-
-            // TODO: Check if Criteo is active
-
-            $sql = 'SELECT
-                        campaign_id AS campaignId,
-                        campaign,
-                        (cost / clicks) AS cpc
-                    FROM ' . Common::prefixTable('aom_criteo') . '
-                    WHERE
-                        date = ? AND
-                        campaign_id = ?';
-
-            $visit['ad'] = Db::fetchRow(
-                $sql,
-                [
-                    date('Y-m-d', strtotime($visit['firstActionTime'])),
-                    $ad[1],
-                ]
-            );
-
-            return $visit;
+            $this->criteo->enrichVisit($visit, $ad);
         }
 
         return $visit;

@@ -30,7 +30,7 @@ class AdWordsImport extends ConsoleCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $adwords = new AdWords();
-        $adwords->import($input->getOption('startDate'), $input->getOption('endDate'));
+        $adWords = new AdWords();
+        $adWords->import($input->getOption('startDate'), $input->getOption('endDate'));
     }
 }

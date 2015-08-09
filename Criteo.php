@@ -65,7 +65,7 @@ class Criteo
             $apiHeader->appToken = $interval = $this->settings->criteoAppToken->getValue();
             $apiHeader->authToken = $loginResponse->clientLoginResult;
 
-            //Create Soap Header, then set the Headers of Soap Client.
+            // Create Soap Header, then set the Headers of Soap Client.
             $soapHeader = new SoapHeader('https://advertising.criteo.com/API/v201010', 'apiHeader', $apiHeader, false);
             $soapClient->__setSoapHeaders([$soapHeader]);
 
@@ -143,5 +143,37 @@ class Criteo
             echo $e->getMessage();
             echo $soapClient->__getLastResponse();
         }
+    }
+
+    /**
+     * Enriches a specific visit with additional Criteo information when this visit came from Criteo.
+     *
+     * @param array &$visit
+     * @param array $ad
+     * @return array
+     * @throws \Exception
+     */
+    public function enrichVisit(&$visit, array $ad)
+    {
+        $sql = 'SELECT
+                    campaign_id AS campaignId,
+                    campaign,
+                    (cost / clicks) AS cpc
+                FROM ' . Common::prefixTable('aom_criteo') . '
+                WHERE
+                    date = ? AND
+                    campaign_id = ?';
+
+        $results = Db::fetchRow(
+            $sql,
+            [
+                date('Y-m-d', strtotime($visit['firstActionTime'])),
+                $ad[1],
+            ]
+        );
+
+        $visit['ad'] = array_merge(['source' => 'Criteo'], $results);
+
+        return $visit;
     }
 }
