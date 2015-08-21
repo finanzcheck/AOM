@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleads/googleads-php-lib.git",
-                "reference": "89e4e515ab99ec0daca7f72a903b5f19d4440895"
+                "reference": "2b7ee485a24b6757e5cca07ea17301e015e5f181"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/89e4e515ab99ec0daca7f72a903b5f19d4440895",
-                "reference": "89e4e515ab99ec0daca7f72a903b5f19d4440895",
+                "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/2b7ee485a24b6757e5cca07ea17301e015e5f181",
+                "reference": "2b7ee485a24b6757e5cca07ea17301e015e5f181",
                 "shasum": ""
             },
             "require": {
@@ -45,7 +45,7 @@
             ],
             "description": "Google Ads APIs Client Library for PHP (AdWords, Adx, and DFP)",
             "homepage": "https://github.com/googleads/googleads-php-lib",
-            "time": "2015-07-01 09:18:10"
+            "time": "2015-07-28 04:18:20"
         }
     ],
     "packages-dev": [],

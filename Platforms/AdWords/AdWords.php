@@ -4,14 +4,16 @@
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-namespace Piwik\Plugins\AOM;
+namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use AdWordsUser;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Plugins\AOM\Settings;
 use ReportUtils;
 
-class AdWords
+class AdWords implements PlatformInterface
 {
     const AD_CAMPAIGN_ID = 1;
     const AD_AD_GROUP_ID = 2;
@@ -79,18 +81,65 @@ class AdWords
     /**
      * @return mixed
      */
-    public function isActive() {
+    public function isActive()
+    {
         return $this->settings->adWordsIsActive->getValue();
+    }
+
+    public function activatePlugin()
+    {
+        try {
+            $sql = 'CREATE TABLE ' . Common::prefixTable('aom_adwords') . ' (
+                        date DATE NOT NULL,
+                        account VARCHAR(255) NOT NULL,
+                        campaign_id BIGINT NOT NULL,
+                        campaign VARCHAR(255) NOT NULL,
+                        ad_group_id BIGINT NOT NULL,
+                        ad_group VARCHAR(255) NOT NULL,
+                        keyword_id BIGINT NOT NULL,
+                        keyword_placement VARCHAR(255) NOT NULL,
+                        criteria_type VARCHAR(255) NOT NULL,
+                        network CHAR(1) NOT NULL,
+                        device CHAR(1) NOT NULL,
+                        impressions INTEGER NOT NULL,
+                        clicks INTEGER NOT NULL,
+                        cost FLOAT NOT NULL,
+                        conversions INTEGER NOT NULL
+                    )  DEFAULT CHARSET=utf8';
+            Db::exec($sql);
+        } catch (\Exception $e) {
+            // ignore error if table already exists (1050 code is for 'table already exists')
+            if (!Db::get()->isErrNo($e, '1050')) {
+                throw $e;
+            }
+        }
+
+        try {
+            $sql = 'CREATE INDEX index_aom_adwords ON ' . Common::prefixTable('aom_adwords')
+                . ' (date, campaign_id, ad_group_id, keyword_id)';  // TODO...
+            Db::exec($sql);
+        } catch (\Exception $e) {
+            // ignore error if index already exists (1061)
+            if (!Db::get()->isErrNo($e, '1061')) {
+                throw $e;
+            }
+        }
+    }
+
+    public function uninstallPlugin()
+    {
+        Db::dropTables(Common::prefixTable('aom_adwords'));
     }
 
     /**
      * @param $startDate
      * @param $endDate
+     * @return mixed|void
      * @throws \Exception
      */
     public function import($startDate, $endDate)
     {
-        if(!$this->isActive()) {
+        if (!$this->isActive()) {
             return;
         }
 
@@ -215,7 +264,7 @@ class AdWords
      * @return array
      * @throws \Exception
      */
-    public function enrichVisit(&$visit, array $ad)
+    public function enrichVisit(array &$visit, array $ad)
     {
         // Content/display network non-keyword-based (e.g. placements), e.g.:
         // adwords|171096476|8837340236|||46709955956|d|t|none|9042066|

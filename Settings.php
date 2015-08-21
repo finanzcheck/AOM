@@ -46,6 +46,27 @@ class Settings extends \Piwik\Plugin\Settings
     /** @var SystemSetting */
     public $criteoPassword;
 
+    /** @var SystemSetting */
+    public $facebookAdsIsActive;
+
+    /** @var SystemSetting */
+    public $facebookAdsTimezone;
+
+    /** @var SystemSetting */
+    public $facebookAdsClientId;
+
+    /** @var SystemSetting */
+    public $facebookAdsClientSecret;
+
+    /** @var SystemSetting */
+    public $facebookAdsUserAccountId;
+
+    /** @var SystemSetting */
+    public $facebookAdsAccountId;
+
+    /** @var SystemSetting */
+    public $facebookAdsAccessToken;
+
     protected function init()
     {
 //        $this->setIntroduction('...');
@@ -55,7 +76,7 @@ class Settings extends \Piwik\Plugin\Settings
 
         // Add fields for AdWords
         $this->createAdWordsIsActiveSetting();
-        if($this->adWordsIsActive->getValue()) {
+        if ($this->adWordsIsActive->getValue()) {
             $this->createAdWordsDeveloperTokenSetting();
             $this->createAdWordsUserAgentSetting();
             $this->createAdWordsClientCustomerIdSetting();
@@ -66,10 +87,21 @@ class Settings extends \Piwik\Plugin\Settings
 
         // Add fields for Criteo
         $this->createCriteoIsActiveSetting();
-        if($this->criteoIsActive->getValue()) {
+        if ($this->criteoIsActive->getValue()) {
             $this->createCriteoAppTokenSetting();
             $this->createCriteoUsernameSetting();
             $this->createCriteoPasswordSetting();
+        }
+
+        // Add fields for Facebook Ads
+        $this->createFacebookAdsIsActiveSetting();
+        if ($this->facebookAdsIsActive->getValue()) {
+            $this->createFacebookAdsTimezone();
+            $this->createFacebookAdsClientIdSetting();
+            $this->createFacebookAdsClientSecretSetting();
+            $this->createFacebookAdsUserAccountIdSetting();
+            $this->createFacebookAdsAccountIdSetting();
+            $this->createFacebookAdsAccessTokenSetting();
         }
     }
 
@@ -198,5 +230,78 @@ class Settings extends \Piwik\Plugin\Settings
         $this->criteoPassword->description = 'Password provided by Criteo, e.g. "C66u37Gi"';
 
         $this->addSetting($this->criteoPassword);
+    }
+
+    private function createFacebookAdsIsActiveSetting()
+    {
+        $this->facebookAdsIsActive = new SystemSetting('facebookAdsIsActive', 'Enable Facebook Ads');
+        $this->facebookAdsIsActive->readableByCurrentUser = true;
+        $this->facebookAdsIsActive->type  = static::TYPE_BOOL;
+        $this->facebookAdsIsActive->uiControlType = static::CONTROL_CHECKBOX;
+        $this->facebookAdsIsActive->description   = 'Enable Facebook Ads';
+        $this->facebookAdsIsActive->defaultValue  = false;
+
+
+        $this->addSetting($this->facebookAdsIsActive);
+    }
+
+    private function createFacebookAdsTimezone()
+    {
+        $this->facebookAdsTimezone = new SystemSetting('facebookAdsTimezone', 'Timezone');
+        $this->facebookAdsTimezone->readableByCurrentUser = true;
+        $this->facebookAdsTimezone->uiControlType = static::CONTROL_TEXT;
+        $this->facebookAdsTimezone->description = 'Timezone of Facebook Ads Account, e.g. "Europe/Berlin"';
+
+        $this->addSetting($this->facebookAdsTimezone);
+    }
+
+    private function createFacebookAdsClientIdSetting()
+    {
+        $this->facebookAdsClientId = new SystemSetting('facebookAdsClientId', 'Client ID');
+        $this->facebookAdsClientId->readableByCurrentUser = true;
+        $this->facebookAdsClientId->uiControlType = static::CONTROL_TEXT;
+        $this->facebookAdsClientId->description = 'Client ID (Facebook App ID), e.g. "384056678729432"';
+
+        $this->addSetting($this->facebookAdsClientId);
+    }
+
+    private function createFacebookAdsClientSecretSetting()
+    {
+        $this->facebookAdsClientSecret = new SystemSetting('facebookAdsClientSecret', 'Client Secret');
+        $this->facebookAdsClientSecret->readableByCurrentUser = true;
+        $this->facebookAdsClientSecret->uiControlType = static::CONTROL_TEXT;
+        $this->facebookAdsClientSecret->description = 'Client Secret (Facebook App Secret), e.g. "666e9b2d7a28ae77d64202b5ac9bedf9"';
+
+        $this->addSetting($this->facebookAdsClientSecret);
+    }
+
+    private function createFacebookAdsUserAccountIdSetting()
+    {
+        $this->facebookAdsUserAccountId = new SystemSetting('facebookAdsUserAccountId', 'User Account ID');
+        $this->facebookAdsUserAccountId->readableByCurrentUser = true;
+        $this->facebookAdsUserAccountId->uiControlType = static::CONTROL_TEXT;
+        $this->facebookAdsUserAccountId->description = 'User Account ID, e.g. "1384758171773244"';
+
+        $this->addSetting($this->facebookAdsUserAccountId);
+    }
+
+    private function createFacebookAdsAccountIdSetting()
+    {
+        $this->facebookAdsAccountId = new SystemSetting('facebookAdsAccountId', 'Account ID');
+        $this->facebookAdsAccountId->readableByCurrentUser = true;
+        $this->facebookAdsAccountId->uiControlType = static::CONTROL_TEXT;
+        $this->facebookAdsAccountId->description = 'Account ID, e.g. "918514149094443"';
+
+        $this->addSetting($this->facebookAdsAccountId);
+    }
+
+    private function createFacebookAdsAccessTokenSetting()
+    {
+        $this->facebookAdsAccessToken = new SystemSetting('facebookAdsAccessToken', 'Access Token');
+        $this->facebookAdsAccessToken->readableByCurrentUser = true;
+        $this->facebookAdsAccessToken->uiControlType = static::CONTROL_TEXT;
+        $this->facebookAdsAccessToken->description = 'Access Token provided by Facebook, e.g. "8bLaboLEVEPZA5rhqXM1D6WjHzGyFgS ..."';
+
+        $this->addSetting($this->facebookAdsAccessToken);
     }
 }

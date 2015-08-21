@@ -23,23 +23,20 @@ use Piwik\Site;
 class API extends \Piwik\Plugin\API
 {
     /**
-     * @var AdWords
+     * @var array PlatformInterface
      */
-    private $adWords;
-
-    /**
-     * @var Criteo
-     */
-    private $criteo;
+    private $platforms = [];
 
     public function __construct()
     {
-        $this->adWords = new AdWords();
-        $this->criteo = new Criteo();
+        foreach (AOM::getPlatforms() as $platform) {
+            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
+            $this->platforms[strtolower($platform)] = new $className();
+        }
     }
 
     /**
-     * Returns all visits with advanced marketing information within the given period.
+     * Returns all visits with enriched marketing information within the given period.
      *
      * @param int $idSite Id Site
      * @param bool|string $period Period to restrict to when looking at the logs
@@ -133,14 +130,8 @@ class API extends \Piwik\Plugin\API
 
         $ad = explode('|', $visit['adId']);
 
-        // AdWords
-        if ($ad[0] === 'adwords') {
-            $this->adWords->enrichVisit($visit, $ad);
-        }
-
-        // Criteo
-        if ($ad[0] === 'criteo') {
-            $this->criteo->enrichVisit($visit, $ad);
+        if (array_key_exists($ad[0], $this->platforms)) {
+            $this->platforms[$ad[0]]->enrichVisit($visit, $ad);
         }
 
         return $visit;
