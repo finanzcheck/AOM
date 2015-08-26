@@ -66,7 +66,22 @@ class Settings extends \Piwik\Plugin\Settings
 
     /** @var SystemSetting */
     public $facebookAdsAccessToken;
+    
+    /** @var SystemSetting */
+    public $bingIsActive;
 
+    /** @var SystemSetting */
+    public $bingUserName;
+
+    /** @var SystemSetting */
+    public $bingPassword;
+
+    /** @var SystemSetting */
+    public $bingDeveloperToken;
+
+    /** @var SystemSetting */
+    public $bingAccountId;
+    
     protected function init()
     {
 //        $this->setIntroduction('...');
@@ -102,6 +117,15 @@ class Settings extends \Piwik\Plugin\Settings
             $this->createFacebookAdsUserAccountIdSetting();
             $this->createFacebookAdsAccountIdSetting();
             $this->createFacebookAdsAccessTokenSetting();
+        }
+        
+        // Add fields for Bing
+        $this->createBingIsActiveSetting();
+        if ($this->bingIsActive->getValue()) {
+            $this->createBingUserNameSetting();
+            $this->createBingPasswordSetting();
+            $this->createBingDeveloperTokenSetting();
+            $this->createBingAccountIdSetting();
         }
     }
 
@@ -241,7 +265,6 @@ class Settings extends \Piwik\Plugin\Settings
         $this->facebookAdsIsActive->description   = 'Enable Facebook Ads';
         $this->facebookAdsIsActive->defaultValue  = false;
 
-
         $this->addSetting($this->facebookAdsIsActive);
     }
 
@@ -304,4 +327,57 @@ class Settings extends \Piwik\Plugin\Settings
 
         $this->addSetting($this->facebookAdsAccessToken);
     }
+
+    private function createBingIsActiveSetting()
+    {
+        $this->bingIsActive = new SystemSetting('bingIsActiveSetting', 'Enable Bing');
+        $this->bingIsActive->readableByCurrentUser = true;
+        $this->bingIsActive->type  = static::TYPE_BOOL;
+        $this->bingIsActive->uiControlType = static::CONTROL_CHECKBOX;
+        $this->bingIsActive->description   = 'Enable Bing';
+        $this->bingIsActive->defaultValue  = false;
+
+        $this->addSetting($this->bingIsActive);
+    }
+
+    private function createBingUserNameSetting()
+    {
+        $this->bingUserName = new SystemSetting('bingUserName', 'UserName');
+        $this->bingUserName->readableByCurrentUser = true;
+        $this->bingUserName->uiControlType = static::CONTROL_TEXT;
+        $this->bingUserName->description = 'UserName, e.g. "jack@test.com"';
+
+        $this->addSetting($this->bingUserName);
+    }
+
+    private function createBingPasswordSetting()
+    {
+        $this->bingPassword = new SystemSetting('bingPassword', 'Password');
+        $this->bingPassword->readableByCurrentUser = true;
+        $this->bingPassword->uiControlType = static::CONTROL_TEXT;
+        $this->bingPassword->description = 'Password, e.g. "Xewf4564125674"';
+
+        $this->addSetting($this->bingPassword);
+    }
+
+    private function createBingDeveloperTokenSetting()
+    {
+        $this->bingDeveloperToken = new SystemSetting('bingDeveloperToken', 'Developer Token');
+        $this->bingDeveloperToken->readableByCurrentUser = true;
+        $this->bingDeveloperToken->uiControlType = static::CONTROL_TEXT;
+        $this->bingDeveloperToken->description = 'Developer Token, e.g. "0465A564ADD"';
+
+        $this->addSetting($this->bingDeveloperToken);
+    }
+
+    private function createBingAccountIdSetting()
+    {
+        $this->bingAccountId = new SystemSetting('bingAccountId', 'Account ID');
+        $this->bingAccountId->readableByCurrentUser = true;
+        $this->bingAccountId->uiControlType = static::CONTROL_TEXT;
+        $this->bingAccountId->description = 'Account Id provided by Bing, e.g. "6457892"';
+
+        $this->addSetting($this->bingAccountId);
+    }
+    
 }

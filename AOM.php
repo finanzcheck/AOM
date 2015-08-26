@@ -11,6 +11,7 @@ use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 class AOM extends \Piwik\Plugin
 {
     const PLATFORM_AD_WORDS = 'AdWords';
+    const PLATFORM_BING = 'Bing';
     const PLATFORM_CRITEO = 'Criteo';
     const PLATFORM_FACEBOOK_ADS = 'FacebookAds';
 
@@ -21,6 +22,7 @@ class AOM extends \Piwik\Plugin
     {
         return [
             self::PLATFORM_AD_WORDS,
+            self::PLATFORM_BING,
             self::PLATFORM_CRITEO,
             self::PLATFORM_FACEBOOK_ADS,
         ];
