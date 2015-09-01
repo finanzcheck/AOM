@@ -71,10 +71,13 @@ class Settings extends \Piwik\Plugin\Settings
     public $bingIsActive;
 
     /** @var SystemSetting */
-    public $bingUserName;
+    public $bingClientId;
 
     /** @var SystemSetting */
-    public $bingPassword;
+    public $bingAccessToken;
+
+    /** @var SystemSetting */
+    public $bingRefreshToken;
 
     /** @var SystemSetting */
     public $bingDeveloperToken;
@@ -82,12 +85,28 @@ class Settings extends \Piwik\Plugin\Settings
     /** @var SystemSetting */
     public $bingAccountId;
     
+    /** @var SystemSetting */
+    public $proxyIsActive;
+
+    /** @var SystemSetting */
+    public $proxyHost;
+
+    /** @var SystemSetting */
+    public $proxyPort;
+    
     protected function init()
     {
 //        $this->setIntroduction('...');
 
         // Add generic fields
         $this->createAdIdSetting();
+
+        // Add fields for Proxy
+        $this->createProxyIsActiveSetting();
+        if ($this->proxyIsActive->getValue()) {
+            $this->createProxyHostSetting();
+            $this->createProxyPortSetting();
+        }
 
         // Add fields for AdWords
         $this->createAdWordsIsActiveSetting();
@@ -122,12 +141,45 @@ class Settings extends \Piwik\Plugin\Settings
         // Add fields for Bing
         $this->createBingIsActiveSetting();
         if ($this->bingIsActive->getValue()) {
-            $this->createBingUserNameSetting();
-            $this->createBingPasswordSetting();
+            $this->createBingClientIdSetting();
+            $this->createBingAccessTokenSetting();
+            $this->createBingRefreshTokenSetting();
             $this->createBingDeveloperTokenSetting();
             $this->createBingAccountIdSetting();
         }
     }
+    
+    private function createProxyIsActiveSetting() {
+        $this->proxyIsActive = new SystemSetting('proxyIsActive', 'Enable Proxy');
+        $this->proxyIsActive->readableByCurrentUser = true;
+        $this->proxyIsActive->type  = static::TYPE_BOOL;
+        $this->proxyIsActive->uiControlType = static::CONTROL_CHECKBOX;
+        $this->proxyIsActive->description   = 'Enable Proxy';
+        $this->proxyIsActive->defaultValue  = false;
+
+        $this->addSetting($this->proxyIsActive);
+    }
+
+    private function createProxyHostSetting()
+    {
+        $this->proxyHost = new SystemSetting('proxyHost', 'Proxy Host');
+        $this->proxyHost->readableByCurrentUser = true;
+        $this->proxyHost->uiControlType = static::CONTROL_TEXT;
+        $this->proxyHost->description = 'Proxy Host, e.g. "proxy.internal"';
+
+        $this->addSetting($this->proxyHost);
+    }
+
+    private function createProxyPortSetting()
+    {
+        $this->proxyPort = new SystemSetting('proxyPort', 'Proxy Port');
+        $this->proxyPort->readableByCurrentUser = true;
+        $this->proxyPort->uiControlType = static::CONTROL_TEXT;
+        $this->proxyPort->description = 'Proxy Port, e.g. "3128"';
+
+        $this->addSetting($this->proxyPort);
+    }
+    
 
     private function createAdIdSetting()
     {
@@ -148,7 +200,6 @@ class Settings extends \Piwik\Plugin\Settings
         $this->adWordsIsActive->uiControlType = static::CONTROL_CHECKBOX;
         $this->adWordsIsActive->description   = 'Enable AdWords';
         $this->adWordsIsActive->defaultValue  = false;
-
 
         $this->addSetting($this->adWordsIsActive);
     }
@@ -340,24 +391,34 @@ class Settings extends \Piwik\Plugin\Settings
         $this->addSetting($this->bingIsActive);
     }
 
-    private function createBingUserNameSetting()
+    private function createBingClientIdSetting()
     {
-        $this->bingUserName = new SystemSetting('bingUserName', 'UserName');
-        $this->bingUserName->readableByCurrentUser = true;
-        $this->bingUserName->uiControlType = static::CONTROL_TEXT;
-        $this->bingUserName->description = 'UserName, e.g. "jack@test.com"';
+        $this->bingClientId = new SystemSetting('bingClientId', 'ClientId');
+        $this->bingClientId->readableByCurrentUser = true;
+        $this->bingClientId->uiControlType = static::CONTROL_TEXT;
+        $this->bingClientId->description = 'ClientId, e.g. "00000004CDEEF2F4"';
 
-        $this->addSetting($this->bingUserName);
+        $this->addSetting($this->bingClientId);
     }
 
-    private function createBingPasswordSetting()
+    private function createBingAccessTokenSetting()
     {
-        $this->bingPassword = new SystemSetting('bingPassword', 'Password');
-        $this->bingPassword->readableByCurrentUser = true;
-        $this->bingPassword->uiControlType = static::CONTROL_TEXT;
-        $this->bingPassword->description = 'Password, e.g. "Xewf4564125674"';
+        $this->bingAccessToken = new SystemSetting('bingAccessToken', 'AccessToken');
+        $this->bingAccessToken->readableByCurrentUser = true;
+        $this->bingAccessToken->uiControlType = static::CONTROL_TEXT;
+        $this->bingAccessToken->description = 'AccessToken, e.g. "EwBwAnhlBAAUxT83/QvqiAZEx5SuwyhZqHzk..."';
 
-        $this->addSetting($this->bingPassword);
+        $this->addSetting($this->bingAccessToken);
+    }
+    
+    private function createBingRefreshTokenSetting()
+    {
+        $this->bingRefreshToken = new SystemSetting('bingRefreshToken', 'RefreshToken');
+        $this->bingRefreshToken->readableByCurrentUser = true;
+        $this->bingRefreshToken->uiControlType = static::CONTROL_TEXT;
+        $this->bingRefreshToken->description = 'RefreshToken, e.g. "EwBwAnhlBAAUxT83/QvqiAZEx5SuwyhZqHzk..."';
+
+        $this->addSetting($this->bingRefreshToken);
     }
 
     private function createBingDeveloperTokenSetting()

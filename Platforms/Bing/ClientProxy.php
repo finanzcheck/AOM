@@ -1,6 +1,4 @@
 <?php
-// Updated on 8/6/2014 1:29:00 PM
-
 namespace Bing\Proxy;
 
 use \DOMDocument;
@@ -14,23 +12,24 @@ Class ClientProxy
 {
 	private $authenticationToken;
 	private $username;
-        private $password;
+    private $password;
 	private $developerToken;
 	private $wsdlUrl;
 	private $accountId;
 	private $customerId;
 	private $service;
-	private $namespace;
-	
+    private $namespace;
+    private $httpProxy = false;
+    private $httpProxyHost;
+    private $httpProxyPort;
+
 	// Converts long types found in SOAP responses to string types in PHP.
-	
 	private function from_long_xml($xmlFragmentString)
 	{
 		return (string)strip_tags($xmlFragmentString);
 	}
 	
 	// Converts PHP string types to long types in SOAP requests.
-	
 	private function to_long_xml($longVal)
 	{
 		return '<long>' . $longVal . '</long>';
@@ -41,11 +40,16 @@ Class ClientProxy
 		$this->wsdlUrl = $wsdl;
 	}
 
-        public static function ConstructWithCredentials($wsdl, $username, $password, $token, $authenticationToken)
+    public static function ConstructWithCredentials($wsdl, $username, $password, $token, $authenticationToken, $httpProxy, $httpHost, $httpPort)
 	{
 		$thisClient = new ClientProxy($wsdl);
+        if($httpProxy) {
+            $thisClient->httpProxy = true;
+            $thisClient->httpProxyHost = $httpHost;
+            $thisClient->httpProxyPort = $httpPort;
+        }
 		
-                $thisClient->authenticationToken = $authenticationToken;
+        $thisClient->authenticationToken = $authenticationToken;
 		$thisClient->username = $username;
 		$thisClient->password = $password;
 		$thisClient->developerToken = $token;
@@ -54,11 +58,16 @@ Class ClientProxy
 		return $thisClient;
 	}
 	
-	public static function ConstructWithAccountId($wsdl, $username, $password, $token, $accountId, $authenticationToken)
+	public static function ConstructWithAccountId($wsdl, $username, $password, $token, $accountId, $authenticationToken, $httpProxy, $httpHost, $httpPort)
 	{
 		$thisClient = new ClientProxy($wsdl);
-		
-                $thisClient->authenticationToken = $authenticationToken;
+        if($httpProxy) {
+            $thisClient->httpProxy = true;
+            $thisClient->httpProxyHost = $httpHost;
+            $thisClient->httpProxyPort = $httpPort;
+        }
+
+        $thisClient->authenticationToken = $authenticationToken;
 		$thisClient->username = $username;
 		$thisClient->password = $password;
 		$thisClient->developerToken = $token;
@@ -95,8 +104,7 @@ Class ClientProxy
 	private function GetServiceNamespace($url)
 	{
 		$doc = new DOMDocument;
-//		$doc->Load($url);
-		$doc->Load("d:\\CustomerManagementService.svc.xml");
+		$doc->Load($url);
 
 		$xpath = new DOMXPath($doc);
 		$query = "/*/@targetNamespace";
@@ -162,31 +170,36 @@ Class ClientProxy
 		// To force PHP to always return an array for an array type in the
 		// response, specify the SOAP_SINGLE_ELEMENT_ARRAYS feature.
 
-		$options = array(
-				'trace' => TRUE,
-				'exceptions' => TRUE,
-				'features' => SOAP_SINGLE_ELEMENT_ARRAYS,
+        $options = array(
+            'soap_version' => SOAP_1_1,
+            'trace' => TRUE,
+            'exceptions' => TRUE,
+            // Map long type to string type. For details, see
+            // from_long_xml and to_long_xml callbacks.
 
-				// Map long type to string type. For details, see
-				// from_long_xml and to_long_xml callbacks.
+            'typemap' => array(
+                array(
+                    'type_ns' => 'http://www.w3.org/2001/XMLSchema',
+                    'type_name' => 'xs:long',
+                    'to_xml' => 'to_long_xml',
+                    'from_xml' => 'from_long_xml',
+                ),
+            )
+        );
 
-				'typemap' => array(
-						array(
-								'type_ns' => 'http://www.w3.org/2001/XMLSchema',
-								'type_name' => 'xs:long',
-								'to_xml' => 'to_long_xml',
-								'from_xml' => 'from_long_xml',
-                        ),
-				),
-            "stream_context" => stream_context_create(
+        if($this->httpProxy) {
+            $options['proxy_host'] = $this->httpProxyHost;
+            $options['proxy_port'] = $this->httpProxyPort;
+
+            $options["stream_context"] = stream_context_create(
                 array(
                     'ssl' => array(
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
                     )
                 )
-            )
-		);
+            );
+        }
 
 		$proxy = @new SOAPClient($this->wsdlUrl, $options);
 
