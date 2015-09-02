@@ -33,6 +33,10 @@ include 'ClientProxy.php';
 
 class Bing implements PlatformInterface
 {
+    const AD_CAMPAIGN_ID = 1;
+    const AD_AD_GROUP_ID = 2;
+    const AD_KEYWORD_ID = 3;
+
     /**
      * @var  Settings
      */
@@ -90,19 +94,6 @@ class Bing implements PlatformInterface
     public function uninstallPlugin()
     {
         Db::dropTables(Common::prefixTable('aom_bing'));
-    }
-
-    private function getAuthToken()
-    {
-        $url = "https://login.live.com/oauth20_token.srf?client_id=" .
-            'xxx' .
-            '&client_secret=' .
-            'xxxx' .
-            '&code=' .
-            'xxxx' .
-            "&grant_type=authorization_code&redirect_uri=https://login.live.com/oauth20_desktop.srf";
-        echo $url . "\n\n";
-        echo file_get_contents($url);
     }
 
     private function refreshToken()
@@ -360,7 +351,7 @@ class Bing implements PlatformInterface
 
     function DownloadFile($reportDownloadUrl)
     {
-        $zipFile = file_get_contents($reportDownloadUrl);
+        $data = file_get_contents($reportDownloadUrl);
 
         $head = unpack("Vsig/vver/vflag/vmeth/vmodt/vmodd/Vcrc/Vcsize/Vsize/vnamelen/vexlen", substr($data, 0, 30));
         return gzinflate(substr($data, 30 + $head['namelen'] + $head['exlen'], $head['csize']));
@@ -375,9 +366,37 @@ class Bing implements PlatformInterface
      * @return array
      * @throws \Exception
      */
-    public
-    function enrichVisit(array &$visit, array $ad)
+    public function enrichVisit(array &$visit, array $ad)
     {
+        $sql = 'SELECT
+                    campaign_id AS campaignId,
+                    campaign,
+                    ad_group_id AS adGroupId,
+                    ad_group AS adGroup,
+                    keyword_id AS keywordId,
+                    keyword,
+                    clicks,
+                    cost,
+                    impressions,
+                    conversions,
+                    (cost / clicks) AS cpc
+                FROM ' . Common::prefixTable('aom_bing') . '
+                WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?';
+
+        $results = Db::fetchRow(
+            $sql,
+            [
+                date('Y-m-d', strtotime($visit['firstActionTime'])),
+                $ad[self::AD_CAMPAIGN_ID],
+                $ad[self::AD_AD_GROUP_ID],
+                $ad[self::AD_KEYWORD_ID],
+            ]
+        );
+
+        $visit['ad'] = array_merge(['source' => 'Bing'], $results);
+
+        return $visit;
+
 
 
     }

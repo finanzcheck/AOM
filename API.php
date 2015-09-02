@@ -130,6 +130,10 @@ class API extends \Piwik\Plugin\API
 
         $ad = explode('|', $visit['adId']);
 
+        if ($ad[0] == 'bingads'){
+            $ad[0] = 'bing';
+        }
+
         if (array_key_exists($ad[0], $this->platforms)) {
             $this->platforms[$ad[0]]->enrichVisit($visit, $ad);
         }

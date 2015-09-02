@@ -74,6 +74,12 @@ class Settings extends \Piwik\Plugin\Settings
     public $bingClientId;
 
     /** @var SystemSetting */
+    public $bingClientSecret;
+
+    /** @var SystemSetting */
+    public $bingGetToken;
+
+    /** @var SystemSetting */
     public $bingAccessToken;
 
     /** @var SystemSetting */
@@ -81,6 +87,9 @@ class Settings extends \Piwik\Plugin\Settings
 
     /** @var SystemSetting */
     public $bingDeveloperToken;
+
+    /** @var SystemSetting */
+    public $bingCode;
 
     /** @var SystemSetting */
     public $bingAccountId;
@@ -142,10 +151,17 @@ class Settings extends \Piwik\Plugin\Settings
         $this->createBingIsActiveSetting();
         if ($this->bingIsActive->getValue()) {
             $this->createBingClientIdSetting();
+            $this->createBingClientSecretSetting();
+            $this->createBingCodeSetting();
             $this->createBingAccessTokenSetting();
             $this->createBingRefreshTokenSetting();
             $this->createBingDeveloperTokenSetting();
             $this->createBingAccountIdSetting();
+            $this->createBingGetTokenSetting();
+            if($this->bingGetToken->getValue()) {
+                var_dump($this->bingGetToken->getValue());
+                $this->updateBingAuthToken();
+            }
         }
     }
     
@@ -396,11 +412,45 @@ class Settings extends \Piwik\Plugin\Settings
         $this->bingClientId = new SystemSetting('bingClientId', 'ClientId');
         $this->bingClientId->readableByCurrentUser = true;
         $this->bingClientId->uiControlType = static::CONTROL_TEXT;
-        $this->bingClientId->description = 'ClientId, e.g. "00000004CDEEF2F4"';
+        $this->bingClientId->description = 'Get ClientId from https://account.live.com/developers/applications, e.g. "00000004CDEEF2F4"';
 
         $this->addSetting($this->bingClientId);
     }
+    
+    private function createBingClientSecretSetting()
+    {
+        $this->bingClientSecret = new SystemSetting('bingClientSecret', 'ClientSecret');
+        $this->bingClientSecret->readableByCurrentUser = true;
+        $this->bingClientSecret->uiControlType = static::CONTROL_TEXT;
+        $this->bingClientSecret->description = 'ClientSecret, e.g. "psadfjkHKJHjsad3jkl"';
 
+        $this->addSetting($this->bingClientSecret);
+    }
+
+    private function createBingCodeSetting()
+    {
+        $this->bingCode = new SystemSetting('bingCode', 'Code');
+        $this->bingCode->readableByCurrentUser = true;
+        $this->bingCode->uiControlType = static::CONTROL_TEXT;
+        $this->bingCode->description = sprintf('Go to: https://login.live.com/oauth20_authorize.srf?client_id=%s&scope=bingads.manage&response_type=code&redirect_uri=https://login.live.com/oauth20_desktop.srf and enter the code value from URI after your login',
+            $this->bingClientId->getValue()
+        );
+        $this->addSetting($this->bingCode);
+    }
+
+    private function createBingGetTokenSetting()
+    {
+        $this->bingGetToken = new SystemSetting('bingGetTokenSetting', 'Get new Tokens for Bing.');
+        $this->bingGetToken->readableByCurrentUser = true;
+        $this->bingGetToken->type  = static::TYPE_BOOL;
+        $this->bingGetToken->uiControlType = static::CONTROL_CHECKBOX;
+        $this->bingGetToken->description   = 'Get new Tokens for Bing. Code will be cleared';
+        $this->bingGetToken->defaultValue  = false;
+
+        $this->addSetting($this->bingGetToken);
+    }
+    
+    
     private function createBingAccessTokenSetting()
     {
         $this->bingAccessToken = new SystemSetting('bingAccessToken', 'AccessToken');
@@ -440,5 +490,36 @@ class Settings extends \Piwik\Plugin\Settings
 
         $this->addSetting($this->bingAccountId);
     }
+
+    private function updateBingAuthToken()
+    {
+        $context = null;
+        if ($this->proxyIsActive->getValue()) {
+            $context = stream_context_create(
+                [
+                    'http' => [
+                        'proxy' => "tcp://" . $this->proxyHost->getValue() . ":" . $this->proxyPort->getValue(),
+                        'request_fulluri' => true,
+                    ]
+                ]
+            );
+        }
+
+        $url = sprintf("https://login.live.com/oauth20_token.srf?client_id=%s&client_secret=%s&code=%s&grant_type=authorization_code&redirect_uri=https://login.live.com/oauth20_desktop.srf",
+            $this->bingClientId->getValue(),
+            $this->bingClientSecret->getValue(),
+            $this->bingCode->getValue()
+        );
+
+        $response = file_get_contents($url, null, $context);
+        $response = json_decode($response);
+        $this->bingRefreshToken->setValue($response->refresh_token);
+        $this->bingAccessToken->setValue($response->access_token);
+        $this->bingCode->setValue('');
+        $this->bingGetToken->setValue(false);
+        $this->bingGetToken->getStorage()->save();
+
+    }
+    
     
 }
