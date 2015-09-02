@@ -159,7 +159,6 @@ class Settings extends \Piwik\Plugin\Settings
             $this->createBingAccountIdSetting();
             $this->createBingGetTokenSetting();
             if($this->bingGetToken->getValue()) {
-                var_dump($this->bingGetToken->getValue());
                 $this->updateBingAuthToken();
             }
         }
@@ -412,7 +411,7 @@ class Settings extends \Piwik\Plugin\Settings
         $this->bingClientId = new SystemSetting('bingClientId', 'ClientId');
         $this->bingClientId->readableByCurrentUser = true;
         $this->bingClientId->uiControlType = static::CONTROL_TEXT;
-        $this->bingClientId->description = 'Get ClientId from https://account.live.com/developers/applications, e.g. "00000004CDEEF2F4"';
+        $this->bingClientId->description = 'Get ClientId from https://account.live.com/developers/applications, e.g. "00000004CDEEF2F4". Add new Application and check the box for "Mobile or desktop client app":';
 
         $this->addSetting($this->bingClientId);
     }

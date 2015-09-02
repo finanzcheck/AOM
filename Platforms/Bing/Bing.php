@@ -6,19 +6,19 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Bing;
 
-use Bing\Reporting\SortOrder;
 use Bing\Proxy\ClientProxy;
-use Bing\Reporting\SubmitGenerateReportRequest;
-use Bing\Reporting\KeywordPerformanceReportRequest;
-use Bing\Reporting\ReportFormat;
-use Bing\Reporting\ReportAggregation;
 use Bing\Reporting\AccountThroughAdGroupReportScope;
-use Bing\Reporting\ReportTime;
 use Bing\Reporting\Date;
 use Bing\Reporting\KeywordPerformanceReportColumn;
-use Bing\Reporting\PollGenerateReportRequest;
-use Bing\Reporting\ReportRequestStatusType;
+use Bing\Reporting\KeywordPerformanceReportRequest;
 use Bing\Reporting\KeywordPerformanceReportSort;
+use Bing\Reporting\PollGenerateReportRequest;
+use Bing\Reporting\ReportAggregation;
+use Bing\Reporting\ReportFormat;
+use Bing\Reporting\ReportRequestStatusType;
+use Bing\Reporting\ReportTime;
+use Bing\Reporting\SortOrder;
+use Bing\Reporting\SubmitGenerateReportRequest;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
@@ -96,33 +96,6 @@ class Bing implements PlatformInterface
         Db::dropTables(Common::prefixTable('aom_bing'));
     }
 
-    private function refreshToken()
-    {
-        $context = null;
-        if ($this->settings->proxyIsActive->getValue()) {
-            $context = stream_context_create(
-                [
-                    'http' => [
-                        'proxy' => "tcp://" . $this->settings->proxyHost->getValue() . ":" . $this->settings->proxyPort->getValue(),
-                        'request_fulluri' => true,
-                    ]
-                ]
-            );
-        }
-
-        $url = sprintf(
-            "https://login.live.com/oauth20_token.srf?client_id=%s&grant_type=refresh_token&redirect_uri=/oauth20_desktop.srf&refresh_token=%s",
-            $this->settings->bingClientId->getValue(),
-            $this->settings->bingRefreshToken->getValue()
-        );
-
-        $response = file_get_contents($url, null, $context);
-        $response = json_decode($response);
-        $this->settings->bingRefreshToken->setValue($response->refresh_token);
-        $this->settings->bingAccessToken->setValue($response->access_token);
-
-    }
-
     public function import($startDate, $endDate)
     {
         $data = $this->getBingReport($startDate, $endDate);
@@ -141,7 +114,9 @@ class Bing implements PlatformInterface
             $date = $date->format('Y-m-d');
 
             Db::query(
-                'INSERT INTO ' . Common::prefixTable('aom_bing') . ' (date, account_id, account, campaign_id, campaign, '
+                'INSERT INTO ' . Common::prefixTable(
+                    'aom_bing'
+                ) . ' (date, account_id, account, campaign_id, campaign, '
                 . 'ad_group_id, ad_group, keyword_id, keyword, impressions, '
                 . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
@@ -176,8 +151,8 @@ class Bing implements PlatformInterface
                 $this->settings->bingAccountId->getValue(),
                 $this->settings->bingAccessToken->getValue(),
                 $this->settings->proxyIsActive->getValue(),
-                $this->settings->proxyHost->getValue(),
-                $this->settings->proxyPort->getValue()
+                isset($this->settings->proxyHost) ? $this->settings->proxyHost->getValue() : null,
+                isset($this->settings->proxyPort) ? $this->settings->proxyPort->getValue() : null
             );
 
             // Build a keyword performance report request,
@@ -231,7 +206,12 @@ class Bing implements PlatformInterface
             $keywordPerformanceReportSort->SortOrder = SortOrder::Ascending;
             $report->Sort[] = $keywordPerformanceReportSort;
 
-            $encodedReport = new \SoapVar($report, SOAP_ENC_OBJECT, 'KeywordPerformanceReportRequest', $proxy->GetNamespace());
+            $encodedReport = new \SoapVar(
+                $report,
+                SOAP_ENC_OBJECT,
+                'KeywordPerformanceReportRequest',
+                $proxy->GetNamespace()
+            );
 
             $request = new SubmitGenerateReportRequest();
             $request->ReportRequest = $encodedReport;
@@ -253,7 +233,7 @@ class Bing implements PlatformInterface
                 // PollGenerateReport helper method calls the corresponding Bing Ads service operation
                 // to get the report request status.
 
-                $reportRequestStatus = $this->PollGenerateReport(
+                $reportRequestStatus = $this->pollGenerateReport(
                     $proxy,
                     $reportRequestId
                 );
@@ -269,15 +249,21 @@ class Bing implements PlatformInterface
                 if ($reportRequestStatus->Status == ReportRequestStatusType::Success) {
                     $reportDownloadUrl = $reportRequestStatus->ReportDownloadUrl;
                     printf("Downloading from %s\n\n", $reportDownloadUrl);
-                    return $this->DownloadFile($reportDownloadUrl);
-                } else if ($reportRequestStatus->Status == ReportRequestStatusType::Error) {
-                    printf("The request failed. Try requesting the report " .
-                        "later.\nIf the request continues to fail, contact support.\n");
-                } else // Pending
-                {
-                    printf("The request is taking longer than expected.\n " .
-                        "Save the report ID (%s) and try again later.\n",
-                        $reportRequestId);
+                    return $this->downloadFile($reportDownloadUrl);
+                } else {
+                    if ($reportRequestStatus->Status == ReportRequestStatusType::Error) {
+                        printf(
+                            "The request failed. Try requesting the report " .
+                            "later.\nIf the request continues to fail, contact support.\n"
+                        );
+                    } else // Pending
+                    {
+                        printf(
+                            "The request is taking longer than expected.\n " .
+                            "Save the report ID (%s) and try again later.\n",
+                            $reportRequestId
+                        );
+                    }
                 }
             }
 
@@ -298,6 +284,64 @@ class Bing implements PlatformInterface
                 print $e->getTraceAsString() . "\n\n";
             }
         }
+    }
+
+    private function refreshToken()
+    {
+        $context = null;
+        if ($this->settings->proxyIsActive->getValue()) {
+            $context = stream_context_create(
+                [
+                    'http' => [
+                        'proxy' => "tcp://" . $this->settings->proxyHost->getValue() . ":" . $this->settings->proxyPort->getValue(),
+                        'request_fulluri' => true,
+                    ]
+                ]
+            );
+        }
+
+        $url = sprintf(
+            "https://login.live.com/oauth20_token.srf?client_id=%s&grant_type=refresh_token&redirect_uri=/oauth20_desktop.srf&refresh_token=%s",
+            $this->settings->bingClientId->getValue(),
+            $this->settings->bingRefreshToken->getValue()
+        );
+
+        $response = file_get_contents($url, null, $context);
+        $response = json_decode($response);
+        $this->settings->bingRefreshToken->setValue($response->refresh_token);
+        $this->settings->bingAccessToken->setValue($response->access_token);
+
+    }
+
+    private function pollGenerateReport($proxy, $reportRequestId)
+    {
+        // Set the request information.
+
+        $request = new PollGenerateReportRequest();
+        $request->ReportRequestId = $reportRequestId;
+
+        return $proxy->GetService()->PollGenerateReport($request)->ReportRequestStatus;
+    }
+
+    private function downloadFile($reportDownloadUrl)
+    {
+        $data = $this->getSslPage($reportDownloadUrl);
+        $head = unpack("Vsig/vver/vflag/vmeth/vmodt/vmodd/Vcrc/Vcsize/Vsize/vnamelen/vexlen", substr($data, 0, 30));
+        return gzinflate(substr($data, 30 + $head['namelen'] + $head['exlen'], $head['csize']));
+    }
+
+    private function getSslPage($url)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_REFERER, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $result = curl_exec($ch);
+        curl_close($ch);
+        return $result;
     }
 
     protected function formatXmlString($xml)
@@ -326,37 +370,6 @@ class Bing implements PlatformInterface
 
         return $result;
     }
-
-
-
-// Check the status of the report request. The guidance of how often to poll
-// for status is from every five to 15 minutes depending on the amount
-// of data being requested. For smaller reports, you can poll every couple
-// of minutes. You should stop polling and try again later if the request
-// is taking longer than an hour.
-
-    function PollGenerateReport($proxy, $reportRequestId)
-    {
-        // Set the request information.
-
-        $request = new PollGenerateReportRequest();
-        $request->ReportRequestId = $reportRequestId;
-
-        return $proxy->GetService()->PollGenerateReport($request)->ReportRequestStatus;
-    }
-
-// Using the URL that the PollGenerateReport operation returned,
-// send an HTTP request to get the report and write it to the specified
-// ZIP file.
-
-    function DownloadFile($reportDownloadUrl)
-    {
-        $data = file_get_contents($reportDownloadUrl);
-
-        $head = unpack("Vsig/vver/vflag/vmeth/vmodt/vmodd/Vcrc/Vcsize/Vsize/vnamelen/vexlen", substr($data, 0, 30));
-        return gzinflate(substr($data, 30 + $head['namelen'] + $head['exlen'], $head['csize']));
-    }
-
 
     /**
      * Enriches a specific visit with additional Criteo information when this visit came from Criteo.
@@ -396,7 +409,6 @@ class Bing implements PlatformInterface
         $visit['ad'] = array_merge(['source' => 'Bing'], $results);
 
         return $visit;
-
 
 
     }
