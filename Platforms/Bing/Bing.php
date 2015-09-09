@@ -326,7 +326,7 @@ class Bing implements PlatformInterface
     private function downloadFile($reportDownloadUrl)
     {
         $data = $this->getSslPage($reportDownloadUrl);
-        $head = unpack("Vsig/vver/vflag/vmeth/vmodt/vmodd/Vcrc/Vcsize/Vsize/vnamelen/vexlen", substr($data, 0, 30));
+        $head = unpack('Vsig/vver/vflag/vmeth/vmodt/vmodd/Vcrc/Vcsize/Vsize/vnamelen/vexlen', substr($data, 0, 30));
         return gzinflate(substr($data, 30 + $head['namelen'] + $head['exlen'], $head['csize']));
     }
 
@@ -334,6 +334,7 @@ class Bing implements PlatformInterface
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_SSLv3);
         curl_setopt($ch, CURLOPT_HEADER, false);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_URL, $url);
