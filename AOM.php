@@ -29,6 +29,28 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
+     * Extracts and returns the contents of the adId param (it's name is configurable) from a given URL
+     * or false when the param could not be found.
+     *
+     * @param string $url
+     * @return mixed Either the contents of the adId param as a string or false when the param could not be found.
+     */
+    public static function getAdIdFromUrl($url)
+    {
+        $settings = new Settings();
+        $parameterName = $settings->adId->getValue();
+
+        $queryString = parse_url($url, PHP_URL_QUERY);
+        parse_str($queryString, $queryParams);
+
+        if (is_array($queryParams) && array_key_exists($parameterName, $queryParams)) {
+            return $queryParams[$parameterName];
+        }
+
+        return false;
+    }
+
+    /**
      * Installs the plugin.
      *
      * @throws \Exception

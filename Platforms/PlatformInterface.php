@@ -32,6 +32,15 @@ interface PlatformInterface
     public function import($startDate, $endDate);
 
     /**
+     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
+     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     *
+     * @param array $adData
+     * @return mixed
+     */
+    public function getAdKeyFromAdData(array $adData);
+
+    /**
      * Enriches a visit with platform specific information (e.g. campaign name, creative, cpc).
      *
      * @param array &$visit The visit to enrich with platform specific information.

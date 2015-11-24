@@ -373,7 +373,7 @@ class Bing implements PlatformInterface
     }
 
     /**
-     * Enriches a specific visit with additional Criteo information when this visit came from Criteo.
+     * Enriches a specific visit with additional Bing information when this visit came from Bing.
      *
      * @param array &$visit
      * @param array $ad
@@ -410,7 +410,35 @@ class Bing implements PlatformInterface
         $visit['ad'] = array_merge(['source' => 'Bing'], $results);
 
         return $visit;
+    }
 
+    /**
+     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
+     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     *
+     * @see http://help.bingads.microsoft.com/apex/index/3/en-us/51091
+     *
+     * @param array $adData
+     * @return mixed
+     */
+    public function getAdKeyFromAdData(array $adData)
+    {
+        // TODO: When to use {TargetId} and when to use {OrderItemId}?!
 
+        // Regular keyword ("kwd-" in {TargetId})
+        // TODO: Not sure about this implementation...
+        if (array_key_exists('campaignId', $adData)
+            && array_key_exists('adGroupId', $adData)
+            && array_key_exists('orderItemId', $adData)
+            && (substr($adData['orderItemId'], 0, strlen($adData['orderItemId'])) === 'kwd-')
+        ) {
+            return $adData['campaignId'] . '|' . $adData['adGroupId'] . '|' . $adData['orderItemId'];
+        }
+
+        // Remarketing list ("aud-" in {TargetId})
+
+        // TODO: Implement me!
+
+        return 'not implemented';
     }
 }

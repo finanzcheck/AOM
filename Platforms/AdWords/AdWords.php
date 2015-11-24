@@ -15,14 +15,6 @@ use ReportUtils;
 
 class AdWords implements PlatformInterface
 {
-    const AD_CAMPAIGN_ID = 1;
-    const AD_AD_GROUP_ID = 2;
-    const AD_FEED_ITEM_ID = 3;
-    const AD_TARGET_ID = 4;
-    const AD_CREATIVE_ID = 5;
-    const AD_NETWORK = 6;
-    const AD_DEVICE = 7;
-
     const CRITERIA_TYPE_AGE = 'age';
     const CRITERIA_TYPE_GENDER = 'gender';
     const CRITERIA_TYPE_KEYWORD = 'keyword';
@@ -360,6 +352,73 @@ class AdWords implements PlatformInterface
         $visit['ad'] = array_merge(['source' => 'AdWords'], $results);
 
         return $visit;
+    }
+
+    /**
+     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
+     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     *
+     * @param array $adData
+     * @return mixed
+     */
+    public function getAdKeyFromAdData(array $adData)
+    {
+        // TODO: Implement me correctly...
+
+        // TODO: Add "date" to adKey?!
+        $adKey = [
+            'platform' => 'AdWords',
+            'campaignId' => $adData['campaignId'],
+            'adGroupId' => $adData['adGroupId'],
+            'device' => $adData['device'],
+        ];
+
+        // Regular keyword based ad in google search or search network:
+        // {"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","targetId":"kwd-118607649","creative":"47609133356","placement":"","network":"g","device":"m","adposition":"1t2","locPhysical":"20228","locInterest":"1004074"}
+        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] != $adData['network'])
+            && (array_key_exists('targetId', $adData) && (0 === strpos($adData['targetId'], 'kwd')))
+            && (false === strpos($adData['targetId'], 'aud'))
+        ) {
+            $adKey['criteriaType'] = self::CRITERIA_TYPE_KEYWORD;
+            $adKey['keywordId'] = substr($adData['targetId'], strpos($adData['targetId'], '-' ) + 1);
+            // TODO: Network cannot be display network (how to pass such a condition?)
+            return $adKey;
+        }
+
+        // Non-keyword-based (= ad group based?) placement ads:
+        // {"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","network":"d","device":"c","adposition":"none","locPhysical":"9041542","locInterest":""}
+        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $adData['network'])
+            && (array_key_exists('targetId', $adData) && ('' === $adData['targetId']))
+            && (array_key_exists('placement', $adData) && (strlen($adData['placement']) > 0))
+        ) {
+            $adKey['network'] = $this->networks[self::NETWORK_DISPLAY_NETWORK];
+            $adKey['placement'] = $adData['placement']; // TODO: Ensure that the serialized adKey is not longer than 255 chars!
+            return $adKey;
+        }
+
+        // Remarketing based ads:
+        // {"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","targetId":"aud-55070239676","creative":"47609140676","placement":"carfansofamerica.com","network":"d","device":"c","adposition":"none","locPhysical":"9042649","locInterest":""}
+        // {"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","targetId":"aud-55070239676","creative":"47609140676","placement":"www.hltv.org","network":"d","device":"t","adposition":"none","locPhysical":"9042582","locInterest":""}
+        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $adData['network'])
+            && array_key_exists('targetId', $adData) && (false !== strpos($adData['targetId'], 'aud'))
+            && (false === strpos($adData['targetId'], 'kwd'))
+            && (array_key_exists('placement', $adData) && (strlen($adData['placement']) > 0))
+        ) {
+            $adKey['network'] = $this->networks[self::NETWORK_DISPLAY_NETWORK];
+            $adKey['placement'] = $adData['placement']; // TODO: Ensure that the serialized adKey is not longer than 255 chars!
+            // TODO: Where to store and map targetId?!
+            return $adKey;
+        }
+
+
+        // TODO: Handle cases like these:
+        // adwords|185040716|9820341356|aud-44922712076:kwd-1534289814|46917823556||g|m|1t2|9041646|1004269
+
+        // TODO: Google Mail ads:
+        // {"platform":"AdWords","campaignId":"","adGroupId":"","targetId":"","creative":"47609218436","placement":"mail.google.com","network":"d","device":"m","adposition":"none","locPhysical":"","locInterest":""}
+
+
+        return 'not implemented';
     }
 
     /**

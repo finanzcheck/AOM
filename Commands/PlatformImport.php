@@ -26,7 +26,7 @@ class PlatformImport extends ConsoleCommand
             ->addOption('platform', null, InputOption::VALUE_REQUIRED)
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
-            ->setDescription('Import data from Facebook Ads.');
+            ->setDescription('Import a platform\'s data for a specific period.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

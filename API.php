@@ -17,24 +17,12 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\Period;
 use Piwik\Period\Range;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Segment;
 use Piwik\Site;
 
 class API extends \Piwik\Plugin\API
 {
-    /**
-     * @var array PlatformInterface
-     */
-    private $platforms = [];
-
-    public function __construct()
-    {
-        foreach (AOM::getPlatforms() as $platform) {
-            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
-            $this->platforms[strtolower($platform)] = new $className();
-        }
-    }
-
     /**
      * Returns all visits with enriched marketing information within the given period.
      *
@@ -94,7 +82,7 @@ class API extends \Piwik\Plugin\API
                     referer_name AS refererName,
                     referer_keyword AS refererKeyword,
                     referer_url AS refererUrl,
-                    aom_ad_id AS adId
+                    aom_ad_data AS adData
                 FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
                 WHERE
                     idsite = ? AND
@@ -114,7 +102,6 @@ class API extends \Piwik\Plugin\API
         return $visits;
     }
 
-
     /**
      * Enriches a specific visit with advanced marketing information when applicable.
      *
@@ -124,18 +111,23 @@ class API extends \Piwik\Plugin\API
      */
     private function enrichVisit(&$visit)
     {
-        if (0 === strlen($visit['adId']) || !strpos($visit['adId'], '|')) {
-            return $visit;
-        }
+        // TODO: Use adKey instead or in addition to adData?!
 
-        $ad = explode('|', $visit['adId']);
+        if (array_key_exists('adData', $visit) || 0 === strlen($visit['adData'])) {
 
-        if ($ad[0] == 'bingads'){
-            $ad[0] = 'bing';
-        }
+            $ad = @json_decode($visit['adData'], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($ad) && array_key_exists('platform', $ad)) {
 
-        if (array_key_exists($ad[0], $this->platforms)) {
-            $this->platforms[$ad[0]]->enrichVisit($visit, $ad);
+                // Platform supported?
+                if (in_array($ad['platform'], AOM::getPlatforms())) {
+
+                    $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $ad['platform'] . '\\' . $ad['platform'];
+
+                    /** @var PlatformInterface $platform */
+                    $platform = new $className();
+                    return $platform->enrichVisit($visit, $ad);
+                }
+            }
         }
 
         return $visit;

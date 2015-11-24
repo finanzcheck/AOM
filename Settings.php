@@ -485,7 +485,7 @@ class Settings extends \Piwik\Plugin\Settings
         $this->bingAccountId = new SystemSetting('bingAccountId', 'Account ID');
         $this->bingAccountId->readableByCurrentUser = true;
         $this->bingAccountId->uiControlType = static::CONTROL_TEXT;
-        $this->bingAccountId->description = 'Account Id provided by Bing, e.g. "6457892"';
+        $this->bingAccountId->description = 'Account ID provided by Bing, e.g. "6457892"';
 
         $this->addSetting($this->bingAccountId);
     }
@@ -519,6 +519,4 @@ class Settings extends \Piwik\Plugin\Settings
         $this->bingGetToken->getStorage()->save();
 
     }
-    
-    
 }

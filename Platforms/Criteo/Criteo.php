@@ -219,4 +219,18 @@ class Criteo implements PlatformInterface
 
         return $visit;
     }
+
+    /**
+     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
+     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     *
+     * @param array $adData
+     * @return mixed
+     */
+    public function getAdKeyFromAdData(array $adData)
+    {
+        // TODO: Implement me!
+
+        return 'not implemented';
+    }
 }
