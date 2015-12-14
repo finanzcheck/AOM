@@ -2,8 +2,8 @@
 
 ## Description
 
-This plugin integrates additional data (costs, ad impressions, etc.) from advertisers (Google AdWords, Bing, Criteo, 
-Facebook Ads) into Piwik and combines that data with individual visits, creating a whole bunch of new opportunities.
+Integrates additional data (costs, ad impressions, etc.) from advertisers (Google AdWords, Bing, Criteo, Facebook Ads) 
+into Piwik and combine that data with individual visits - creating a whole bunch of new opportunities.
 
 
 ## Advertiser's platforms
@@ -62,12 +62,46 @@ When a Facebook Ads ad is clicked, data like the following can be found in piwik
 {"platform":"FacebookAds","campaignGroupId":"6028603577541","campaignId":"6028603577541","adGroupId":"6028603577541"}
 
 
+
+## API
+
+This plugin provides the following API endpoints (add `&token_auth=...` in production environment):
+
+### AOM.getVisits
+
+Returns all visits with marketing information within the given period.
+
+Example: ?module=API&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01&format=json
+
+
+### AOM.getEcommerceOrderWithVisits
+
+Returns a specific ecommerce order by orderId with all visits with marketing information that happened before the 
+ecommerce order or false (when no order could be found for the given orderId).
+
+Example: ?module=API&method=AOM.getEcommerceOrderWithVisits&orderId=123&idSite=1&format=json
+
+
+### AOM.getEcommerceOrdersWithVisits
+
+Returns all ecommerce orders with all visits with marketing information that happened before the ecommerce order within 
+the given period.
+
+Example: ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&period=day&date=2015-05-01&format=json
+
+
+
 ## Installation / Update
 
 See http://piwik.org/faq/plugins/#faq_21.
 Run ``composer install`` to install dependencies, such as the Google AdWords SDK.
 
-Is recommended to setup auto archiving (http://piwik.org/docs/setup-auto-archiving/) to improve performance.
+It is recommended to setup auto archiving (http://piwik.org/docs/setup-auto-archiving/) to improve performance.
+
+
+## Tests
+
+Run integration tests with `./console tests:run --testsuite integration AOM`.
 
 
 ## Changelog
