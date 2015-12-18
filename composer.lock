@@ -1,0 +1,62 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "10267170de4f5d70b3c0cb61cb08398f",
+    "content-hash": "d1901ce5724a56b4fc22734035bbcb19",
+    "packages": [
+        {
+            "name": "googleads/googleads-php-lib",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/googleads/googleads-php-lib.git",
+                "reference": "fdb07af38adc281c78ce81dc47baeb6ad1086aa9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/fdb07af38adc281c78ce81dc47baeb6ad1086aa9",
+                "reference": "fdb07af38adc281c78ce81dc47baeb6ad1086aa9",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/Google/Api/Ads/AdWords/Lib",
+                    "src/Google/Api/Ads/Dfp/Lib"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "include-path": [
+                "src/"
+            ],
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Vincent Tsao",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Google Ads APIs Client Library for PHP (AdWords, Adx, and DFP)",
+            "homepage": "https://github.com/googleads/googleads-php-lib",
+            "time": "2015-11-19 19:14:17"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "googleads/googleads-php-lib": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": []
+}
