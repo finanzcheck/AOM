@@ -222,14 +222,42 @@ class FacebookAds implements PlatformInterface
         // TODO ...
         $results = [];
 
-        $visit['ad'] = array_merge(['source' => 'FacebookAds'], $results);
+        $visit['adData']['enriched'] = array_merge(['source' => 'FacebookAds'], $results);
 
         return $visit;
     }
 
     /**
-     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
-     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     * Extracts advertisement platform specific data from the query params.
+     *
+     * @param string $paramPrefix
+     * @param array $queryParams
+     * @return mixed
+     */
+    public function getAdDataFromQueryParams($paramPrefix, array $queryParams)
+    {
+        $adData = [
+            'platform' => 'FacebookAds',
+        ];
+
+        if (array_key_exists($paramPrefix . '_campaign_group_id', $queryParams)) {
+            $adData['campaignGroupId'] = $queryParams[$paramPrefix . '_campaign_group_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
+            $adData['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
+            $adData['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+        }
+
+        return $adData;
+    }
+
+    /**
+     * Builds a string key from the ad data to reference explicit platform data.
+     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
      * @param array $adData
      * @return mixed

@@ -17,7 +17,7 @@ use Piwik\Tracker\Visitor;
 class AdData extends VisitDimension
 {
     protected $columnName = 'aom_ad_data';
-    protected $columnType = 'TEXT NULL';
+    protected $columnType = 'VARCHAR(1024) NULL';
 
     /**
      * The onNewVisit method is triggered when a new visitor is detected.
@@ -29,12 +29,13 @@ class AdData extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
-        return AOM::getAdIdFromUrl($action->getActionUrl());
+        return json_encode(AOM::getAdDataFromUrl($action->getActionUrl()));
     }
 
     /**
      * This hook is executed when determining if an action is the start of a new visit or part of an existing one.
-     * We force the creation of a new visit when the adData of the current action is different from the visit's adData.
+     * We force the creation of a new visit when the ad data of the current action is different from the visit's
+     * current ad data.
      *
      * @param Request $request
      * @param Visitor $visitor
@@ -43,19 +44,32 @@ class AdData extends VisitDimension
      */
     public function shouldForceNewVisit(Request $request, Visitor $visitor, Action $action = null)
     {
-        // TODO: Identify why this happens...
-        if (null === $action) {
-            return false;
+        $adData = AOM::getAdDataFromUrl($action->getActionUrl());
+
+        // Get ad data of on-going visit
+        $lastVisitAdData = Db::fetchOne(
+            'SELECT aom_ad_data FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?',
+            [$visitor->visitProperties->getProperty('idvisit')]
+        );
+
+        // TODO: Generally keep last visit going when we do not have any adData?!
+        // TODO: Overwrite pk_campaign & co. because we know better...?!
+
+        // Force new visit when we have ad data for the first time
+        if (null === $lastVisitAdData) {
+            return (null != $adData);
         }
 
-        // Get adId of last visit
-        $visitorInfo = $visitor->getVisitorInfo();
-        $lastVisitAdId = (array_key_exists('idvisit', $visitorInfo) && is_numeric($visitorInfo['idvisit']))
-            ? Db::fetchOne(
-                'SELECT aom_ad_data FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?',
-                [$visitor->getVisitorInfo()['idvisit']]
-            ) : false;
+        // JSON-decode ad data (start new visit when ad data is obscure)
+        $lastVisitAdData = @json_decode($lastVisitAdData, true);
+        if (json_last_error() != JSON_ERROR_NONE
+            || !is_array($lastVisitAdData)
+            || !array_key_exists('platform', $lastVisitAdData)
+        ) {
+            return true;
+        }
 
-        return ($lastVisitAdId != AOM::getAdIdFromUrl($action->getActionUrl()));
+        return (count(array_diff_assoc($lastVisitAdData, $adData)) > 0
+            || count(array_diff_assoc($adData, $lastVisitAdData)) > 0);
     }
 }

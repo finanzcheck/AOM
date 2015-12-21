@@ -23,6 +23,13 @@ interface PlatformInterface
     public function uninstallPlugin();
 
     /**
+     * Whether or not this platform is active.
+     *
+     * @return bool
+     */
+    public function isActive();
+
+    /**
      * Imports platform data for the specified period.
      *
      * @param string $startDate YYYY-MM-DD
@@ -32,8 +39,18 @@ interface PlatformInterface
     public function import($startDate, $endDate);
 
     /**
-     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
-     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     * Extracts advertisement platform specific data from the query params and stores it in piwik_log_visit.aom_ad_data.
+     * The implementation of this method must ensure a consistently ordered JSON.
+     *
+     * @param string $paramPrefix
+     * @param array $queryParams
+     * @return mixed
+     */
+    public function getAdDataFromQueryParams($paramPrefix, array $queryParams);
+
+    /**
+     * Builds a string key from the ad data to reference explicit platform data.
+     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
      * @param array $adData
      * @return mixed
@@ -44,8 +61,8 @@ interface PlatformInterface
      * Enriches a visit with platform specific information (e.g. campaign name, creative, cpc).
      *
      * @param array &$visit The visit to enrich with platform specific information.
-     * @param array $ad     Details about the ad the visitor came from.
+     * @param array $adData Details about the ad the visitor came from.
      * @return mixed
      */
-    public function enrichVisit(array &$visit, array $ad);
+    public function enrichVisit(array &$visit, array $adData);
 }

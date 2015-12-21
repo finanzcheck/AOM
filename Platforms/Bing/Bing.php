@@ -407,14 +407,50 @@ class Bing implements PlatformInterface
             ]
         );
 
-        $visit['ad'] = array_merge(['source' => 'Bing'], $results);
+        $visit['adData']['enriched'] = array_merge(['source' => 'Bing'], $results);
 
         return $visit;
     }
 
     /**
-     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
-     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     * Extracts advertisement platform specific data from the query params.
+     *
+     * @param string $paramPrefix
+     * @param array $queryParams
+     * @return mixed
+     */
+    public function getAdDataFromQueryParams($paramPrefix, array $queryParams)
+    {
+        $adData = [
+            'platform' => 'Bing',
+        ];
+
+        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
+            $adData['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
+            $adData['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_order_item_id', $queryParams)) {
+            $adData['orderItemId'] = $queryParams[$paramPrefix . '_order_item_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
+            $adData['targetId'] = $queryParams[$paramPrefix . '_target_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
+            $adData['adId'] = $queryParams[$paramPrefix . '_ad_id'];
+        }
+
+        return $adData;
+    }
+
+    /**
+     * Builds a string key from the ad data to reference explicit platform data.
+     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
      * @see http://help.bingads.microsoft.com/apex/index/3/en-us/51091
      *

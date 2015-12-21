@@ -211,7 +211,7 @@ class API extends \Piwik\Plugin\API
                            campaign_id AS campaignId,'
                         : ''
                     ) . '
-                    aom_ad_data AS adData
+                    aom_ad_data AS rawAdData
                 FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
                 WHERE
                     ' . (null != $visitFirstActionTimeMin ? 'visit_first_action_time >= ? AND' : '') . '
@@ -237,7 +237,24 @@ class API extends \Piwik\Plugin\API
         // Enrich visits with advanced marketing information
         if (is_array($visits)) {
             foreach ($visits as &$visit) {
+
+                // Make ad data JSON to associative array
+                $visit['adData'] = array();
+                if (is_array($visit) && array_key_exists('rawAdData', $visit) || 0 === strlen($visit['rawAdData'])) {
+
+                    $adData = @json_decode($visit['rawAdData'], true);
+
+                    if (json_last_error() === JSON_ERROR_NONE
+                        && is_array($adData)
+                        && array_key_exists('platform', $adData)
+                    ) {
+                        $visit['adData'] = $adData;
+                    }
+                }
+
                 $this->enrichVisit($visit);
+
+                unset($visit['rawAdData']);
             }
         }
 
@@ -253,22 +270,18 @@ class API extends \Piwik\Plugin\API
      */
     private function enrichVisit(&$visit)
     {
-        // TODO: Use adKey instead or in addition to adData?!
-        if (is_array($visit) && array_key_exists('adData', $visit) || 0 === strlen($visit['adData'])) {
-            $ad = @json_decode($visit['adData'], true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($ad) && array_key_exists('platform', $ad)) {
+        // Platform supported?
+        if (array_key_exists('platform', $visit['adData'])
+            && in_array($visit['adData']['platform'], AOM::getPlatforms())
+        ) {
 
-                // Platform supported?
-                if (in_array($ad['platform'], AOM::getPlatforms())) {
+            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $visit['adData']['platform'] . '\\'
+                . $visit['adData']['platform'];
 
-                    $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $ad['platform'] . '\\' . $ad['platform'];
+            /** @var PlatformInterface $platform */
+            $platform = new $className();
 
-                    /** @var PlatformInterface $platform */
-                    $platform = new $className();
-
-                    return $platform->enrichVisit($visit, $ad);
-                }
-            }
+            return $platform->enrichVisit($visit, $visit['adData']);
         }
 
         return $visit;

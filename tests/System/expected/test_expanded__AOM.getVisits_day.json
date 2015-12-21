@@ -1,0 +1,57 @@
+[
+  {
+    "visitorId": "5083436001463556729",
+    "visitId": "1",
+    "firstActionTime": "2015-12-01 01:29:45",
+    "device": "desktop",
+    "source": "direct",
+    "refererName": "",
+    "refererKeyword": "",
+    "refererUrl": "",
+    "adData": []
+  },
+  {
+    "visitorId": "8834336047278127061",
+    "visitId": "4",
+    "firstActionTime": "2015-12-01 01:29:45",
+    "device": "desktop",
+    "source": "direct",
+    "refererName": "",
+    "refererKeyword": "",
+    "refererUrl": "",
+    "adData": []
+  },
+  {
+    "visitorId": "5083436001463556729",
+    "visitId": "3",
+    "firstActionTime": "2015-12-01 01:35:45",
+    "device": "desktop",
+    "source": "direct",
+    "refererName": "",
+    "refererKeyword": "",
+    "refererUrl": "",
+    "adData": []
+  },
+  {
+    "visitorId": "5083436001463556729",
+    "visitId": "2",
+    "firstActionTime": "2015-12-01 01:41:45",
+    "device": "desktop",
+    "source": "direct",
+    "refererName": "",
+    "refererKeyword": "",
+    "refererUrl": "",
+    "adData": []
+  },
+  {
+    "visitorId": "8834336047278127061",
+    "visitId": "5",
+    "firstActionTime": "2015-12-01 01:41:45",
+    "device": "desktop",
+    "source": "direct",
+    "refererName": "",
+    "refererKeyword": "",
+    "refererUrl": "",
+    "adData": []
+  }
+]

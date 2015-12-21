@@ -36,6 +36,7 @@ class Criteo implements PlatformInterface
     {
         try {
             $sql = 'CREATE TABLE ' . Common::prefixTable('aom_criteo') . ' (
+                        ad_key VARCHAR(255) NOT NULL,
                         date DATE NOT NULL,
                         campaign_id INTEGER NOT NULL,
                         campaign VARCHAR(255) NOT NULL,
@@ -192,11 +193,11 @@ class Criteo implements PlatformInterface
      * Enriches a specific visit with additional Criteo information when this visit came from Criteo.
      *
      * @param array &$visit
-     * @param array $ad
+     * @param array $adData
      * @return array
      * @throws \Exception
      */
-    public function enrichVisit(array &$visit, array $ad)
+    public function enrichVisit(array &$visit, array $adData)
     {
         $sql = 'SELECT
                     campaign_id AS campaignId,
@@ -211,26 +212,50 @@ class Criteo implements PlatformInterface
             $sql,
             [
                 date('Y-m-d', strtotime($visit['firstActionTime'])),
-                $ad[1],
+                $adData['campaignId'],
             ]
         );
 
-        $visit['ad'] = array_merge(['source' => 'Criteo'], $results);
+        $visit['adData'] = array_merge($adData, ($results ? $results : []));
 
         return $visit;
     }
 
     /**
-     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
-     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     * Extracts advertisement platform specific data from the query params.
+     *
+     * @param string $paramPrefix
+     * @param array $queryParams
+     * @return mixed
+     */
+    public function getAdDataFromQueryParams($paramPrefix, array $queryParams)
+    {
+        $adData = [
+            'platform' => 'Criteo',
+        ];
+
+        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
+            $adData['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+        } else {
+            $adData['campaignId'] = null;
+        }
+
+        return $adData;
+    }
+
+    /**
+     * Builds a string key from the ad data to reference explicit platform data.
+     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
      * @param array $adData
      * @return mixed
      */
     public function getAdKeyFromAdData(array $adData)
     {
-        // TODO: Implement me!
+        if (array_key_exists('campaignId', $adData)) {
+            return 'criteo' . '-' . $adData['campaignId'];
+        }
 
-        return 'not implemented';
+        return null;
     }
 }

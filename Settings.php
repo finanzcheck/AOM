@@ -11,7 +11,7 @@ use Piwik\Settings\SystemSetting;
 class Settings extends \Piwik\Plugin\Settings
 {
     /** @var SystemSetting */
-    public $adId;
+    public $paramPrefix;
 
     /** @var SystemSetting */
     public $adWordsIsActive;
@@ -108,7 +108,7 @@ class Settings extends \Piwik\Plugin\Settings
 //        $this->setIntroduction('...');
 
         // Add generic fields
-        $this->createAdIdSetting();
+        $this->createParamPrefixSetting();
 
         // Add fields for Proxy
         $this->createProxyIsActiveSetting();
@@ -194,17 +194,16 @@ class Settings extends \Piwik\Plugin\Settings
 
         $this->addSetting($this->proxyPort);
     }
-    
 
-    private function createAdIdSetting()
+    private function createParamPrefixSetting()
     {
-        $this->adId = new SystemSetting('adId', 'Ad-ID-Parameter');
-        $this->adId->readableByCurrentUser = true;
-        $this->adId->uiControlType = static::CONTROL_TEXT;
-        $this->adId->defaultValue = 'ad_id';
-        $this->adId->description = 'URL-Parameter used for tracking, e.g. "ad_id"';
+        $this->paramPrefix = new SystemSetting('paramPrefix', 'Parameter-Prefix');
+        $this->paramPrefix->readableByCurrentUser = true;
+        $this->paramPrefix->uiControlType = static::CONTROL_TEXT;
+        $this->paramPrefix->defaultValue = 'aom';
+        $this->paramPrefix->description = 'Prefix of URL-parameter, e.g. "aom" for "aom_campaign_id';
 
-        $this->addSetting($this->adId);
+        $this->addSetting($this->paramPrefix);
     }
 
     private function createAdWordsIsActiveSetting()
@@ -493,6 +492,7 @@ class Settings extends \Piwik\Plugin\Settings
     private function updateBingAuthToken()
     {
         $context = null;
+
         if ($this->proxyIsActive->getValue()) {
             $context = stream_context_create(
                 [
@@ -517,6 +517,5 @@ class Settings extends \Piwik\Plugin\Settings
         $this->bingCode->setValue('');
         $this->bingGetToken->setValue(false);
         $this->bingGetToken->getStorage()->save();
-
     }
 }

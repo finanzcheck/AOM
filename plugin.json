@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "keywords": ["AdWords", "Bing", "Criteo", "Facebook"],
   "homepage": "",
-  "description": "Integrate additional data (e.g. campaign names, costs, ad impressions) from advertisers like Google AdWords, Bing, Criteo and Facebook into Piwik and combine that data with individual visits - creating a whole bunch of new opportunities.",
+  "description": "Integrate additional data (e.g. campaign names, costs, ad impressions) from advertisers like Google AdWords, Bing, Criteo and Facebook into Piwik and combine that data with individual visits - create a whole bunch of new opportunities.",
   "license": "GPL v3+",
   "authors": [
     {

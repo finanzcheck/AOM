@@ -29,28 +29,6 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Extracts and returns the contents of the adId param (it's name is configurable) from a given URL
-     * or false when the param could not be found.
-     *
-     * @param string $url
-     * @return mixed Either the contents of the adId param as a string or false when the param could not be found.
-     */
-    public static function getAdIdFromUrl($url)
-    {
-        $settings = new Settings();
-        $parameterName = $settings->adId->getValue();
-
-        $queryString = parse_url($url, PHP_URL_QUERY);
-        parse_str($queryString, $queryParams);
-
-        if (is_array($queryParams) && array_key_exists($parameterName, $queryParams)) {
-            return $queryParams[$parameterName];
-        }
-
-        return false;
-    }
-
-    /**
      * Installs the plugin.
      *
      * @throws \Exception
@@ -80,5 +58,39 @@ class AOM extends \Piwik\Plugin
             $platform = new $className();
             $platform->uninstallPlugin();
         }
+    }
+
+    /**
+     * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.
+     *
+     * @param string $url
+     * @return mixed Either the contents of this plugin's params or null when no params are found.
+     */
+    public static function getAdDataFromUrl($url)
+    {
+        $settings = new Settings();
+        $paramPrefix = $settings->paramPrefix->getValue();
+
+        $queryString = parse_url($url, PHP_URL_QUERY);
+        parse_str($queryString, $queryParams);
+
+        if (is_array($queryParams)
+            && array_key_exists($paramPrefix . '_platform', $queryParams)
+            && in_array($queryParams[$paramPrefix . '_platform'], AOM::getPlatforms())
+        ) {
+            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $queryParams[$paramPrefix . '_platform'] . '\\'
+                . $queryParams[$paramPrefix . '_platform'];
+
+            /** @var PlatformInterface $platform */
+            $platform = new $className();
+            $adData = ($platform->isActive()
+                ? $platform->getAdDataFromQueryParams($paramPrefix, $queryParams)
+                : null
+            );
+
+            return $adData;
+        }
+
+        return null;
     }
 }

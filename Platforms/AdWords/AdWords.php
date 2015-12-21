@@ -349,14 +349,72 @@ class AdWords implements PlatformInterface
             $results = $results[0];
         }
 
-        $visit['ad'] = array_merge(['source' => 'AdWords'], $results);
+        $visit['adData']['enriched'] = array_merge(['source' => 'AdWords'], $results);
 
         return $visit;
     }
 
     /**
-     * Builds a string key from the ad data that has been passed via URL (as URL-encoded JSON) and is used to reference
-     * explicit platform data (this key is being stored in piwik_log_visit.aom_ad_key).
+     * Extracts advertisement platform specific data from the query params.
+     *
+     * @param string $paramPrefix
+     * @param array $queryParams
+     * @return mixed
+     */
+    public function getAdDataFromQueryParams($paramPrefix, array $queryParams)
+    {
+        $adData = [
+            'platform' => 'AdWords',
+        ];
+
+        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
+            $adData['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
+            $adData['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
+            $adData['targetId'] = $queryParams[$paramPrefix . '_target_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_creative', $queryParams)) {
+            $adData['creative'] = $queryParams[$paramPrefix . '_creative'];
+        }
+
+        if (array_key_exists($paramPrefix . '_placement', $queryParams)) {
+            $adData['placement'] = $queryParams[$paramPrefix . '_placement'];
+        }
+
+        if (array_key_exists($paramPrefix . '_network', $queryParams)) {
+            $adData['network'] = $queryParams[$paramPrefix . '_network'];
+        }
+
+        if (array_key_exists($paramPrefix . '_device', $queryParams)) {
+            $adData['device'] = $queryParams[$paramPrefix . '_device'];
+        }
+
+        if (array_key_exists($paramPrefix . '_ad_position', $queryParams)) {
+            $adData['adPosition'] = $queryParams[$paramPrefix . '_ad_position'];
+        }
+
+        if (array_key_exists($paramPrefix . '_loc_physical', $queryParams)) {
+            $adData['locPhysical'] = $queryParams[$paramPrefix . '_loc_physical'];
+        }
+
+        if (array_key_exists($paramPrefix . '_loc_Interest', $queryParams)) {
+            $adData['locInterest'] = $queryParams[$paramPrefix . '_loc_Interest'];
+        }
+
+        // TODO: Shorten placement when entire data as JSON has more than 1,024 chars.
+
+        return $adData;
+    }
+
+    /**
+     * Builds a string key from the ad data to reference explicit platform data.
+     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
      * @param array $adData
      * @return mixed
