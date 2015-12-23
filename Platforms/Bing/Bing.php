@@ -52,7 +52,7 @@ class Bing implements PlatformInterface
         return $this->settings->bingIsActive->getValue();
     }
 
-    public function activatePlugin()
+    public function installPlugin()
     {
         try {
             $sql = 'CREATE TABLE ' . Common::prefixTable('aom_bing') . ' (
@@ -382,6 +382,9 @@ class Bing implements PlatformInterface
      */
     public function enrichVisit(array &$visit, array $ad)
     {
+        // TODO: This method must be refactored!
+        return $visit;
+
         $sql = 'SELECT
                     campaign_id AS campaignId,
                     campaign,

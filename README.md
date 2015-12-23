@@ -98,17 +98,17 @@ The following params must be replaced manually with their corresponding IDs:
 | Param                      | Mandatory | Contents      |
 | -------------------------- | --------- | ------------- | 
 | {prefix}_platform          | true      | Criteo        |  
-| {prefix}_campaign_group_id | false     | 6028603577541 |
+| {prefix}_campaign_group_id | false     | 4160286035775 |
 | {prefix}_campaign_id       | false     | 6028603577541 |
-| {prefix}_ad_group_id       | false     | 6028603577541 |
+| {prefix}_ad_group_id       | false     | 5760286037541 |
 
 A typical link at FacebookAds (with the prefix "aom") should have the following params:
 
-    &aom_platform=FacebookAds&aom_campaign_group_id=6028603577541&aom_campaign_id=6028603577541&aom_ad_group_id=6028603577541
+    &aom_platform=FacebookAds&aom_campaign_group_id=4160286035775&aom_campaign_id=6028603577541&aom_ad_group_id=5760286037541
     
 When a Facebook Ads ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_data`:
 
-    {"platform":"FacebookAds","campaignGroupId":"6028603577541","campaignId":"6028603577541","adGroupId":"6028603577541"}
+    {"platform":"FacebookAds","campaignGroupId":"4160286035775","campaignId":"6028603577541","adGroupId":"5760286037541"}
 
 
 ## Other advertising platforms and Piwik's default tracking params

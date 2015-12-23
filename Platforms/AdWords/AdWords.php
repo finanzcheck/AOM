@@ -78,7 +78,7 @@ class AdWords implements PlatformInterface
         return $this->settings->adWordsIsActive->getValue();
     }
 
-    public function activatePlugin()
+    public function installPlugin()
     {
         try {
             $sql = 'CREATE TABLE ' . Common::prefixTable('aom_adwords') . ' (
@@ -258,38 +258,42 @@ class AdWords implements PlatformInterface
      */
     public function enrichVisit(array &$visit, array $ad)
     {
+        // TODO: This method must be refactored!
+        return $visit;
+
+
         // Content/display network non-keyword-based (e.g. placements), e.g.:
         // adwords|171096476|8837340236|||46709955956|d|t|none|9042066|
         // adwords|171096476|8837340236|||46709955956|d|c|none|9042228|
-        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $ad[self::AD_NETWORK])
-            && ('' === $ad[self::AD_TARGET_ID])
+        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $ad['network'])
+            && ('' === $ad['targetId'])
         ) {
             $where = 'network = ?';
             $arguments = [
-                $ad[self::AD_NETWORK],
+                $ad['network'],
             ];
 
         // Keyword-based content/display network, e.g.:
         // adwords|165772076|9118382276||kwd-53736810072|46709947556|d|c|none|9043365|
         // TODO: This is currently not working (above ist "criteria_type" = age but keyword_id 53736810072 does not exist!)
-        } else if ((false !== strrpos($ad[self::AD_TARGET_ID], 'kwd'))
-            && ($this->networks[self::NETWORK_DISPLAY_NETWORK] === $ad[self::AD_NETWORK])
+        } else if ((false !== strrpos($ad['targetId'], 'kwd'))
+            && ($this->networks[self::NETWORK_DISPLAY_NETWORK] === $ad['network'])
         ) {
             $where = 'keyword_id = ? AND network = ?';
             $arguments = [
-                substr($ad[self::AD_TARGET_ID], strrpos($ad[self::AD_TARGET_ID], '-' ) + 1),
+                substr($ad['targetId'], strrpos($ad['targetId'], '-' ) + 1),
                 $this->networks[self::NETWORK_DISPLAY_NETWORK],
             ];
 
         // Regular keyword in "Google Search" or "Search Network", e.g.:
         // adwords|184422836|9794377676||kwd-399658803|46709975396|g|m|1t3|1004363|1004412
         // adwords|165772076|9477119516||kwd-146001483|46709949356|d|t|none|9042671|
-        } else if ((false !== strrpos($ad[self::AD_TARGET_ID], 'kwd'))
-            && ($this->networks[self::NETWORK_DISPLAY_NETWORK] != $ad[self::AD_NETWORK])
+        } else if ((false !== strrpos($ad['targetId'], 'kwd'))
+            && ($this->networks[self::NETWORK_DISPLAY_NETWORK] != $ad['network'])
         ) {
             $where = 'keyword_id = ? AND criteria_type = ? AND network != ?';
             $arguments = [
-                substr($ad[self::AD_TARGET_ID], strrpos($ad[self::AD_TARGET_ID], '-' ) + 1),
+                substr($ad['targetId'], strrpos($ad['targetId'], '-' ) + 1),
                 self::CRITERIA_TYPE_KEYWORD,
                 $this->networks[self::NETWORK_DISPLAY_NETWORK],
             ];
@@ -317,9 +321,9 @@ class AdWords implements PlatformInterface
             array_merge(
                 [
                     date('Y-m-d', strtotime($visit['firstActionTime'])),
-                    $ad[self::AD_CAMPAIGN_ID],
-                    $ad[self::AD_AD_GROUP_ID],
-                    $ad[self::AD_DEVICE],
+                    $ad['campaignId'],
+                    $ad['adGroupId'],
+                    $ad['device'],
                 ],
                 $arguments
             )
@@ -339,9 +343,9 @@ class AdWords implements PlatformInterface
                 WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND device = ?',
                 [
                     date('Y-m-d', strtotime($visit['firstActionTime'])),
-                    $ad[self::AD_CAMPAIGN_ID],
-                    $ad[self::AD_AD_GROUP_ID],
-                    $ad[self::AD_DEVICE],
+                    $ad['campaignId'],
+                    $ad['adGroupId'],
+                    $ad['device'],
                 ]
             );
 

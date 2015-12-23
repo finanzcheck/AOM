@@ -22,12 +22,21 @@ class Fixtures extends Fixture
     {
         $this->setUpWebsite();
 
+        // since we're changing the list of activated plugins, we have to make sure file caches are reset
+        Piwik\Cache::flushAll();
+
+        // TODO: Write tests with plugin being disabled (see AdvancedCampaignReporting)
+        $testVars = new Piwik\Tests\Framework\TestingEnvironmentVariables();
+        $testVars->disableAOM = false;
+        $testVars->save();
+
         $settings = new Settings();
         $settings->paramPrefix->setValue('aom');
         $settings->criteoIsActive->setValue(true);
         $settings->adWordsIsActive->setValue(true);
         $settings->facebookAdsIsActive->setValue(true);
         $settings->bingIsActive->setValue(true);
+        $settings->save();
 
         $this->trackCampaignVisits($this->dateTime);
     }
@@ -57,21 +66,12 @@ class Fixtures extends Fixture
      */
     public function trackCampaignVisits($dateTime)
     {
-        // since we're changing the list of activated plugins, we have to make sure file caches are reset
-        Piwik\Cache::flushAll();
-
-        // TODO: Write tests with plugin being disabled (see AdvancedCampaignReporting)
-        $testVars = new Piwik\Tests\Framework\TestingEnvironmentVariables();
-        $testVars->disableAOM = false;
-        $testVars->save();
-
         $t = self::getTracker($this->idSite, $dateTime, $defaultInit = true, $useLocal = false);
 
-        $t->setUserId('d9857faa8002a8eebd0bc75b63dfacef');
         $this->trackVisitorWithMultipleVisitsWithSameAdData($t, $dateTime);
-
-        $t->setUserId('919c1aed2f5b1f79d27951b0b309ff42');
         $this->trackVisitorWithMultipleVisitsWithDifferentAdData($t, $dateTime);
+        $this->trackVisitorWithMultipleVisitsFromVariousPlatforms($t, $dateTime);
+
 
         // TODO: Add additional test cases for all API endpoints!
     }
@@ -84,6 +84,8 @@ class Fixtures extends Fixture
      */
     protected function trackVisitorWithMultipleVisitsWithSameAdData(\PiwikTracker $t, $dateTime)
     {
+        $t->setUserId('d9857faa8002a8eebd0bc75b63dfacef');
+
         $this->moveTimeForward($t, 0.1, $dateTime);
         $t->setUrl('http://example.com/?aom_platform=Criteo&aom_campaign_id=14340');
         self::checkResponse($t->doTrackPageView('Viewing homepage, will be recorded as a visit from campaign'));
@@ -107,6 +109,8 @@ class Fixtures extends Fixture
      */
     protected function trackVisitorWithMultipleVisitsWithDifferentAdData(\PiwikTracker $t, $dateTime)
     {
+        $t->setUserId('919c1aed2f5b1f79d27951b0b309ff42');
+
         $this->moveTimeForward($t, 0.1, $dateTime);
         $t->setUrl('http://example.com/?aom_platform=Criteo&aom_campaign_id=4711');
         self::checkResponse($t->doTrackPageView('Viewing homepage, will be recorded as a visit from campaign'));
@@ -115,6 +119,47 @@ class Fixtures extends Fixture
         $this->moveTimeForward($t, 0.3, $dateTime);
         $t->setUrl('http://example.com/?aom_platform=Criteo&aom_campaign_id=84571');
         self::checkResponse($t->doTrackPageView('Second visit, should start a new visit'));
+    }
+
+    /**
+     * @param \PiwikTracker $t
+     * @param $dateTime
+     */
+    protected function trackVisitorWithMultipleVisitsFromVariousPlatforms(\PiwikTracker $t, $dateTime)
+    {
+        // AdWords
+        $t->setUserId('c1aed2f5b1f79d27951b0b309ff42919');
+        $this->moveTimeForward($t, 0.1, $dateTime);
+        $t->setUrl(
+            'http://example.com/?aom_platform=AdWords&aom_campaign_id=184418636&aom_ad_group_id=9794351276'
+            . '&aom_target_id=kwd-118607649&aom_creative=47609133356&aom_placement=&aom_network=g&aom_device=m'
+            . '&aom_ad_position=1t2&aom_loc_physical=20228&aom_loc_Interest=1004074'
+        );
+        self::checkResponse($t->doTrackPageView('Visit from AdWords'));
+
+        // Bing
+        $t->setUserId('aed2f5b1f79d27951b0b309ff42919c1');
+        $this->moveTimeForward($t, 0.3, $dateTime);
+        $t->setUrl(
+            'http://example.com/?aom_platform=Bing&aom_campaign_id=190561279&aom_ad_group_id=2029114499'
+            . '&aom_order_item_id=40414589411&aom_target_id=40414589411&aom_ad_id=5222037942'
+        );
+        self::checkResponse($t->doTrackPageView('Visit from Bing'));
+
+        // Criteo
+        $t->setUserId('d2f5b1f79d27951b0b309ff42919c1ae');
+        $this->moveTimeForward($t, 0.1, $dateTime);
+        $t->setUrl('http://example.com/?aom_platform=Criteo&aom_campaign_id=14340');
+        self::checkResponse($t->doTrackPageView('Visit from Criteo'));
+
+        // Facebook Ads
+        $t->setUserId('f5b1f79d27951b0b309ff42919c1aed2');
+        $this->moveTimeForward($t, 0.2, $dateTime);
+        $t->setUrl(
+            'http://example.com/?aom_platform=FacebookAds&aom_campaign_group_id=4160286035775'
+            . '&aom_campaign_id=6028603577541&aom_ad_group_id=5760286037541'
+        );
+        self::checkResponse($t->doTrackPageView('Visit from Bing'));
     }
 
     /**
@@ -147,7 +192,6 @@ class Fixtures extends Fixture
                             $plugins[] = 'AOM';
                         }
                     }
-
                     Piwik\Config::getInstance()->Plugins['Plugins'] = $plugins;
                 }],
             ]),

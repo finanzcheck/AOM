@@ -32,7 +32,7 @@ class Criteo implements PlatformInterface
         return $this->settings->criteoIsActive->getValue();
     }
 
-    public function activatePlugin()
+    public function installPlugin()
     {
         try {
             $sql = 'CREATE TABLE ' . Common::prefixTable('aom_criteo') . ' (

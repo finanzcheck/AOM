@@ -31,7 +31,7 @@ class FacebookAds implements PlatformInterface
         return $this->settings->facebookAdsIsActive->getValue();
     }
 
-    public function activatePlugin()
+    public function installPlugin()
     {
         try {
             $sql = 'CREATE TABLE ' . Common::prefixTable('aom_facebook_ads') . ' (
@@ -213,16 +213,16 @@ class FacebookAds implements PlatformInterface
      * Enriches a specific visit with additional Facebook information when this visit came from Facebook.
      *
      * @param array &$visit
-     * @param array $ad
+     * @param array $adData
      * @return array
      * @throws \Exception
      */
-    public function enrichVisit(array &$visit, array $ad)
+    public function enrichVisit(array &$visit, array $adData)
     {
-        // TODO ...
+        // TODO: This method must be refactored!
         $results = [];
 
-        $visit['adData']['enriched'] = array_merge(['source' => 'FacebookAds'], $results);
+        $visit['adData'] = array_merge($adData, ($results ? $results : []));
 
         return $visit;
     }

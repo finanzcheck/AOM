@@ -46,18 +46,22 @@ class AdData extends VisitDimension
     {
         $adData = AOM::getAdDataFromUrl($action->getActionUrl());
 
+        // Keep Piwik's default behaviour when we do not have any ad data
+        if (!is_array($adData)) {
+            return false;
+        }
+
         // Get ad data of on-going visit
         $lastVisitAdData = Db::fetchOne(
             'SELECT aom_ad_data FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?',
             [$visitor->visitProperties->getProperty('idvisit')]
         );
 
-        // TODO: Generally keep last visit going when we do not have any adData?!
         // TODO: Overwrite pk_campaign & co. because we know better...?!
 
         // Force new visit when we have ad data for the first time
         if (null === $lastVisitAdData) {
-            return (null != $adData);
+            return true;
         }
 
         // JSON-decode ad data (start new visit when ad data is obscure)

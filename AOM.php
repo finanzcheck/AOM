@@ -30,10 +30,11 @@ class AOM extends \Piwik\Plugin
 
     /**
      * Installs the plugin.
+     * We must use install() instead of activate() to make integration tests working.
      *
      * @throws \Exception
      */
-    public function activate()
+    public function install()
     {
         foreach (self::getPlatforms() as $platform) {
 
@@ -41,7 +42,7 @@ class AOM extends \Piwik\Plugin
 
             /** @var PlatformInterface $platform */
             $platform = new $className();
-            $platform->activatePlugin();
+            $platform->installPlugin();
         }
     }
 
@@ -83,6 +84,7 @@ class AOM extends \Piwik\Plugin
 
             /** @var PlatformInterface $platform */
             $platform = new $className();
+
             $adData = ($platform->isActive()
                 ? $platform->getAdDataFromQueryParams($paramPrefix, $queryParams)
                 : null

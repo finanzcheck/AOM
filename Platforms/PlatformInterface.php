@@ -13,7 +13,7 @@ interface PlatformInterface
      *
      * @return mixed
      */
-    public function activatePlugin();
+    public function installPlugin();
 
     /**
      * Cleans up platform specific stuff such as tables and indices when the plugin is being uninstalled.
