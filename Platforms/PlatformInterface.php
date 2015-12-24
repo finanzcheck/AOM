@@ -6,8 +6,17 @@
  */
 namespace Piwik\Plugins\AOM\Platforms;
 
+use Piwik\Plugins\AOM\Settings;
+
 interface PlatformInterface
 {
+    /**
+     * Returns this plugin's settings.
+     *
+     * @return Settings
+     */
+    public function getSettings();
+
     /**
      * Setup a platform (e.g. add tables and indices).
      *
@@ -36,7 +45,7 @@ interface PlatformInterface
      * @param string $endDate   YYYY-MM-DD
      * @return mixed
      */
-    public function import($startDate, $endDate);
+    public function import($startDate = null, $endDate = null);
 
     /**
      * Extracts advertisement platform specific data from the query params and stores it in piwik_log_visit.aom_ad_data.

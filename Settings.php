@@ -378,7 +378,7 @@ class Settings extends \Piwik\Plugin\Settings
         $this->facebookAdsAccountId = new SystemSetting('facebookAdsAccountId', 'Account ID');
         $this->facebookAdsAccountId->readableByCurrentUser = true;
         $this->facebookAdsAccountId->uiControlType = static::CONTROL_TEXT;
-        $this->facebookAdsAccountId->description = 'Account ID, e.g. "918514149094443"';
+        $this->facebookAdsAccountId->description = 'Account ID, e.g. "1384758171773244"';
 
         $this->addSetting($this->facebookAdsAccountId);
     }

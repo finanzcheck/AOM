@@ -2,21 +2,23 @@
 
 ## Description
 
-Integrate additional data (costs, ad impressions, etc.) from advertisers (Google AdWords, Bing, Criteo, Facebook Ads) 
-into Piwik and combine that data with individual visits - create a whole bunch of new opportunities!
+Integrate additional data (costs, ad impressions, etc.) from advertising platforms (Google AdWords, Bing, Criteo, 
+Facebook Ads) into Piwik and combine that data with individual visits - create a whole bunch of new opportunities!
 
 
 ## Advertiser's platforms
 
-To obtain data (campaign names, costs, ad impressions, etc.) from the advertiser's platforms, API access must be granted 
-and configured within the settings of this plugin.
+To obtain data (campaign names, costs, ad impressions, etc.) from the advertising platforms, API access must be granted 
+and configured within the settings of this plugin. 
 
-To map individual visits with the data from the advertising platforms (which is optional), all links from the 
-advertiser's platforms must have additional params that supply the required data to this plugin. This data is stored in
-`piwik_log_visit.aom_ad_data`. The params are as follows:
+To map individual visits with the data from the advertising platforms, all links from the platforms must have additional 
+params that supply the required data to this plugin. This data is stored in `piwik_log_visit.aom_ad_data`. 
+When a visitor returns with other tracking params, a new visit starts automatically. 
 
 
 ### Google AdWords
+
+#### Tracking params
 
 We use [ValueTrack params](https://support.google.com/adwords/answer/2375447?hl=en) to obtain the required data.
 The following params are supported:
@@ -48,7 +50,18 @@ When a Google AdWords ad is clicked, data like the following can be found in `pi
 Placements are shortened when the length of the entire JSON is more than 1,024 characters.
 
 
+#### Importing & merging
+
+For importing and merging you must activate AdWords and provide API credentials within this plugin's settings. For now,
+you must [create a refresh token](https://developers.google.com/adwords/api/docs/guides/oauth_playground) on your own.
+ 
+AdWords data can is being (re)imported for the last 3 days (as old data might change). You can (re)import data manually  
+by executing `./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20`.
+
+
 ### Microsoft Bing Ads
+
+#### Tracking params
 
 We use [URL tracking](http://help.bingads.microsoft.com/apex/index/3/en-us/51091) to obtain the required data. 
 The following params are supported:
@@ -71,7 +84,14 @@ When a Bing ad is clicked, data like the following can be found in `piwik_log_vi
     {"platform":"Bing","campaignId":190561279,"adGroupId":2029114499,"orderItemId":40414589411,"targetId":"40414589411","adId":5222037942}
 
 
+#### Importing & merging
+
+...
+
+
 ### Criteo
+
+#### Tracking params
 
 When using Criteo, all links must be created manually. 
 The following params must be replaced manually with their corresponding IDs:
@@ -87,10 +107,20 @@ A typical link at Criteo (with the prefix "aom") should have the following param
 
 When a Criteo ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_data`:
 
-    {"platform":"Criteo","campaignId":"14340"}
+    {"platform":"Criteo","campaignId":"14340"}  
+
+
+#### Importing & merging
+
+Criteo's data is being imported once a day. You can (re)import data manually by executing 
+`./console aom:import --platform=Criteo --startDate=2015-12-20 --endDate=2015-12-20`.
+  
+Merging is solely based on Criteo's campaign ID.  
 
 
 ### Facebook Ads
+
+#### Tracking params
 
 When using Facebook Ads, all links must be created manually.
 The following params must be replaced manually with their corresponding IDs:
@@ -109,6 +139,21 @@ A typical link at FacebookAds (with the prefix "aom") should have the following 
 When a Facebook Ads ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_data`:
 
     {"platform":"FacebookAds","campaignGroupId":"4160286035775","campaignId":"6028603577541","adGroupId":"5760286037541"}
+
+
+#### Importing & merging
+
+For importing and merging you must activate Facebook Ads and provide API credentials within this plugin's settings. 
+This requires a [Facebook App with Marketing API access](https://developers.facebook.com/docs/marketing-api/quickstart). 
+For now, you must create and update an access token manually:
+
+1. Open https://www.facebook.com/dialog/oauth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_URL&scope=ads_read
+2. This redirects to YOUR_URL?code=...
+3. Paste in the given code and open https://graph.facebook.com/v2.3/oauth/access_token?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_URL&client_secret=YOUR_CLIENT_SECRET&code=...
+4. Use the result as an ACCESS_TOKEN
+
+Facebook Ads' data is being imported once a day. You can (re)import data manually by executing 
+`./console aom:import --platform=FacebookAds --startDate=2015-12-20 --endDate=2015-12-20`.
 
 
 ## Other advertising platforms and Piwik's default tracking params
@@ -150,15 +195,34 @@ Example: ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&period=day
 
 ## Requirements, installation & updates
 
-You must use MySQL 5.0.3 or higher to store more than 255 characters in VARCHAR.
+MySQL 5.0.3 or higher is required as we store more than 255 characters in VARCHAR.
+You must be able to run cron jobs to set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/).
 
-See http://piwik.org/faq/plugins/#faq_21.
-Run `composer install` to install dependencies, such as the Google AdWords SDK.
+To install AOM, follow Piwik's "[How to install a plugin](http://piwik.org/faq/plugins/#faq_21)" guide.
+Run `composer install` in `plugins/AOM` to install dependencies, such as the Google AdWords SDK.
+Configure this plugin (e.g. provide API credentials to advertiser's platforms).
 
-It is recommended to setup auto archiving (http://piwik.org/docs/setup-auto-archiving/) to improve performance.
+Set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/) to automatically import data from the advertiser's 
+platforms. The auto archiving cron job executes the `core:archive command` which triggers 
+[Piwik's TaskScheduler](https://developer.piwik.org/api-reference/Piwik/TaskScheduler) and thus this plugin's tasks. 
+
 
 
 ## Tests
+
+You must enable Piwik's development mode with `./console development:enable` and provide some additional configuration 
+in `config.ini.php`, e.g.:
+
+    [database_tests]
+    host = "127.0.0.1"
+    username = "root"
+    password = "root"
+    dbname = "piwik_test"
+    tables_prefix = "piwik_"
+    
+    [tests]
+    http_host = "local.piwik.de"
+    request_uri = "/"
 
 Run unit tests with `./console tests:run --group AOM_Unit`.
 Run integration tests with `./console tests:run --group AOM_Integration`.

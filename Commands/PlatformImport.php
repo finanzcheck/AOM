@@ -15,18 +15,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Example:
- * ./console aom:platform:import --platform=AdWords --startDate=2015-08-01 --endDate=2015-08-01
+ * ./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20
  */
 class PlatformImport extends ConsoleCommand
 {
     protected function configure()
     {
         $this
-            ->setName('aom:platform:import')
+            ->setName('aom:import')
             ->addOption('platform', null, InputOption::VALUE_REQUIRED)
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
-            ->setDescription('Import a platform\'s data for a specific period.');
+            ->setDescription('Import an advertising platform\'s data for a specific period.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -37,7 +37,6 @@ class PlatformImport extends ConsoleCommand
             return;
         }
 
-        // TODO: Find a better solution for this...
         $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $input->getOption('platform')
             . '\\' . $input->getOption('platform');
 

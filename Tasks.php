@@ -6,31 +6,29 @@
  */
 namespace Piwik\Plugins\AOM;
 
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Scheduler\Schedule\Schedule;
+
 class Tasks extends \Piwik\Plugin\Tasks
 {
     public function schedule()
     {
-        $this->daily('criteoImport');
-        $this->daily('adwordsImport');
-    }
+        foreach (AOM::getPlatforms() as $platform) {
 
-    public function criteoImport()
-    {
-        // Reimport last 3 days
-        $startDate = strftime("%Y-%m-%d", strtotime("-3 days"));
-        $endDate = strftime("%Y-%m-%d");
+            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
 
-        $criteo = new Criteo();
-        $criteo->import($startDate, $endDate);
-    }
+            /** @var PlatformInterface $platform */
+            $platform = new $className();
 
-    public function adwordsImport()
-    {
-        // Reimport last 3 days
-        $startDate = strftime("%Y-%m-%d", strtotime("-3 days"));
-        $endDate = strftime("%Y-%m-%d");
+            if ($platform->isActive()) {
 
-        $adwords = new AdWords();
-        $adwords->import($startDate, $endDate);
+                // Although every active advertising platform's import-method is being triggered every hour,
+                // data is only being imported when either it does not yet exist or the advertising platform has
+                // specified additional logic (e.g. for reimporting data under specific circumstances)
+                $schedule = Schedule::getScheduledTimeForPeriod(Schedule::PERIOD_HOUR);
+
+                $this->custom($platform, 'import', null, $schedule);
+            }
+        }
     }
 }
