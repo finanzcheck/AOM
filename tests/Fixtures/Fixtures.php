@@ -32,10 +32,10 @@ class Fixtures extends Fixture
 
         $settings = new Settings();
         $settings->paramPrefix->setValue('aom');
-        $settings->criteoIsActive->setValue(true);
-        $settings->adWordsIsActive->setValue(true);
-        $settings->facebookAdsIsActive->setValue(true);
-        $settings->bingIsActive->setValue(true);
+        $settings->platformAdWordsIsActive->setValue(true);
+        $settings->platformBingIsActive->setValue(true);
+        $settings->platformCriteoIsActive->setValue(true);
+        $settings->platformFacebookAdsIsActive->setValue(true);
         $settings->save();
 
         $this->trackCampaignVisits($this->dateTime);

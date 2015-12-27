@@ -6,21 +6,26 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
-use AdWordsUser;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
+use Piwik\Plugins\AOM\Settings;
 use ReportUtils;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
-    /**
-     * @param $startDate
-     * @param $endDate
-     * @return mixed|void
-     * @throws \Exception
-     */
     public function import($startDate, $endDate)
+    {
+        $settings = new Settings();
+        $configuration = $settings->getConfiguration();
+
+        foreach ($configuration[AOM::PLATFORM_AD_WORDS]['accounts'] as $id => $account) {
+            $this->importAccount($account, $startDate, $endDate);
+        }
+    }
+
+    private function importAccount($account, $startDate, $endDate)
     {
         // Delete existing data for the specified period
         // TODO: this might be more complicated when we already merged / assigned data to visits!?!
@@ -33,25 +38,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             [$startDate, $endDate]
         );
 
-        // Add AdWords SDK to include path
-        set_include_path(get_include_path() . PATH_SEPARATOR
-            . getcwd() . '/plugins/AOM/vendor/googleads/googleads-php-lib/src/');
-
-        require_once('Google/Api/Ads/AdWords/Lib/AdWordsUser.php');
-        require_once('Google/Api/Ads/AdWords/Util/ReportUtils.php');
-
-        $user = new AdWordsUser(
-            null,
-            $this->platform->getSettings()->adWordsDeveloperToken->getValue(),
-            $this->platform->getSettings()->adWordsUserAgent->getValue(),
-            $this->platform->getSettings()->adWordsClientCustomerId->getValue(),
-            null,
-            [
-                'client_id' => $this->platform->getSettings()->adWordsClientId->getValue(),
-                'client_secret' => $this->platform->getSettings()->adWordsClientSecret->getValue(),
-                'refresh_token' => $this->platform->getSettings()->adWordsRefreshToken->getValue(),
-            ]
-        );
+        $user = AdWords::getAdWordsUser($account);
 
         $user->LogAll();
 
@@ -106,10 +93,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             }
 
             Db::query(
-                'INSERT INTO ' . Common::prefixTable('aom_adwords') . ' (date, account, campaign_id, campaign, '
+                'INSERT INTO ' . Common::prefixTable('aom_adwords') . ' (idsite, date, account, campaign_id, campaign, '
                 . 'ad_group_id, ad_group, keyword_id, keyword_placement, criteria_type, network, device, impressions, '
-                . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
+                    $account['websiteId'],
                     $row['day'],
                     $row['account'],
                     $row['campaignID'],

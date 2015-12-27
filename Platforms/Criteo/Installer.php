@@ -22,7 +22,7 @@ class Installer implements InstallerInterface
     {
         try {
             $sql = 'CREATE TABLE ' . Common::prefixTable('aom_criteo') . ' (
-                        ad_key VARCHAR(255) NOT NULL,
+                        idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
                         campaign_id INTEGER NOT NULL,
                         campaign VARCHAR(255) NOT NULL,

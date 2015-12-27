@@ -6,6 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
+use AdWordsUser;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\Platform;
@@ -292,5 +293,32 @@ class AdWords extends Platform implements PlatformInterface
 
 
         return 'not implemented';
+    }
+
+    /**
+     * Returns an AdWords user for a specific AdWords Account.
+     *
+     * @param array $account
+     * @return AdWordsUser
+     */
+    public static function getAdWordsUser($account)
+    {
+        $oauth2Info = [
+            'client_id' => $account['clientId'],
+            'client_secret' => $account['clientSecret'],
+        ];
+
+        if (null != $account['refreshToken']) {
+            $oauth2Info['refresh_token'] = $account['refreshToken'];
+        }
+
+        return new AdWordsUser(
+            null,
+            $account['developerToken'],
+            $account['userAgent'],
+            $account['clientCustomerId'],
+            null,
+            $oauth2Info
+        );
     }
 }

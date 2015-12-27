@@ -52,8 +52,10 @@ Placements are shortened when the length of the entire JSON is more than 1,024 c
 
 #### Importing & merging
 
-For importing and merging you must activate AdWords and provide API credentials within this plugin's settings. For now,
-you must [create a refresh token](https://developers.google.com/adwords/api/docs/guides/oauth_playground) on your own.
+For importing and merging you must activate AdWords and provide API credentials within this plugin's settings. 
+This requires a [web application in the Google API console](https://code.google.com/apis/console#access) with Piwik's 
+full URI (e.g. http://local.piwik.de?module=AOM&action=platformAction&platform=AdWords&method=processOAuthRedirect) 
+being an authorized redirect URI.
  
 AdWords data can is being (re)imported for the last 3 days (as old data might change). You can (re)import data manually  
 by executing `./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20`.
@@ -86,7 +88,12 @@ When a Bing ad is clicked, data like the following can be found in `piwik_log_vi
 
 #### Importing & merging
 
-...
+For importing and merging you must activate Bing and provide API credentials within this plugin's settings.
+This requires a [mobile or desktop client app](https://account.live.com/developers/applications) at Bing.
+Piwik's URI (e.g. http://local.piwik.de/) must be added at Bing to the app's valid redirect URLs under "API settings". 
+
+Bing's data is being imported once a day. You can (re)import data manually by executing 
+`./console aom:import --platform=Bing --startDate=2015-12-20 --endDate=2015-12-20`.
 
 
 ### Criteo
@@ -145,12 +152,7 @@ When a Facebook Ads ad is clicked, data like the following can be found in `piwi
 
 For importing and merging you must activate Facebook Ads and provide API credentials within this plugin's settings. 
 This requires a [Facebook App with Marketing API access](https://developers.facebook.com/docs/marketing-api/quickstart). 
-For now, you must create and update an access token manually:
-
-1. Open https://www.facebook.com/dialog/oauth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_URL&scope=ads_read
-2. This redirects to YOUR_URL?code=...
-3. Paste in the given code and open https://graph.facebook.com/v2.3/oauth/access_token?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_URL&client_secret=YOUR_CLIENT_SECRET&code=...
-4. Use the result as an ACCESS_TOKEN
+Piwik's URI (e.g. http://local.piwik.de/) must be added to the app's valid OAuth redirect URIs. 
 
 Facebook Ads' data is being imported once a day. You can (re)import data manually by executing 
 `./console aom:import --platform=FacebookAds --startDate=2015-12-20 --endDate=2015-12-20`.
@@ -199,7 +201,7 @@ MySQL 5.0.3 or higher is required as we store more than 255 characters in VARCHA
 You must be able to run cron jobs to set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/).
 
 To install AOM, follow Piwik's "[How to install a plugin](http://piwik.org/faq/plugins/#faq_21)" guide.
-Run `composer install` in `plugins/AOM` to install dependencies, such as the Google AdWords SDK.
+Run `composer install` in `plugins/AOM` to install dependencies, such as the Facebook Ads and Google AdWords SDKs.
 Configure this plugin (e.g. provide API credentials to advertiser's platforms).
 
 Set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/) to automatically import data from the advertiser's 

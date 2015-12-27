@@ -27,7 +27,16 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             [$startDate, $endDate]
         );
 
-        // We do not use Facebook's PHP library to keep composer dependencies to a minimum.
+
+
+
+
+
+
+
+
+
+
 
         // Calculate time interval
         // https://developers.facebook.com/docs/marketing-api/guides/chapter-7-ad-report-stats?locale=de_DE#range
@@ -133,10 +142,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         if (array_key_exists('data', $results) && is_array($results['data'])) {
             foreach ($results['data'] as $row) {
                 Db::query(
-                    'INSERT INTO ' . Common::prefixTable('aom_facebook_ads') . ' (date, account_id, account_name, '
-                    . 'campaign_group_id, campaign_group_name, campaign_id, campaign_name, adgroup_id, adgroup_name, '
-                    . 'adgroup_objective, spend, total_actions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    'INSERT INTO ' . Common::prefixTable('aom_facebook_ads') . ' (idsite, date, account_id, '
+                    . 'account_name, campaign_group_id, campaign_group_name, campaign_id, campaign_name, adgroup_id, '
+                    . 'adgroup_name, adgroup_objective, spend, total_actions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [
+                        $account['websiteId'],
                         $row['date_start'],
                         $row['account_id'],
                         $row['account_name'],

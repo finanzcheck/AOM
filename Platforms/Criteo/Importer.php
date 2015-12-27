@@ -9,7 +9,9 @@ namespace Piwik\Plugins\AOM\Platforms\Criteo;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
+use Piwik\Plugins\AOM\Settings;
 use SoapClient;
 use SoapFault;
 use SoapHeader;
@@ -17,6 +19,16 @@ use SoapHeader;
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
     public function import($startDate, $endDate)
+    {
+        $settings = new Settings();
+        $configuration = $settings->getConfiguration();
+
+        foreach ($configuration[AOM::PLATFORM_CRITEO]['accounts'] as $id => $account) {
+            $this->importAccount($account, $startDate, $endDate);
+        }
+    }
+
+    private function importAccount($account, $startDate, $endDate)
     {
         // Delete existing data for the specified period
         // TODO: this might be more complicated when we already merged / assigned data to visits!?!
@@ -37,15 +49,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         ]);
 
         $clientLogin = new \stdClass();
-        $clientLogin->username = $this->platform->getSettings()->criteoUsername->getValue();
-        $clientLogin->password = $this->platform->getSettings()->criteoPassword->getValue();
+        $clientLogin->username = $account['username'];
+        $clientLogin->password = $account['password'];
 
         // TODO: Use multiple try catch blocks instead?!
         try {
             $loginResponse = $soapClient->__soapCall('clientLogin', [$clientLogin]);
 
             $apiHeader = new \stdClass();
-            $apiHeader->appToken = $interval = $this->platform->getSettings()->criteoAppToken->getValue();
+            $apiHeader->appToken = $interval = $account['appToken'];
             $apiHeader->authToken = $loginResponse->clientLoginResult;
 
             // Create Soap Header, then set the Headers of Soap Client.
@@ -101,10 +113,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             // TODO: Use MySQL transaction to improve performance!
             foreach ($xml->table->rows->row as $row) {
                  Db::query(
-                    'INSERT INTO ' . Common::prefixTable('aom_criteo') . ' (date, campaign_id, campaign, '
+                    'INSERT INTO ' . Common::prefixTable('aom_criteo') . ' (idsite, date, campaign_id, campaign, '
                     . 'impressions, clicks, cost, conversions, conversions_value, conversions_post_view, '
-                    . 'conversions_post_view_value) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    . 'conversions_post_view_value) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [
+                        $account['websiteId'],
                         $row['dateTime'],
                         $row['campaignID'],
                         $campaigns[(string) $row['campaignID']],

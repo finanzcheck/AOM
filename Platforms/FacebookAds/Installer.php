@@ -17,6 +17,7 @@ class Installer implements InstallerInterface
     {
         try {
             $sql = 'CREATE TABLE ' . Common::prefixTable('aom_facebook_ads') . ' (
+                        idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
                         account_id BIGINT NOT NULL,
                         account_name VARCHAR(255) NOT NULL,

@@ -29,6 +29,17 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
+     * @param bool|string $pluginName
+     */
+    public function __construct($pluginName = false)
+    {
+        // Add composer dependencies
+        require_once PIWIK_INCLUDE_PATH . '/plugins/AOM/vendor/autoload.php';
+
+        parent::__construct($pluginName);
+    }
+
+    /**
      * Installs the plugin.
      * We must use install() instead of activate() to make integration tests working.
      *
@@ -59,6 +70,26 @@ class AOM extends \Piwik\Plugin
             $platform = new $className();
             $platform->uninstallPlugin();
         }
+    }
+
+    /**
+     * @see Piwik\Plugin::registerEvents
+     */
+    public function registerEvents()
+    {
+        return array(
+            'AssetManager.getJavaScriptFiles' => 'getJsFiles',
+        );
+    }
+
+    /**
+     * Return list of plug-in specific JavaScript files to be imported by the asset manager.
+     *
+     * @see Piwik\AssetManager
+     */
+    public function getJsFiles(&$jsFiles)
+    {
+        $jsFiles[] = 'plugins/AOM/javascripts/AOM.js';
     }
 
     /**

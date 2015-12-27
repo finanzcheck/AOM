@@ -22,7 +22,9 @@ use Bing\Reporting\SubmitGenerateReportRequest;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
+use Piwik\Plugins\AOM\Settings;
 use SoapFault;
 
 //TODO Replace
@@ -34,7 +36,17 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 {
     public function import($startDate, $endDate)
     {
-        $data = $this->getBingReport($startDate, $endDate);
+        $settings = new Settings();
+        $configuration = $settings->getConfiguration();
+
+        foreach ($configuration[AOM::PLATFORM_BING]['accounts'] as $id => $account) {
+            $this->importAccount($id, $account, $startDate, $endDate);
+        }
+    }
+
+    private function importAccount($id, $account, $startDate, $endDate)
+    {
+        $data = $this->getBingReport($id, $account, $startDate, $endDate);
 
         Db::deleteAllRows(
             Common::prefixTable('aom_bing'),
@@ -52,10 +64,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             Db::query(
                 'INSERT INTO ' . Common::prefixTable(
                     'aom_bing'
-                ) . ' (date, account_id, account, campaign_id, campaign, '
+                ) . ' (idsite, date, account_id, account, campaign_id, campaign, '
                 . 'ad_group_id, ad_group, keyword_id, keyword, impressions, '
-                . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
+                    $account['websiteId'],
                     $date,
                     $row->AccountId->attributes()['value'],
                     $row->AccountName->attributes()['value'],
@@ -74,18 +87,21 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         }
     }
 
-    public function getBingReport($startDate, $endDate)
+    public function getBingReport($id, $account, $startDate, $endDate)
     {
-        //Always refresh token as it expires after 60m
-        $this->refreshToken();
+        // Always refresh token as it expires after 60m
+        $this->refreshToken($id, $account);
+
         try {
             $proxy = ClientProxy::ConstructWithAccountId(
                 "https://api.bingads.microsoft.com/Api/Advertiser/Reporting/V9/ReportingService.svc?singleWsdl",
                 null,
                 null,
-                $this->platform->getSettings()->bingDeveloperToken->getValue(),
-                $this->platform->getSettings()->bingAccountId->getValue(),
-                $this->platform->getSettings()->bingAccessToken->getValue(),
+                $account['developerToken'],
+                $account['accountId'],
+                $account['accessToken'],
+
+            // TODO: Keep proxy settings?!
                 $this->platform->getSettings()->proxyIsActive->getValue(),
                 isset($this->platform->getSettings()->proxyHost) ? $this->platform->getSettings()->proxyHost->getValue() : null,
                 isset($this->platform->getSettings()->proxyPort) ? $this->platform->getSettings()->proxyPort->getValue() : null
@@ -222,7 +238,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         }
     }
 
-    private function refreshToken()
+    // TODO: This method is somewhere else too?! Maybe in Controller.php?!
+    private function refreshToken($id, $account)
     {
         $context = null;
         if ($this->platform->getSettings()->proxyIsActive->getValue()) {
@@ -237,16 +254,23 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             );
         }
 
+        // TODO: This redirect URL is invalid!
         $url = sprintf(
             "https://login.live.com/oauth20_token.srf?client_id=%s&grant_type=refresh_token&redirect_uri=/oauth20_desktop.srf&refresh_token=%s",
-            $this->platform->getSettings()->bingClientId->getValue(),
-            $this->platform->getSettings()->bingRefreshToken->getValue()
+            $account['clientId'],
+            $account['refreshToken']
         );
 
         $response = file_get_contents($url, null, $context);
-        $response = json_decode($response);
-        $this->platform->getSettings()->bingRefreshToken->setValue($response->refresh_token);
-        $this->platform->getSettings()->bingAccessToken->setValue($response->access_token);
+        $data = json_decode($response, true);
+
+
+        $configuration = $this->platform->getSettings()->getConfiguration();
+        $configuration[AOM::PLATFORM_BING]['accounts'][$id]['accessToken'] = $data['access_token'];
+        $configuration[AOM::PLATFORM_BING]['accounts'][$id]['refreshToken'] = $data['refresh_token'];
+
+        // TODO: Using $this->platform->getSettings() is stupid.
+        $this->platform->getSettings()->setConfiguration($configuration);
 
     }
 

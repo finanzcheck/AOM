@@ -39,7 +39,7 @@ abstract class Platform
      */
     public function isActive()
     {
-        return $this->settings->{lcfirst($this->getUnqualifiedClassName()) . 'IsActive'}->getValue();
+        return $this->settings->{'platform' . $this->getUnqualifiedClassName() . 'IsActive'}->getValue();
     }
 
     /**
