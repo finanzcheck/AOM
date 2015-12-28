@@ -228,6 +228,7 @@ in `config.ini.php`, e.g.:
 
 Run unit tests with `./console tests:run --group AOM_Unit`.
 Run integration tests with `./console tests:run --group AOM_Integration`.
+Run all tests with `./console tests:run --group AOM`.
 
 
 ## Changelog
