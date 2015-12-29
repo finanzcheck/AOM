@@ -7,7 +7,6 @@
 namespace Piwik\Plugins\AOM\Platforms\Bing;
 
 use Exception;
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
 
@@ -16,7 +15,7 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' . Common::prefixTable('aom_bing') . ' (
+            $sql = 'CREATE TABLE ' . Bing::getDataTableName() . ' (
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
                         account_id INTEGER NOT NULL,
@@ -41,8 +40,7 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_bing ON ' . Common::prefixTable('aom_bing')
-                . ' (date, campaign_id)'; // TODO...
+            $sql = 'CREATE INDEX index_aom_bing ON ' . Bing::getDataTableName() . ' (date, campaign_id)'; // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
             // ignore error if index already exists (1061)
@@ -55,6 +53,6 @@ class Installer implements InstallerInterface
 
     public function uninstallPlugin()
     {
-        Db::dropTables(Common::prefixTable('aom_bing'));
+        Db::dropTables(Bing::getDataTableName());
     }
 }

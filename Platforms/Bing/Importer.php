@@ -49,7 +49,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $data = $this->getBingReport($id, $account, $startDate, $endDate);
 
         Db::deleteAllRows(
-            Common::prefixTable('aom_bing'),
+            Bing::getDataTableName(),
             'WHERE date >= ? AND date <= ?',
             'date',
             1000000,
@@ -62,9 +62,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $date = $date->format('Y-m-d');
 
             Db::query(
-                'INSERT INTO ' . Common::prefixTable(
-                    'aom_bing'
-                ) . ' (idsite, date, account_id, account, campaign_id, campaign, '
+                'INSERT INTO ' . Bing::getDataTableName()
+                . ' (idsite, date, account_id, account, campaign_id, campaign, '
                 . 'ad_group_id, ad_group, keyword_id, keyword, impressions, '
                 . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [

@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\Platforms\Bing;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 
@@ -17,6 +18,14 @@ class Bing extends Platform implements PlatformInterface
     const AD_CAMPAIGN_ID = 1;
     const AD_AD_GROUP_ID = 2;
     const AD_KEYWORD_ID = 3;
+
+    /**
+     * Returns the platform's data table name.
+     */
+    public static function getDataTableName()
+    {
+        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_BING));
+    }
 
     /**
      * Enriches a specific visit with additional Bing information when this visit came from Bing.
@@ -43,7 +52,7 @@ class Bing extends Platform implements PlatformInterface
                     impressions,
                     conversions,
                     (cost / clicks) AS cpc
-                FROM ' . Common::prefixTable('aom_bing') . '
+                FROM ' . self::getDataTableName() . '
                 WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?';
 
         $results = Db::fetchRow(

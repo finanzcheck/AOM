@@ -59,7 +59,6 @@ class APITest extends SystemTestCase
         ];
 
         // AOM.getVisits
-        // returnVisitorId must be false as visitorIds are random and API responses won't match during tests otherwise
         $apiToTest[] = [
             $api,
             [

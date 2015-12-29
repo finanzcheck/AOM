@@ -8,7 +8,6 @@ namespace Piwik\Plugins\AOM\Commands;
 
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\Settings;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -45,11 +44,7 @@ class PlatformImport extends ConsoleCommand
             return;
         }
 
-        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $input->getOption('platform')
-            . '\\' . $input->getOption('platform');
-
-        /** @var PlatformInterface $platform */
-        $platform = new $className();
+        $platform = AOM::getPlatformInstance($input->getOption('platform'));
         $platform->import($input->getOption('startDate'), $input->getOption('endDate'));
 
         $output->writeln($input->getOption('platform') . '-import for period from '

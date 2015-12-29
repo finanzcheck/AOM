@@ -190,14 +190,17 @@ class Settings extends \Piwik\Plugin\Settings
                 $optionValue = serialize($defaultConfiguration);
             }
 
-            $this->configuration = unserialize($optionValue);
+            $this->configuration = @json_decode($optionValue, true);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                $this->configuration = unserialize($optionValue);
+            }
         }
 
         return $this->configuration;
     }
 
     public function setConfiguration(array $configuration) {
-        Option::set('Plugin_AOM_CustomSettings', serialize($configuration));
+        Option::set('Plugin_AOM_CustomSettings', json_encode($configuration));
         $this->configuration = $configuration;
     }
 

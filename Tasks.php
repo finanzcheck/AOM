@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM;
 
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Scheduler\Schedule\Schedule;
 
 class Tasks extends \Piwik\Plugin\Tasks
@@ -15,10 +14,7 @@ class Tasks extends \Piwik\Plugin\Tasks
     {
         foreach (AOM::getPlatforms() as $platform) {
 
-            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
-
-            /** @var PlatformInterface $platform */
-            $platform = new $className();
+            $platform = AOM::getPlatformInstance($platform);
 
             if ($platform->isActive()) {
 

@@ -34,7 +34,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // TODO: this might be more complicated when we already merged / assigned data to visits!?!
         // TODO: There might be more than 100000 rows?!
         Db::deleteAllRows(
-            Common::prefixTable('aom_criteo'),
+            Criteo::getDataTableName(),
             'WHERE date >= ? AND date <= ?',
             'date',
             100000,
@@ -113,7 +113,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             // TODO: Use MySQL transaction to improve performance!
             foreach ($xml->table->rows->row as $row) {
                  Db::query(
-                    'INSERT INTO ' . Common::prefixTable('aom_criteo') . ' (idsite, date, campaign_id, campaign, '
+                    'INSERT INTO ' . Criteo::getDataTableName() . ' (idsite, date, campaign_id, campaign, '
                     . 'impressions, clicks, cost, conversions, conversions_value, conversions_post_view, '
                     . 'conversions_post_view_value) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [

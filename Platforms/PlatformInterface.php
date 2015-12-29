@@ -67,6 +67,11 @@ interface PlatformInterface
     public function getAdKeyFromAdParams(array $adParams);
 
     /**
+     * Returns the platform's data table name.
+     */
+    public static function getDataTableName();
+
+    /**
      * Enriches a visit with platform specific information (e.g. campaign name, creative, cpc).
      *
      * @param array &$visit The visit to enrich with platform specific information.

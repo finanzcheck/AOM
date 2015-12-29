@@ -52,7 +52,7 @@ class AdParams extends VisitDimension
         }
 
         // Get ad data of on-going visit
-        $lastVisitAdData = Db::fetchOne(
+        $lastVisitAdParams = Db::fetchOne(
             'SELECT aom_ad_params FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?',
             [$visitor->visitProperties->getProperty('idvisit')]
         );
@@ -60,20 +60,20 @@ class AdParams extends VisitDimension
         // TODO: Overwrite pk_campaign & co. because we know better...?!
 
         // Force new visit when we have ad data for the first time
-        if (null === $lastVisitAdData) {
+        if (null === $lastVisitAdParams) {
             return true;
         }
 
         // JSON-decode ad data (start new visit when ad data is obscure)
-        $lastVisitAdData = @json_decode($lastVisitAdData, true);
+        $lastVisitAdParams = @json_decode($lastVisitAdParams, true);
         if (json_last_error() != JSON_ERROR_NONE
-            || !is_array($lastVisitAdData)
-            || !array_key_exists('platform', $lastVisitAdData)
+            || !is_array($lastVisitAdParams)
+            || !array_key_exists('platform', $lastVisitAdParams)
         ) {
             return true;
         }
 
-        return (count(array_diff_assoc($lastVisitAdData, $adParams)) > 0
-            || count(array_diff_assoc($adParams, $lastVisitAdData)) > 0);
+        return (count(array_diff_assoc($lastVisitAdParams, $adParams)) > 0
+            || count(array_diff_assoc($adParams, $lastVisitAdParams)) > 0);
     }
 }

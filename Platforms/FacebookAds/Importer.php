@@ -8,19 +8,30 @@ namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 
 use DateTime;
 use DateTimeZone;
-use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
+use Piwik\Plugins\AOM\Settings;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
     public function import($startDate, $endDate)
     {
+        $settings = new Settings();
+        $configuration = $settings->getConfiguration();
+
+        foreach ($configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'] as $id => $account) {
+            $this->importAccount($account, $startDate, $endDate);
+        }
+    }
+
+    private function importAccount($account, $startDate, $endDate)
+    {
         // Delete existing data for the specified period
         // TODO: this might be more complicated when we already merged / assigned data to visits!?!
         // TODO: There might be more than 100000 rows?!
         Db::deleteAllRows(
-            Common::prefixTable('aom_facebook_ads'),
+            FacebookAds::getDataTableName(),
             'WHERE date >= ? AND date <= ?',
             'date',
             100000,
@@ -142,7 +153,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         if (array_key_exists('data', $results) && is_array($results['data'])) {
             foreach ($results['data'] as $row) {
                 Db::query(
-                    'INSERT INTO ' . Common::prefixTable('aom_facebook_ads') . ' (idsite, date, account_id, '
+                    'INSERT INTO ' . FacebookAds::getDataTableName() . ' (idsite, date, account_id, '
                     . 'account_name, campaign_group_id, campaign_group_name, campaign_id, campaign_name, adgroup_id, '
                     . 'adgroup_name, adgroup_objective, spend, total_actions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [

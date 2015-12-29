@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\Platforms\AdWords;
 use AdWordsUser;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use ReportUtils;
@@ -59,6 +60,14 @@ class AdWords extends Platform implements PlatformInterface
         self::DEVICE_TABLETS_WITH_FULL_BROWSERS => 't',
         self::DEVICE_OTHER => 'o',  // TODO: "other" exists, but is "o" correct?!
     ];
+
+    /**
+     * Returns the platform's data table name.
+     */
+    public static function getDataTableName()
+    {
+        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_AD_WORDS));
+    }
 
     /**
      * Enriches a specific visit with additional AdWords information when this visit came from AdWords.
@@ -125,7 +134,7 @@ class AdWords extends Platform implements PlatformInterface
                     network,
                     device,
                     (cost / clicks) AS cpc
-                FROM ' . Common::prefixTable('aom_adwords') . '
+                FROM ' . self::getDataTableName() . '
                 WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND device = ? AND ' . $where;
 
         $results = Db::fetchAll(
@@ -151,7 +160,7 @@ class AdWords extends Platform implements PlatformInterface
                     ad_group_id AS adGroupId,
                     ad_group AS adGroup,
                     device
-                FROM ' . Common::prefixTable('aom_adwords') . '
+                FROM ' . self::getDataTableName() . '
                 WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND device = ?',
                 [
                     date('Y-m-d', strtotime($visit['firstActionTime'])),

@@ -7,12 +7,22 @@
 namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 
 use Exception;
+use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 
 class FacebookAds extends Platform implements PlatformInterface
 {
+    /**
+     * Returns the platform's data table name.
+     */
+    public static function getDataTableName()
+    {
+        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_FACEBOOK_ADS));
+    }
+
     /**
      * Enriches a specific visit with additional Facebook information when this visit came from Facebook.
      *

@@ -7,7 +7,6 @@
 namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 
 use Exception;
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
 
@@ -16,7 +15,7 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' . Common::prefixTable('aom_facebook_ads') . ' (
+            $sql = 'CREATE TABLE ' . FacebookAds::getDataTableName() . ' (
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
                         account_id BIGINT NOT NULL,
@@ -40,7 +39,7 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_facebook ON ' . Common::prefixTable('aom_facebook_ads')
+            $sql = 'CREATE INDEX index_aom_facebook ON ' . FacebookAds::getDataTableName()
                 . ' (date, account_id)';  // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
@@ -53,6 +52,6 @@ class Installer implements InstallerInterface
 
     public function uninstallPlugin()
     {
-        Db::dropTables(Common::prefixTable('aom_facebook_ads'));
+        Db::dropTables(FacebookAds::getDataTableName());
     }
 }

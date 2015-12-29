@@ -72,7 +72,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
         $loginUrl = $helper->getLoginUrl(
             'http://' . $_SERVER['SERVER_NAME']
                 . '?module=AOM&action=platformAction&platform=FacebookAds&method=processAccessTokenCode&id=' . $id,
-            ['ads_read', 'email']
+            ['ads_read']
         );
 
         header('Location: ' . $loginUrl);

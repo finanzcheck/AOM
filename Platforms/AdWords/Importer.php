@@ -31,7 +31,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // TODO: this might be more complicated when we already merged / assigned data to visits!?!
         // TODO: There might be more than 100000 rows?!
         Db::deleteAllRows(
-            Common::prefixTable('aom_adwords'),
+            AdWords::getDataTableName(),
             'WHERE date >= ? AND date <= ?',
             'date',
             100000,
@@ -93,7 +93,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             }
 
             Db::query(
-                'INSERT INTO ' . Common::prefixTable('aom_adwords') . ' (idsite, date, account, campaign_id, campaign, '
+                'INSERT INTO ' . AdWords::getDataTableName() . ' (idsite, date, account, campaign_id, campaign, '
                 . 'ad_group_id, ad_group, keyword_id, keyword_placement, criteria_type, network, device, impressions, '
                 . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [

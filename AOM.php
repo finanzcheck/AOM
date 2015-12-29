@@ -48,11 +48,7 @@ class AOM extends \Piwik\Plugin
     public function install()
     {
         foreach (self::getPlatforms() as $platform) {
-
-            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
-
-            /** @var PlatformInterface $platform */
-            $platform = new $className();
+            $platform = self::getPlatformInstance($platform);
             $platform->installPlugin();
         }
     }
@@ -63,11 +59,7 @@ class AOM extends \Piwik\Plugin
     public function uninstall()
     {
         foreach (self::getPlatforms() as $platform) {
-
-            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
-
-            /** @var PlatformInterface $platform */
-            $platform = new $className();
+            $platform = self::getPlatformInstance($platform);
             $platform->uninstallPlugin();
         }
     }
@@ -93,6 +85,17 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
+     * @param string $platform
+     * @return PlatformInterface
+     */
+    public static function getPlatformInstance($platform)
+    {
+        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
+
+        return new $className();
+    }
+
+    /**
      * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.
      *
      * @param string $url
@@ -110,11 +113,8 @@ class AOM extends \Piwik\Plugin
             && array_key_exists($paramPrefix . '_platform', $queryParams)
             && in_array($queryParams[$paramPrefix . '_platform'], AOM::getPlatforms())
         ) {
-            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $queryParams[$paramPrefix . '_platform'] . '\\'
-                . $queryParams[$paramPrefix . '_platform'];
 
-            /** @var PlatformInterface $platform */
-            $platform = new $className();
+            $platform = self::getPlatformInstance($queryParams[$paramPrefix . '_platform']);
 
             $adParams = ($platform->isActive()
                 ? $platform->getAdParamsFromQueryParams($paramPrefix, $queryParams)

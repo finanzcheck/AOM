@@ -68,8 +68,8 @@ class Fixtures extends Fixture
     {
         $t = self::getTracker($this->idSite, $dateTime, $defaultInit = true, $useLocal = false);
 
-        $this->trackVisitorWithMultipleVisitsWithSameAdData($t, $dateTime);
-        $this->trackVisitorWithMultipleVisitsWithDifferentAdData($t, $dateTime);
+        $this->trackVisitorWithMultipleVisitsWithSameAdParams($t, $dateTime);
+        $this->trackVisitorWithMultipleVisitsWithDifferentAdParams($t, $dateTime);
         $this->trackVisitorWithMultipleVisitsFromVariousPlatforms($t, $dateTime);
 
 
@@ -82,7 +82,7 @@ class Fixtures extends Fixture
      * @param \PiwikTracker $t
      * @param $dateTime
      */
-    protected function trackVisitorWithMultipleVisitsWithSameAdData(\PiwikTracker $t, $dateTime)
+    protected function trackVisitorWithMultipleVisitsWithSameAdParams(\PiwikTracker $t, $dateTime)
     {
         $t->setUserId('d9857faa8002a8eebd0bc75b63dfacef');
 
@@ -107,7 +107,7 @@ class Fixtures extends Fixture
      * @param \PiwikTracker $t
      * @param $dateTime
      */
-    protected function trackVisitorWithMultipleVisitsWithDifferentAdData(\PiwikTracker $t, $dateTime)
+    protected function trackVisitorWithMultipleVisitsWithDifferentAdParams(\PiwikTracker $t, $dateTime)
     {
         $t->setUserId('919c1aed2f5b1f79d27951b0b309ff42');
 

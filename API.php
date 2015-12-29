@@ -155,6 +155,55 @@ class API extends \Piwik\Plugin\API
     }
 
     /**
+     * Returns various status information which can be used for monitoring:
+     * ?module=API&token_auth=...&method=AOM.getStatus&format=json
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function getStatus()
+    {
+        $status = [
+            'stats' => [],
+            'platforms' => [],
+        ];
+
+        foreach (['Hour', 'Day', 'Week'] as $period) {
+
+            $visits = intval(Db::fetchOne(
+                'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
+                     WHERE log_visit.visit_first_action_time >= ?',
+                [
+                    date('Y-m-d H:i:s', strtotime('-1 ' . $period))
+                ]));
+
+            $orders = intval(Db::fetchOne(
+                'SELECT COUNT(*) FROM ' . Common::prefixTable('log_conversion') . ' AS log_conversion
+                     WHERE log_conversion.server_time >= ?',
+                [
+                    date('Y-m-d H:i:s', strtotime('-1 ' . $period))
+                ]));
+
+            $status['stats']['last' . $period] = [
+                'visits' => $visits,
+                'orders' => $orders,
+                'conversionRate' => ($visits > 0 ? $orders / $visits : 0),
+            ];
+
+            foreach (AOM::getPlatforms() as $platformName) {
+                $platform = AOM::getPlatformInstance($platformName);
+                $status['platforms'][$platformName] = [
+                    'daysSinceLastImportWithResults' => intval(Db::fetchOne(
+                        'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $platform::getDataTableName()
+                    )),
+                ];
+            }
+        }
+
+        return $status;
+    }
+
+    /**
      * Returns all visits that match the given criteria.
      * All visits are being enriched with advanced marketing information when applicable.
      *
@@ -274,12 +323,7 @@ class API extends \Piwik\Plugin\API
         if (array_key_exists('platform', $visit['adParams'])
             && in_array($visit['adParams']['platform'], AOM::getPlatforms())
         ) {
-
-            $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $visit['adParams']['platform'] . '\\'
-                . $visit['adParams']['platform'];
-
-            /** @var PlatformInterface $platform */
-            $platform = new $className();
+            $platform = AOM::getPlatformInstance($visit['adParams']['platform']);
 
             return $platform->enrichVisit($visit, $visit['adParams']);
         }

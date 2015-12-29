@@ -12,10 +12,10 @@ use Piwik\Tests\Framework\TestCase\SystemTestCase;
 
 /**
  * @group AOM
- * @group AOM_AdDataExtractionTest
+ * @group AOM_AdParamsExtractionTest
  * @group AOM_Integration
  */
-class AdDataExtractionTest extends SystemTestCase
+class AdParamsExtractionTest extends SystemTestCase
 {
     /**
      * @var Fixtures
@@ -59,4 +59,4 @@ class AdDataExtractionTest extends SystemTestCase
     }
 }
 
-AdDataExtractionTest::$fixture = new Fixtures();
+AdParamsExtractionTest::$fixture = new Fixtures();

@@ -46,7 +46,7 @@ class AdKey extends VisitDimension
     {
         // TODO: This entire stuff must be refactored!
 
-//        // TODO: We call AOM::getAdDataFromUrl() multiple times, which might be bad in terms of performance.
+//        // TODO: We call AOM::getAdParamsFromUrl() multiple times, which might be bad in terms of performance.
 //        $adParams = AOM::getAdParamsFromUrl($action->getActionUrl());
 //
 //        if (is_array($adParams) && array_key_exists('platform', $adParams)) {

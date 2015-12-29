@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
 use ReportUtils;
@@ -16,7 +15,7 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' . Common::prefixTable('aom_adwords') . ' (
+            $sql = 'CREATE TABLE ' .  AdWords::getDataTableName() . ' (
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
                         account VARCHAR(255) NOT NULL,
@@ -43,7 +42,7 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_adwords ON ' . Common::prefixTable('aom_adwords')
+            $sql = 'CREATE INDEX index_aom_adwords ON ' . AdWords::getDataTableName()
                 . ' (date, campaign_id, ad_group_id, keyword_id)';  // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
@@ -56,6 +55,6 @@ class Installer implements InstallerInterface
 
     public function uninstallPlugin()
     {
-        Db::dropTables(Common::prefixTable('aom_adwords'));
+        Db::dropTables(AdWords::getDataTableName());
     }
 }
