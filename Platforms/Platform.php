@@ -108,6 +108,37 @@ abstract class Platform
     }
 
     /**
+     * Merge platform data for the specified period.
+     * If no period has been specified, we'll try to merge yesterdays data only.
+     *
+     * @param string $startDate YYYY-MM-DD
+     * @param string $endDate   YYYY-MM-DD
+     * @return mixed
+     */
+    public function merge($startDate = null, $endDate = null)
+    {
+        if (!$this->isActive()) {
+            return;
+        }
+
+        // Validate start and end date
+        if (null === $startDate || null === $endDate) {
+
+            // TODO: Consider site timezone here?!
+            $startDate = date('Y-m-d', strtotime('-1 day', time()));
+            $endDate = date('Y-m-d', strtotime('-1 day', time()));
+        }
+
+        // Instantiate importer and inject platform
+        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $this->getUnqualifiedClassName() . '\\Merger';
+
+        /** @var ImporterInterface $importer */
+        $importer = new $className($this);
+        $importer->merge($startDate, $endDate);
+    }
+
+
+    /**
      * Returns the platform's unqualified class name
      *
      * @return string

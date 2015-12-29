@@ -23,6 +23,7 @@ class Installer implements InstallerInterface
     {
         try {
             $sql = 'CREATE TABLE ' . Criteo::getDataTableName() . ' (
+                        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
                         campaign_id INTEGER NOT NULL,
