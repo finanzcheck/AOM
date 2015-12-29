@@ -165,7 +165,7 @@ class AdWords extends Platform implements PlatformInterface
             $results = $results[0];
         }
 
-        $visit['adData']['enriched'] = array_merge(['source' => 'AdWords'], $results);
+        $visit['adParams']['enriched'] = array_merge(['source' => 'AdWords'], $results);
 
         return $visit;
     }
@@ -177,109 +177,109 @@ class AdWords extends Platform implements PlatformInterface
      * @param array $queryParams
      * @return mixed
      */
-    public function getAdDataFromQueryParams($paramPrefix, array $queryParams)
+    public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
-        $adData = [
+        $adParams = [
             'platform' => 'AdWords',
         ];
 
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adData['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
         }
 
         if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
-            $adData['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
         }
 
         if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
-            $adData['targetId'] = $queryParams[$paramPrefix . '_target_id'];
+            $adParams['targetId'] = $queryParams[$paramPrefix . '_target_id'];
         }
 
         if (array_key_exists($paramPrefix . '_creative', $queryParams)) {
-            $adData['creative'] = $queryParams[$paramPrefix . '_creative'];
+            $adParams['creative'] = $queryParams[$paramPrefix . '_creative'];
         }
 
         if (array_key_exists($paramPrefix . '_placement', $queryParams)) {
-            $adData['placement'] = $queryParams[$paramPrefix . '_placement'];
+            $adParams['placement'] = $queryParams[$paramPrefix . '_placement'];
         }
 
         if (array_key_exists($paramPrefix . '_network', $queryParams)) {
-            $adData['network'] = $queryParams[$paramPrefix . '_network'];
+            $adParams['network'] = $queryParams[$paramPrefix . '_network'];
         }
 
         if (array_key_exists($paramPrefix . '_device', $queryParams)) {
-            $adData['device'] = $queryParams[$paramPrefix . '_device'];
+            $adParams['device'] = $queryParams[$paramPrefix . '_device'];
         }
 
         if (array_key_exists($paramPrefix . '_ad_position', $queryParams)) {
-            $adData['adPosition'] = $queryParams[$paramPrefix . '_ad_position'];
+            $adParams['adPosition'] = $queryParams[$paramPrefix . '_ad_position'];
         }
 
         if (array_key_exists($paramPrefix . '_loc_physical', $queryParams)) {
-            $adData['locPhysical'] = $queryParams[$paramPrefix . '_loc_physical'];
+            $adParams['locPhysical'] = $queryParams[$paramPrefix . '_loc_physical'];
         }
 
         if (array_key_exists($paramPrefix . '_loc_Interest', $queryParams)) {
-            $adData['locInterest'] = $queryParams[$paramPrefix . '_loc_Interest'];
+            $adParams['locInterest'] = $queryParams[$paramPrefix . '_loc_Interest'];
         }
 
         // TODO: Shorten placement when entire data as JSON has more than 1,024 chars.
 
-        return $adData;
+        return $adParams;
     }
 
     /**
      * Builds a string key from the ad data to reference explicit platform data.
      * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
-     * @param array $adData
+     * @param array $adParams
      * @return mixed
      */
-    public function getAdKeyFromAdData(array $adData)
+    public function getAdKeyFromAdParams(array $adParams)
     {
         // TODO: Implement me correctly...
 
         // TODO: Add "date" to adKey?!
         $adKey = [
             'platform' => 'AdWords',
-            'campaignId' => $adData['campaignId'],
-            'adGroupId' => $adData['adGroupId'],
-            'device' => $adData['device'],
+            'campaignId' => $adParams['campaignId'],
+            'adGroupId' => $adParams['adGroupId'],
+            'device' => $adParams['device'],
         ];
 
         // Regular keyword based ad in google search or search network:
         // {"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","targetId":"kwd-118607649","creative":"47609133356","placement":"","network":"g","device":"m","adposition":"1t2","locPhysical":"20228","locInterest":"1004074"}
-        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] != $adData['network'])
-            && (array_key_exists('targetId', $adData) && (0 === strpos($adData['targetId'], 'kwd')))
-            && (false === strpos($adData['targetId'], 'aud'))
+        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] != $adParams['network'])
+            && (array_key_exists('targetId', $adParams) && (0 === strpos($adParams['targetId'], 'kwd')))
+            && (false === strpos($adParams['targetId'], 'aud'))
         ) {
             $adKey['criteriaType'] = self::CRITERIA_TYPE_KEYWORD;
-            $adKey['keywordId'] = substr($adData['targetId'], strpos($adData['targetId'], '-' ) + 1);
+            $adKey['keywordId'] = substr($adParams['targetId'], strpos($adParams['targetId'], '-' ) + 1);
             // TODO: Network cannot be display network (how to pass such a condition?)
             return $adKey;
         }
 
         // Non-keyword-based (= ad group based?) placement ads:
         // {"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","network":"d","device":"c","adposition":"none","locPhysical":"9041542","locInterest":""}
-        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $adData['network'])
-            && (array_key_exists('targetId', $adData) && ('' === $adData['targetId']))
-            && (array_key_exists('placement', $adData) && (strlen($adData['placement']) > 0))
+        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $adParams['network'])
+            && (array_key_exists('targetId', $adParams) && ('' === $adParams['targetId']))
+            && (array_key_exists('placement', $adParams) && (strlen($adParams['placement']) > 0))
         ) {
             $adKey['network'] = $this->networks[self::NETWORK_DISPLAY_NETWORK];
-            $adKey['placement'] = $adData['placement']; // TODO: Ensure that the serialized adKey is not longer than 255 chars!
+            $adKey['placement'] = $adParams['placement']; // TODO: Ensure that the serialized adKey is not longer than 255 chars!
             return $adKey;
         }
 
         // Remarketing based ads:
         // {"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","targetId":"aud-55070239676","creative":"47609140676","placement":"carfansofamerica.com","network":"d","device":"c","adposition":"none","locPhysical":"9042649","locInterest":""}
         // {"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","targetId":"aud-55070239676","creative":"47609140676","placement":"www.hltv.org","network":"d","device":"t","adposition":"none","locPhysical":"9042582","locInterest":""}
-        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $adData['network'])
-            && array_key_exists('targetId', $adData) && (false !== strpos($adData['targetId'], 'aud'))
-            && (false === strpos($adData['targetId'], 'kwd'))
-            && (array_key_exists('placement', $adData) && (strlen($adData['placement']) > 0))
+        if (($this->networks[self::NETWORK_DISPLAY_NETWORK] === $adParams['network'])
+            && array_key_exists('targetId', $adParams) && (false !== strpos($adParams['targetId'], 'aud'))
+            && (false === strpos($adParams['targetId'], 'kwd'))
+            && (array_key_exists('placement', $adParams) && (strlen($adParams['placement']) > 0))
         ) {
             $adKey['network'] = $this->networks[self::NETWORK_DISPLAY_NETWORK];
-            $adKey['placement'] = $adData['placement']; // TODO: Ensure that the serialized adKey is not longer than 255 chars!
+            $adKey['placement'] = $adParams['placement']; // TODO: Ensure that the serialized adKey is not longer than 255 chars!
             // TODO: Where to store and map targetId?!
             return $adKey;
         }

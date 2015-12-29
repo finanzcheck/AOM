@@ -18,11 +18,11 @@ class Criteo extends Platform implements PlatformInterface
      * Enriches a specific visit with additional Criteo information when this visit came from Criteo.
      *
      * @param array &$visit
-     * @param array $adData
+     * @param array $adParams
      * @return array
      * @throws \Exception
      */
-    public function enrichVisit(array &$visit, array $adData)
+    public function enrichVisit(array &$visit, array $adParams)
     {
         $sql = 'SELECT
                     campaign_id AS campaignId,
@@ -37,11 +37,11 @@ class Criteo extends Platform implements PlatformInterface
             $sql,
             [
                 date('Y-m-d', strtotime($visit['firstActionTime'])),
-                $adData['campaignId'],
+                $adParams['campaignId'],
             ]
         );
 
-        $visit['adData'] = array_merge($adData, ($results ? $results : []));
+        $visit['adParams'] = array_merge($adParams, ($results ? $results : []));
 
         return $visit;
     }
@@ -53,32 +53,32 @@ class Criteo extends Platform implements PlatformInterface
      * @param array $queryParams
      * @return mixed
      */
-    public function getAdDataFromQueryParams($paramPrefix, array $queryParams)
+    public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
-        $adData = [
+        $adParams = [
             'platform' => 'Criteo',
         ];
 
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adData['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
         } else {
-            $adData['campaignId'] = null;
+            $adParams['campaignId'] = null;
         }
 
-        return $adData;
+        return $adParams;
     }
 
     /**
      * Builds a string key from the ad data to reference explicit platform data.
      * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
-     * @param array $adData
+     * @param array $adParams
      * @return mixed
      */
-    public function getAdKeyFromAdData(array $adData)
+    public function getAdKeyFromAdParams(array $adParams)
     {
-        if (array_key_exists('campaignId', $adData)) {
-            return 'criteo' . '-' . $adData['campaignId'];
+        if (array_key_exists('campaignId', $adParams)) {
+            return 'criteo' . '-' . $adParams['campaignId'];
         }
 
         return null;

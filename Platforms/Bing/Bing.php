@@ -56,7 +56,7 @@ class Bing extends Platform implements PlatformInterface
             ]
         );
 
-        $visit['adData']['enriched'] = array_merge(['source' => 'Bing'], $results);
+        $visit['adParams']['enriched'] = array_merge(['source' => 'Bing'], $results);
 
         return $visit;
     }
@@ -68,33 +68,33 @@ class Bing extends Platform implements PlatformInterface
      * @param array $queryParams
      * @return mixed
      */
-    public function getAdDataFromQueryParams($paramPrefix, array $queryParams)
+    public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
-        $adData = [
+        $adParams = [
             'platform' => 'Bing',
         ];
 
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adData['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
         }
 
         if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
-            $adData['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
         }
 
         if (array_key_exists($paramPrefix . '_order_item_id', $queryParams)) {
-            $adData['orderItemId'] = $queryParams[$paramPrefix . '_order_item_id'];
+            $adParams['orderItemId'] = $queryParams[$paramPrefix . '_order_item_id'];
         }
 
         if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
-            $adData['targetId'] = $queryParams[$paramPrefix . '_target_id'];
+            $adParams['targetId'] = $queryParams[$paramPrefix . '_target_id'];
         }
 
         if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
-            $adData['adId'] = $queryParams[$paramPrefix . '_ad_id'];
+            $adParams['adId'] = $queryParams[$paramPrefix . '_ad_id'];
         }
 
-        return $adData;
+        return $adParams;
     }
 
     /**
@@ -103,21 +103,21 @@ class Bing extends Platform implements PlatformInterface
      *
      * @see http://help.bingads.microsoft.com/apex/index/3/en-us/51091
      *
-     * @param array $adData
+     * @param array $adParams
      * @return mixed
      */
-    public function getAdKeyFromAdData(array $adData)
+    public function getAdKeyFromAdParams(array $adParams)
     {
         // TODO: When to use {TargetId} and when to use {OrderItemId}?!
 
         // Regular keyword ("kwd-" in {TargetId})
         // TODO: Not sure about this implementation...
-        if (array_key_exists('campaignId', $adData)
-            && array_key_exists('adGroupId', $adData)
-            && array_key_exists('orderItemId', $adData)
-            && (substr($adData['orderItemId'], 0, strlen($adData['orderItemId'])) === 'kwd-')
+        if (array_key_exists('campaignId', $adParams)
+            && array_key_exists('adGroupId', $adParams)
+            && array_key_exists('orderItemId', $adParams)
+            && (substr($adParams['orderItemId'], 0, strlen($adParams['orderItemId'])) === 'kwd-')
         ) {
-            return $adData['campaignId'] . '|' . $adData['adGroupId'] . '|' . $adData['orderItemId'];
+            return $adParams['campaignId'] . '|' . $adParams['adGroupId'] . '|' . $adParams['orderItemId'];
         }
 
         // Remarketing list ("aud-" in {TargetId})

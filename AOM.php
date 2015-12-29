@@ -98,7 +98,7 @@ class AOM extends \Piwik\Plugin
      * @param string $url
      * @return mixed Either the contents of this plugin's params or null when no params are found.
      */
-    public static function getAdDataFromUrl($url)
+    public static function getAdParamsFromUrl($url)
     {
         $settings = new Settings();
         $paramPrefix = $settings->paramPrefix->getValue();
@@ -116,12 +116,12 @@ class AOM extends \Piwik\Plugin
             /** @var PlatformInterface $platform */
             $platform = new $className();
 
-            $adData = ($platform->isActive()
-                ? $platform->getAdDataFromQueryParams($paramPrefix, $queryParams)
+            $adParams = ($platform->isActive()
+                ? $platform->getAdParamsFromQueryParams($paramPrefix, $queryParams)
                 : null
             );
 
-            return $adData;
+            return $adParams;
         }
 
         return null;

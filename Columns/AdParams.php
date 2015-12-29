@@ -14,9 +14,9 @@ use Piwik\Tracker\Action;
 use Piwik\Tracker\Request;
 use Piwik\Tracker\Visitor;
 
-class AdData extends VisitDimension
+class AdParams extends VisitDimension
 {
-    protected $columnName = 'aom_ad_data';
+    protected $columnName = 'aom_ad_params';
     protected $columnType = 'VARCHAR(1024) NULL';
 
     /**
@@ -25,11 +25,11 @@ class AdData extends VisitDimension
      * @param Request $request
      * @param Visitor $visitor
      * @param Action|null $action
-     * @return mixed The value to be saved in 'aom_ad_data'. By returning boolean false no value will be saved.
+     * @return mixed The value to be saved in 'aom_ad_params'. By returning boolean false no value will be saved.
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
-        return json_encode(AOM::getAdDataFromUrl($action->getActionUrl()));
+        return json_encode(AOM::getAdParamsFromUrl($action->getActionUrl()));
     }
 
     /**
@@ -44,16 +44,16 @@ class AdData extends VisitDimension
      */
     public function shouldForceNewVisit(Request $request, Visitor $visitor, Action $action = null)
     {
-        $adData = AOM::getAdDataFromUrl($action->getActionUrl());
+        $adParams = AOM::getAdParamsFromUrl($action->getActionUrl());
 
         // Keep Piwik's default behaviour when we do not have any ad data
-        if (!is_array($adData)) {
+        if (!is_array($adParams)) {
             return false;
         }
 
         // Get ad data of on-going visit
         $lastVisitAdData = Db::fetchOne(
-            'SELECT aom_ad_data FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?',
+            'SELECT aom_ad_params FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?',
             [$visitor->visitProperties->getProperty('idvisit')]
         );
 
@@ -73,7 +73,7 @@ class AdData extends VisitDimension
             return true;
         }
 
-        return (count(array_diff_assoc($lastVisitAdData, $adData)) > 0
-            || count(array_diff_assoc($adData, $lastVisitAdData)) > 0);
+        return (count(array_diff_assoc($lastVisitAdData, $adParams)) > 0
+            || count(array_diff_assoc($adParams, $lastVisitAdData)) > 0);
     }
 }

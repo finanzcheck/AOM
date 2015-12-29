@@ -48,30 +48,30 @@ interface PlatformInterface
     public function import($startDate = null, $endDate = null);
 
     /**
-     * Extracts advertisement platform specific data from the query params and stores it in piwik_log_visit.aom_ad_data.
+     * Extracts advertisement platform specific data from the query params and stores it in piwik_log_visit.aom_ad_params.
      * The implementation of this method must ensure a consistently ordered JSON.
      *
      * @param string $paramPrefix
      * @param array $queryParams
      * @return mixed
      */
-    public function getAdDataFromQueryParams($paramPrefix, array $queryParams);
+    public function getAdParamsFromQueryParams($paramPrefix, array $queryParams);
 
     /**
      * Builds a string key from the ad data to reference explicit platform data.
      * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *
-     * @param array $adData
+     * @param array $adParams
      * @return mixed
      */
-    public function getAdKeyFromAdData(array $adData);
+    public function getAdKeyFromAdParams(array $adParams);
 
     /**
      * Enriches a visit with platform specific information (e.g. campaign name, creative, cpc).
      *
      * @param array &$visit The visit to enrich with platform specific information.
-     * @param array $adData Details about the ad the visitor came from.
+     * @param array $adParams Details about the ad the visitor came from.
      * @return mixed
      */
-    public function enrichVisit(array &$visit, array $adData);
+    public function enrichVisit(array &$visit, array $adParams);
 }

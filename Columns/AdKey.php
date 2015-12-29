@@ -47,17 +47,17 @@ class AdKey extends VisitDimension
         // TODO: This entire stuff must be refactored!
 
 //        // TODO: We call AOM::getAdDataFromUrl() multiple times, which might be bad in terms of performance.
-//        $adData = AOM::getAdDataFromUrl($action->getActionUrl());
+//        $adParams = AOM::getAdParamsFromUrl($action->getActionUrl());
 //
-//        if (is_array($adData) && array_key_exists('platform', $adData)) {
+//        if (is_array($adParams) && array_key_exists('platform', $adParams)) {
 //
-//            if (in_array($adData['platform'], AOM::getPlatforms())) {
+//            if (in_array($adParams['platform'], AOM::getPlatforms())) {
 //
-//                $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $adData['platform'] . '\\' . $adData['platform'];
+//                $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $adParams['platform'] . '\\' . $adParams['platform'];
 //
 //                /** @var PlatformInterface $platform */
 //                $platform = new $className();
-//                $adKey = $platform->getAdKeyFromAdData($adData);
+//                $adKey = $platform->getAdKeyFromAdParams($adParams);
 //
 //                return $adKey;
 //            }

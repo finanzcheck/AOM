@@ -12,7 +12,7 @@ To obtain data (campaign names, costs, ad impressions, etc.) from the advertisin
 and configured within the settings of this plugin. 
 
 To map individual visits with the data from the advertising platforms, all links from the platforms must have additional 
-params that supply the required data to this plugin. This data is stored in `piwik_log_visit.aom_ad_data`. 
+params that supply the required data to this plugin. This data is stored in `piwik_log_visit.aom_ad_params`. 
 When a visitor returns with other tracking params, a new visit starts automatically. 
 
 
@@ -41,7 +41,7 @@ A typical link at Google AdWords (with the prefix "aom") should have the followi
 
     &aom_platform=AdWords&aom_campaign_id={campaignid}&aom_ad_group_id={adgroupid}&aom_target_id={targetid}&aom_creative={creative}&aom_placement={placement}&aom_network={network}&aom_device={device}&aom_ad_position={adposition}&aom_loc_physical={locPhysical}&aom_loc_Interest={locInterest}
     
-When a Google AdWords ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_data`:
+When a Google AdWords ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
 
     {"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","targetId":"kwd-118607649","creative":"47609133356","placement":"","network":"g","device":"m","adPosition":"1t2","locPhysical":"20228","locInterest":"1004074"}
     {"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","network":"d","device":"c","adPosition":"none","locPhysical":"9041542","locInterest":""}
@@ -81,7 +81,7 @@ A typical link at Microsoft Bing Ads (with the prefix "aom") should have the fol
 
     &aom_platform=Bing&aom_campaign_id={CampaignId}&aom_ad_group_id={AdGroupId}&aom_order_item_id={OrderItemId}&aom_target_id={TargetId}&aom_ad_id={AdId}
 
-When a Bing ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_data`:
+When a Bing ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
 
     {"platform":"Bing","campaignId":190561279,"adGroupId":2029114499,"orderItemId":40414589411,"targetId":"40414589411","adId":5222037942}
 
@@ -112,7 +112,7 @@ A typical link at Criteo (with the prefix "aom") should have the following param
 
     &aom_platform=Criteo&aom_campaign_id=14340
 
-When a Criteo ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_data`:
+When a Criteo ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
 
     {"platform":"Criteo","campaignId":"14340"}  
 
@@ -143,7 +143,7 @@ A typical link at FacebookAds (with the prefix "aom") should have the following 
 
     &aom_platform=FacebookAds&aom_campaign_group_id=4160286035775&aom_campaign_id=6028603577541&aom_ad_group_id=5760286037541
     
-When a Facebook Ads ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_data`:
+When a Facebook Ads ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
 
     {"platform":"FacebookAds","campaignGroupId":"4160286035775","campaignId":"6028603577541","adGroupId":"5760286037541"}
 
