@@ -96,6 +96,31 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
+     * Extracts and returns the platfrom from a given URL or null when no platform is identified.
+     *
+     * @param string $url
+     * @return mixed Either the contents of this plugin's params or null when no params are found.
+     */
+    public static function getPlatformFromUrl($url)
+    {
+        $settings = new Settings();
+        $paramPrefix = $settings->paramPrefix->getValue();
+
+        $queryString = parse_url($url, PHP_URL_QUERY);
+        parse_str($queryString, $queryParams);
+
+        if (is_array($queryParams)
+            && array_key_exists($paramPrefix . '_platform', $queryParams)
+            && in_array($queryParams[$paramPrefix . '_platform'], AOM::getPlatforms())
+        ) {
+            return $queryParams[$paramPrefix . '_platform'];
+        }
+
+        return null;
+    }
+
+
+    /**
      * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.
      *
      * @param string $url

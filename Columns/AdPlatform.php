@@ -8,7 +8,9 @@ namespace Piwik\Plugins\AOM\Columns;
 
 use Piwik\Db;
 use Piwik\Plugin\Dimension\VisitDimension;
-
+use Piwik\Plugins\AOM\AOM;
+use Piwik\Tracker\Request;
+use Piwik\Tracker\Visitor;
 
 class AdPlatform extends VisitDimension
 {
@@ -29,4 +31,13 @@ class AdPlatform extends VisitDimension
 
         return $changes;
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function onNewVisit(Request $request, Visitor $visitor, $action)
+    {
+        return AOM::getPlatformFromUrl($action->getActionUrl());
+    }
+
 }
