@@ -96,10 +96,10 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Extracts and returns the platfrom from a given URL or null when no platform is identified.
+     * Extracts and returns the advertising platform from a given URL or null when no platform is identified.
      *
      * @param string $url
-     * @return mixed Either the contents of this plugin's params or null when no params are found.
+     * @return mixed Either the platform or null when no valid platform could be extracted.
      */
     public static function getPlatformFromUrl($url)
     {
@@ -118,7 +118,6 @@ class AOM extends \Piwik\Plugin
 
         return null;
     }
-
 
     /**
      * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.

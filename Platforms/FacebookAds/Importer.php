@@ -6,8 +6,10 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 
-use DateTime;
-use DateTimeZone;
+use FacebookAds\Api;
+use FacebookAds\Object\AdAccount;
+use FacebookAds\Object\Fields\InsightsFields;
+use FacebookAds\Object\Values\InsightsLevels;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -21,7 +23,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'] as $id => $account) {
-            $this->importAccount($account, $startDate, $endDate);
+            if (array_key_exists('active', $account) && true === $account['active']) {
+                $this->importAccount($account, $startDate, $endDate);
+            } else {
+                var_dump('Skipping inactive account.'); // TODO: Use better logging!
+            }
         }
     }
 
@@ -38,141 +44,56 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             [$startDate, $endDate]
         );
 
-
-
-
-
-
-
-
-
-
-
-
-        // Calculate time interval
-        // https://developers.facebook.com/docs/marketing-api/guides/chapter-7-ad-report-stats?locale=de_DE#range
-        $startDate = DateTime::createFromFormat(
-            'Y-m-d h:i:s',
-            ($startDate . '00:00:00'),
-            new DateTimeZone($this->platform->getSettings()->facebookAdsTimezone->getValue())
-        );
-        $endDate = DateTime::createFromFormat(
-            'Y-m-d h:i:s',
-            ($endDate . '00:00:00'),
-            new DateTimeZone($this->platform->getSettings()->facebookAdsTimezone->getValue())
+        Api::init(
+            $account['clientId'],
+            $account['clientSecret'],
+            $account['accessToken']
         );
 
-        // Trigger report creation
-        // TODO: Consider this: https://developers.facebook.com/docs/marketing-api/guides/chapter-7-ad-report-stats?locale=de_DE#windows!
-        $ch = curl_init();
-        curl_setopt(
-            $ch,
-            CURLOPT_URL,
-            'https://graph.facebook.com/v2.5/act_' . $this->platform->getSettings()->facebookAdsAccountId->getValue() . '/insights'
-        );
-        curl_setopt($ch, CURLOPT_POSTFIELDS, [
-            'access_token' => $this->platform->getSettings()->facebookAdsAccessToken->getValue(),
-            'level' => 'ad',
-
-            // TODO: https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/
-//            'time_interval' => '{since:' . $startDate->getTimestamp() . ', until:' . ($endDate->getTimestamp() + 86400) . '}',
-
-            // TODO: Following stuff is outdated!
-//            'data_columns' => '["account_id", "account_name", "campaign_group_id", "campaign_group_name", "campaign_id",
-//                "campaign_name", "adgroup_id", "adgroup_name", "adgroup_objective", "total_actions", "spend"]',
-//            'time_interval' => '{time_start:' . $startDate->getTimestamp() . ', time_stop:' . ($endDate->getTimestamp() + 86400) . '}',
-//            'time_increment' => 1,
-//            'actions_group_by' => "['action_type','action_target_id']",
-            'async' => true,
+        $adAccount = new AdAccount('act_' . $account['accountId']);
+        $insights = $adAccount->getInsights([
+            InsightsFields::DATE_START,
+            InsightsFields::ACCOUNT_NAME,
+            InsightsFields::CAMPAIGN_ID,
+            InsightsFields::CAMPAIGN_NAME,
+            InsightsFields::ADSET_ID,
+            InsightsFields::ADSET_NAME,
+            InsightsFields::AD_NAME,
+            InsightsFields::AD_ID,
+            InsightsFields::IMPRESSIONS,
+            InsightsFields::INLINE_LINK_CLICKS,
+            InsightsFields::SPEND,
+        ], [
+            'level' => InsightsLevels::AD,
+            'time_range' => [
+                'since' => $startDate,
+                'until' => $endDate,
+            ],
         ]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-        $output = curl_exec($ch);
-        $error = curl_errno($ch);
-        if ($error > 0) {
-            die('(error #' . $error . ': ' . curl_error($ch) . ').');
-        }
-        curl_close($ch);
-        $response = json_decode($output, true);
-        if (is_array($response) && array_key_exists('error', $response)) {
-            die('ERROR: ' . $output);
-        } elseif (is_array($response) && array_key_exists('report_run_id', $response)) {
-            $reportId = $response['report_run_id'];
-        } else {
-            die('INVALID RESPONSE: ' . $output);
-        }
-
-        // Wait for report
-        while(true) {
-
-            sleep(30);
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, 'https://graph.facebook.com/v2.5/' . $reportId
-                . '?access_token=' . $this->platform->getSettings()->facebookAdsAccessToken->getValue());
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-            $output = curl_exec($ch);
-            $error = curl_errno($ch);
-            if ($error > 0) {
-                die('(error #' . $error . ': ' . curl_error($ch) . ').');
-            }
-            curl_close($ch);
-            $response = json_decode($output, true);
-            if (is_array($response) && array_key_exists('error', $response)) {
-                die('ERROR: ' . $output);
-            } elseif (is_array($response) && array_key_exists('async_status', $response)) {
-                if ('Job Completed' === $response['async_status']) {
-                    break;
-                }
-                continue;
-            } else {
-                die('INVALID RESPONSE: ' . $output);
-            }
-        }
-
-        // Download report
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'https://graph.facebook.com/v2.5/act_'
-            . $this->platform->getSettings()->facebookAdsUserAccountId->getValue() . '/insights?report_run_id='
-            . $reportId . '&access_token=' . $this->platform->getSettings()->facebookAdsAccessToken->getValue());
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-        $output = curl_exec($ch);
-        $error = curl_errno($ch);
-        if ($error > 0) {
-            die('(error #' . $error . ': ' . curl_error($ch) . ').');
-        }
-        curl_close($ch);
-
-        $results = json_decode($output, true);
-
-        var_dump($results);
 
         // TODO: Use MySQL transaction to improve performance!
-        if (array_key_exists('data', $results) && is_array($results['data'])) {
-            foreach ($results['data'] as $row) {
-                Db::query(
-                    'INSERT INTO ' . FacebookAds::getDataTableName() . ' (idsite, date, account_id, '
-                    . 'account_name, campaign_group_id, campaign_group_name, campaign_id, campaign_name, adgroup_id, '
-                    . 'adgroup_name, adgroup_objective, spend, total_actions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [
-                        $account['websiteId'],
-                        $row['date_start'],
-                        $row['account_id'],
-                        $row['account_name'],
-                        $row['campaign_group_id'],
-                        $row['campaign_group_name'],
-                        $row['campaign_id'],
-                        $row['campaign_name'],
-                        $row['adgroup_id'],
-                        $row['adgroup_name'],
-                        $row['adgroup_objective'],
-                        $row['spend'],
-                        $row['total_actions'],
-                    ]
-                );
-            }
+        foreach ($insights as $insight) {
+            Db::query(
+                'INSERT INTO ' . FacebookAds::getDataTableName()
+                    . ' (idsite, date, account_id, account_name, campaign_id, campaign_name, adset_id, adset_name, '
+                    . 'ad_id, ad_name, impressions, inline_link_clicks, spend) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $account['websiteId'],
+                    $insight->getData()[InsightsFields::DATE_START],
+                    $account['accountId'],
+                    $insight->getData()[InsightsFields::ACCOUNT_NAME],
+                    $insight->getData()[InsightsFields::CAMPAIGN_ID],
+                    $insight->getData()[InsightsFields::CAMPAIGN_NAME],
+                    $insight->getData()[InsightsFields::ADSET_ID],
+                    $insight->getData()[InsightsFields::ADSET_NAME],
+                    $insight->getData()[InsightsFields::AD_ID],
+                    $insight->getData()[InsightsFields::AD_NAME],
+                    $insight->getData()[InsightsFields::IMPRESSIONS],
+                    $insight->getData()[InsightsFields::INLINE_LINK_CLICKS],
+                    $insight->getData()[InsightsFields::SPEND],
+                ]
+            );
         }
     }
 }

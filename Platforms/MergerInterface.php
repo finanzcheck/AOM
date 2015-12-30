@@ -9,7 +9,7 @@ namespace Piwik\Plugins\AOM\Platforms;
 interface MergerInterface
 {
     /**
-     * Imports platform data for the specified period.
+     * Merges platform data for the specified period.
      *
      * @param string $startDate YYYY-MM-DD
      * @param string $endDate   YYYY-MM-DD

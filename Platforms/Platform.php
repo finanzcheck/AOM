@@ -108,7 +108,7 @@ abstract class Platform
     }
 
     /**
-     * Merge platform data for the specified period.
+     * Merges platform data for the specified period.
      * If no period has been specified, we'll try to merge yesterdays data only.
      *
      * @param string $startDate YYYY-MM-DD
@@ -129,14 +129,13 @@ abstract class Platform
             $endDate = date('Y-m-d', strtotime('-1 day', time()));
         }
 
-        // Instantiate importer and inject platform
+        // Instantiate merger and inject platform
         $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $this->getUnqualifiedClassName() . '\\Merger';
 
-        /** @var ImporterInterface $importer */
-        $importer = new $className($this);
-        $importer->merge($startDate, $endDate);
+        /** @var MergerInterface $merger */
+        $merger = new $className($this);
+        $merger->merge($startDate, $endDate);
     }
-
 
     /**
      * Returns the platform's unqualified class name

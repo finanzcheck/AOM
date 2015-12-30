@@ -40,7 +40,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_BING]['accounts'] as $id => $account) {
-            $this->importAccount($id, $account, $startDate, $endDate);
+            if (array_key_exists('active', $account) && true === $account['active']) {
+                $this->importAccount($id, $account, $startDate, $endDate);
+            } else {
+                var_dump('Skipping inactive account.'); // TODO: Use better logging!
+            }
         }
     }
 

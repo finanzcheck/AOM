@@ -39,6 +39,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             'userAccountId' => $userAccountId,
             'accountId' => $accountId,
             'accessToken' => null,
+            'active' => true,
         ];
 
         $settings->setConfiguration($configuration);
@@ -112,7 +113,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
 
         if (isset($accessToken)) {
 
-            $configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'][$id]['accessToken'] = $accessToken;
+            $configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'][$id]['accessToken'] = $accessToken->getValue();
             $settings->setConfiguration($configuration);
 
             header('Location: ?module=AOM&action=settings');

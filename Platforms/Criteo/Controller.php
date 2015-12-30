@@ -31,7 +31,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             'appToken' => $appToken,
             'username' => $username,
             'password' => $password,
-
+            'active' => true,
         ];
 
         $settings->setConfiguration($configuration);

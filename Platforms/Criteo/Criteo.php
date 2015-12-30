@@ -65,7 +65,7 @@ class Criteo extends Platform implements PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
         $adParams = [
-            'platform' => 'Criteo',
+            'platform' => AOM::PLATFORM_CRITEO,
         ];
 
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {

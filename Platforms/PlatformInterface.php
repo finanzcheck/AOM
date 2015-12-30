@@ -48,6 +48,15 @@ interface PlatformInterface
     public function import($startDate = null, $endDate = null);
 
     /**
+     * Merges platform data for the specified period.
+     *
+     * @param string $startDate YYYY-MM-DD
+     * @param string $endDate   YYYY-MM-DD
+     * @return mixed
+     */
+    public function merge($startDate = null, $endDate = null);
+
+    /**
      * Extracts advertisement platform specific data from the query params and stores it in piwik_log_visit.aom_ad_params.
      * The implementation of this method must ensure a consistently ordered JSON.
      *

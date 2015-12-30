@@ -20,15 +20,15 @@ class Installer implements InstallerInterface
                         date DATE NOT NULL,
                         account_id BIGINT NOT NULL,
                         account_name VARCHAR(255) NOT NULL,
-                        campaign_group_id BIGINT NOT NULL,
-                        campaign_group_name VARCHAR(255) NOT NULL,
                         campaign_id BIGINT NOT NULL,
                         campaign_name VARCHAR(255) NOT NULL,
-                        adgroup_id BIGINT NOT NULL,
-                        adgroup_name VARCHAR(255) NOT NULL,
-                        adgroup_objective VARCHAR(255) NOT NULL,
-                        spend FLOAT NOT NULL,
-                        total_actions INTEGER NOT NULL
+                        adset_id BIGINT NOT NULL,
+                        adset_name VARCHAR(255) NOT NULL,
+                        ad_id BIGINT NOT NULL,
+                        ad_name VARCHAR(255) NOT NULL,
+                        impressions INTEGER NOT NULL,
+                        inline_link_clicks INTEGER NOT NULL,
+                        spend FLOAT NOT NULL
                     )  DEFAULT CHARSET=utf8';
             Db::exec($sql);
         } catch (\Exception $e) {
@@ -40,7 +40,7 @@ class Installer implements InstallerInterface
 
         try {
             $sql = 'CREATE INDEX index_aom_facebook ON ' . FacebookAds::getDataTableName()
-                . ' (date, account_id)';  // TODO...
+                . ' (idsite, date, account_id)';  // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
             // ignore error if index already exists (1061)

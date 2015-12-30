@@ -132,8 +132,8 @@ class Fixtures extends Fixture
         $this->moveTimeForward($t, 0.1, $dateTime);
         $t->setUrl(
             'http://example.com/?aom_platform=AdWords&aom_campaign_id=184418636&aom_ad_group_id=9794351276'
-            . '&aom_target_id=kwd-118607649&aom_creative=47609133356&aom_placement=&aom_network=g&aom_device=m'
-            . '&aom_ad_position=1t2&aom_loc_physical=20228&aom_loc_Interest=1004074'
+            . '&aom_feed_item_id=&aom_target_id=kwd-118607649&aom_creative=47609133356&aom_placement=&aom_target='
+            . '&aom_network=g&aom_device=m&aom_ad_position=1t2&aom_loc_physical=20228&aom_loc_Interest=1004074'
         );
         self::checkResponse($t->doTrackPageView('Visit from AdWords'));
 
@@ -156,8 +156,8 @@ class Fixtures extends Fixture
         $t->setUserId('f5b1f79d27951b0b309ff42919c1aed2');
         $this->moveTimeForward($t, 0.2, $dateTime);
         $t->setUrl(
-            'http://example.com/?aom_platform=FacebookAds&aom_campaign_group_id=4160286035775'
-            . '&aom_campaign_id=6028603577541&aom_ad_group_id=5760286037541'
+            'http://example.com/?aom_platform=FacebookAds&aom_campaign_id=4160286035775&aom_adset_id=6028603577541'
+            . '&aom_ad_id=5760286037541'
         );
         self::checkResponse($t->doTrackPageView('Visit from Bing'));
     }

@@ -12,7 +12,7 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Tracker\Request;
 use Piwik\Tracker\Visitor;
 
-class AdPlatform extends VisitDimension
+class Platform extends VisitDimension
 {
     protected $columnName = 'aom_platform';
     protected $columnType = 'VARCHAR(255) NULL';
@@ -39,5 +39,4 @@ class AdPlatform extends VisitDimension
     {
         return AOM::getPlatformFromUrl($action->getActionUrl());
     }
-
 }

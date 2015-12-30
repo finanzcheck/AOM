@@ -51,19 +51,19 @@ class FacebookAds extends Platform implements PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
         $adParams = [
-            'platform' => 'FacebookAds',
+            'platform' => AOM::PLATFORM_FACEBOOK_ADS,
         ];
-
-        if (array_key_exists($paramPrefix . '_campaign_group_id', $queryParams)) {
-            $adParams['campaignGroupId'] = $queryParams[$paramPrefix . '_campaign_group_id'];
-        }
 
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
             $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
         }
 
-        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
-            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+        if (array_key_exists($paramPrefix . '_adset_id', $queryParams)) {
+            $adParams['adsetId'] = $queryParams[$paramPrefix . '_adset_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
+            $adParams['adId'] = $queryParams[$paramPrefix . '_ad_id'];
         }
 
         return $adParams;

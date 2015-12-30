@@ -23,23 +23,25 @@ When a visitor returns with other tracking params, a new visit starts automatica
 We use [ValueTrack params](https://support.google.com/adwords/answer/2375447?hl=en) to obtain the required data.
 The following params are supported:
 
-| Param                 | Mandatory | Contents      |
-| --------------------- | --------- | ------------- | 
-| {prefix}_platform     | true      | AdWords       |  
-| {prefix}_campaign_id  | false     | {campaignid}  |
-| {prefix}_ad_group_id  | false     | {adgroupid}   |
-| {prefix}_target_id    | false     | {targetid}    |
-| {prefix}_creative     | false     | {creative}    |
-| {prefix}_placement    | false     | {placement}   |
-| {prefix}_network      | false     | {network}     |
-| {prefix}_device       | false     | {device}      |
-| {prefix}_ad_position  | false     | {adposition}  |
-| {prefix}_loc_physical | false     | {locPhysical} |
-| {prefix}_loc_interest | false     | {locInterest} |
+| Param                 | Mandatory | Contents          | Description                                                                                                                     |
+| --------------------- | --------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| {prefix}_platform     | true      | AdWords           |                                                                                                                                 |
+| {prefix}_campaign_id  | true      | {campaignid}      | The campaign ID.                                                                                                                |
+| {prefix}_ad_group_id  | true      | {adgroupid}       | The ad group ID.                                                                                                                |
+| {prefix}_feed_item_id | false     | {feeditemid}      | Most probably the ID of a specific [sitelink](https://developers.google.com/adwords/api/docs/guides/feed-services).             |
+| {prefix}_target_id    | true      | {targetid}        | The ID of the keyword, dynamic search ad, remarketing list target or product partition ID that triggered an ad.                 |
+| {prefix}_creative     | false     | {creative}        | A unique ID for your ad.                                                                                                        |
+| {prefix}_placement    | true      | {placement}       | The content site where your ad was clicked or the matching placement targeting criteria for the site where your ad was clicked. |
+| {prefix}_target       | true      | {target}          | A placement category (works with placement-targeted campaigns only).                                                            |
+| {prefix}_network      | true      | {network}         | Where the click came from: "g" for Google search, "s" for a search partner, or "d" for the display network.                     |
+| {prefix}_device       | true      | {device}          | What device the click came from: "m" for mobile (including WAP), "t" for tablet, and "c" for computer.                          |
+| {prefix}_ad_position  | false     | {adposition}      |                                                                                                                                 |
+| {prefix}_loc_physical | false     | {loc_physical_ms} | The ID of the geographical location of the click.                                                                               |
+| {prefix}_loc_interest | false     | {loc_interest_ms} | The ID of the location of interest that helped trigger the ad.                                                                  |
 
 A typical link at Google AdWords (with the prefix "aom") should have the following params:
 
-    &aom_platform=AdWords&aom_campaign_id={campaignid}&aom_ad_group_id={adgroupid}&aom_target_id={targetid}&aom_creative={creative}&aom_placement={placement}&aom_network={network}&aom_device={device}&aom_ad_position={adposition}&aom_loc_physical={locPhysical}&aom_loc_Interest={locInterest}
+    &aom_platform=AdWords&aom_campaign_id={campaignid}&aom_ad_group_id={adgroupid}&aom_feed_item_id={feeditemid}&aom_target_id={targetid}&aom_creative={creative}&aom_placement={placement}&aom_target={target}&aom_network={network}&aom_device={device}&aom_ad_position={adposition}&aom_loc_physical={loc_physical_ms}&aom_loc_Interest={loc_interest_ms}
     
 When a Google AdWords ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
 
@@ -132,20 +134,20 @@ Merging is solely based on Criteo's campaign ID.
 When using Facebook Ads, all links must be created manually.
 The following params must be replaced manually with their corresponding IDs:
 
-| Param                      | Mandatory | Contents      |
-| -------------------------- | --------- | ------------- | 
-| {prefix}_platform          | true      | Criteo        |  
-| {prefix}_campaign_group_id | false     | 4160286035775 |
-| {prefix}_campaign_id       | false     | 6028603577541 |
-| {prefix}_ad_group_id       | false     | 5760286037541 |
+| Param                | Mandatory | Contents      |
+| -------------------- | --------- | ------------- | 
+| {prefix}_platform    | true      | FacebookAds   |  
+| {prefix}_campaign_id | false     | 4160286035775 |
+| {prefix}_adset_id    | false     | 6028603577541 |
+| {prefix}_ad_id       | false     | 5760286037541 |
 
 A typical link at FacebookAds (with the prefix "aom") should have the following params:
 
-    &aom_platform=FacebookAds&aom_campaign_group_id=4160286035775&aom_campaign_id=6028603577541&aom_ad_group_id=5760286037541
+    &aom_platform=FacebookAds&aom_campaign_id=4160286035775&aom_adset_id=6028603577541&aom_ad_id=5760286037541
     
 When a Facebook Ads ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
 
-    {"platform":"FacebookAds","campaignGroupId":"4160286035775","campaignId":"6028603577541","adGroupId":"5760286037541"}
+    {"platform":"FacebookAds","campaignId":"4160286035775","adsetId":"6028603577541","adId":"5760286037541"}
 
 
 #### Importing & merging
@@ -226,9 +228,10 @@ in `config.ini.php`, e.g.:
     http_host = "local.piwik.de"
     request_uri = "/"
 
+Run all tests with `./console tests:run --group AOM`.
+
 Run unit tests with `./console tests:run --group AOM_Unit`.
 Run integration tests with `./console tests:run --group AOM_Integration`.
-Run all tests with `./console tests:run --group AOM`.
 
 
 ## Changelog

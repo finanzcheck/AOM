@@ -6,13 +6,10 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Criteo;
 
-use Exception;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
-use SoapClient;
-use SoapFault;
-use SoapHeader;
 
 class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterface
 {
@@ -33,15 +30,15 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
     public function merge($startDate, $endDate)
     {
-        //Get all relevant visits
+        // Get all relevant visits
         $visits = DB::fetchAll(
             'SELECT * FROM  ' . Common::prefixTable(
                 'log_visit'
-            ) . '  WHERE visit_first_action_time >= ? AND visit_first_action_time <= ? AND aom_platform = \'criteo\'',
-            [$startDate, $endDate]
+            ) . '  WHERE visit_first_action_time >= ? AND visit_first_action_time <= ? AND aom_platform = "?"',
+            [$startDate, $endDate, AOM::PLATFORM_CRITEO]
         );
 
-        //Get all relevant ad data
+        // Get all relevant ad data
         $result = DB::fetchAll(
             'SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE date >= ? AND date <= ?',
             [$startDate, $endDate]
@@ -52,19 +49,19 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
             $adDataMap[$this->buildKeyFromAdData($row)] = $row;
         }
 
-        //Update visits$
+        // Update visits
         $updateStatements = [];
         foreach ($visits as $visit) {
             $key = $this->buildKeyFromVisitor($visit);
             if (isset($adDataMap[$key])) {
-                //Set AdData
+                // Set aom_ad_data
                 $data = json_encode($adDataMap[$key]);
                 $updateStatements[] = 'UPDATE ' . Common::prefixTable(
                         'log_visit'
                     ) . ' SET aom_ad_data = \'' . $data . '\', aom_platform_row_id = ' . $adDataMap[$key]['id'] .
                     ' WHERE idvisit = ' . $visit['idvisit'];
             } elseif ($visit['aom_platform_row_id'] || $visit['aom_ad_data']) {
-                //Unset Addata
+                // Unset aom_ad_data
                 $updateStatements[] = 'UPDATE ' . Common::prefixTable(
                         'log_visit'
                     ) . ' SET aom_ad_data = null, aom_platform_row_id = null' .

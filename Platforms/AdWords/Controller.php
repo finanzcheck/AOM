@@ -38,6 +38,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             'developerToken' => $developerToken,
             'userAgent' => $userAgent,
             'refreshToken' => null,
+            'active' => true,
         ];
 
         $settings->setConfiguration($configuration);

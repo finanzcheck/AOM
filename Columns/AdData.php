@@ -8,11 +8,6 @@ namespace Piwik\Plugins\AOM\Columns;
 
 use Piwik\Db;
 use Piwik\Plugin\Dimension\VisitDimension;
-use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Tracker\Action;
-use Piwik\Tracker\Request;
-use Piwik\Tracker\Visitor;
 
 class AdData extends VisitDimension
 {

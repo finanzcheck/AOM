@@ -26,7 +26,7 @@ class PlatformMerge extends ConsoleCommand
             ->addOption('platform', null, InputOption::VALUE_REQUIRED)
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
-            ->setDescription('Import an advertising platform\'s data for a specific period.');
+            ->setDescription('Merges an advertising platform\'s data for a specific period.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

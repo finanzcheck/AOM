@@ -189,7 +189,7 @@ class AdWords extends Platform implements PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
         $adParams = [
-            'platform' => 'AdWords',
+            'platform' => AOM::PLATFORM_AD_WORDS,
         ];
 
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
@@ -198,6 +198,10 @@ class AdWords extends Platform implements PlatformInterface
 
         if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
             $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+        }
+
+        if (array_key_exists($paramPrefix . '_feed_item_id', $queryParams)) {
+            $adParams['feedItemId'] = $queryParams[$paramPrefix . '_feed_item_id'];
         }
 
         if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
@@ -210,6 +214,10 @@ class AdWords extends Platform implements PlatformInterface
 
         if (array_key_exists($paramPrefix . '_placement', $queryParams)) {
             $adParams['placement'] = $queryParams[$paramPrefix . '_placement'];
+        }
+
+        if (array_key_exists($paramPrefix . '_target', $queryParams)) {
+            $adParams['target'] = $queryParams[$paramPrefix . '_target'];
         }
 
         if (array_key_exists($paramPrefix . '_network', $queryParams)) {

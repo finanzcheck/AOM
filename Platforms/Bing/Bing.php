@@ -80,7 +80,7 @@ class Bing extends Platform implements PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
         $adParams = [
-            'platform' => 'Bing',
+            'platform' => AOM::PLATFORM_BING,
         ];
 
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
