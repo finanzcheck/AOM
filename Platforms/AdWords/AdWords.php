@@ -338,4 +338,13 @@ class AdWords extends Platform implements PlatformInterface
             $oauth2Info
         );
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function getAdDataFromAdParams($idsite, array $adParams)
+    {
+        //Not implemented yet
+        return null;
+    }
 }

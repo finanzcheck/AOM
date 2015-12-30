@@ -92,4 +92,45 @@ class Criteo extends Platform implements PlatformInterface
 
         return null;
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function getAdDataFromAdParams($idsite, array $adParams)
+    {
+        return $this::getAdData($idsite, date('Y-m-d'), $adParams['campaignId']);
+    }
+
+    /**
+     * @param $idsite
+     * @param $date
+     * @param $campaignId
+     * @return null
+     * @throws Exception
+     */
+    public static function getAdData($idsite, $date, $campaignId)
+    {
+        $result = DB::fetchAll('SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE idsite = ? AND date = ? AND campaign_id = ?', [$idsite, $date, $campaignId]);
+        if(count($result) > 0) {
+            return $result[0];
+        }
+        //No direct match found seach for historic data
+        $result = DB::fetchAll('SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE idsite = ? AND campaign_id = ? ORDER BY date DESC', [$idsite, $campaignId]);
+        if(count($result) > 0) {
+            //Remove date spcific information
+            unset($result[0]['impressions']);
+            unset($result[0]['clicks']);
+            unset($result[0]['cost']);
+            unset($result[0]['conversions']);
+            unset($result[0]['conversions_value']);
+            unset($result[0]['conversions_post_view']);
+            unset($result[0]['conversions_post_view_value']);
+
+            return $result[0];
+        }
+
+        return null;
+    }
+
+
 }

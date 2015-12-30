@@ -67,6 +67,18 @@ interface PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams);
 
     /**
+     * Extracts advertisement data s from the ad params and stores it in piwik_log_visit.aom_ad_data.
+     * Ad this point it it likely that there is no actual ad data available. In this case historical data is used to
+     * add some basic information.
+     * The implementation of this method must ensure a consistently ordered JSON.
+     *
+     * @param string $idSite
+     * @param array $adParams
+     * @return mixed
+     */
+    public function getAdDataFromAdParams($idSite, array $adParams);
+
+    /**
      * Builds a string key from the ad data to reference explicit platform data.
      * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
      *

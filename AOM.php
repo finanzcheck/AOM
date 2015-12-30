@@ -7,6 +7,7 @@
 namespace Piwik\Plugins\AOM;
 
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Tracker\Action;
 
 class AOM extends \Piwik\Plugin
 {
@@ -117,6 +118,23 @@ class AOM extends \Piwik\Plugin
         }
 
         return null;
+    }
+
+
+    /**
+     * Tries to find some Ad data for this visit
+     * @param Action $url
+     * @return mixed
+     */
+    public static function getAdData(Action $action)
+    {
+        $params = self::getAdParamsFromUrl($action->getActionUrl());
+        if(!$params) {
+            return null;
+        }
+
+        $platform = self::getPlatformInstance($params['platform']);
+        return $platform->getAdDataFromAdParams($action->request->getIdSite(), $params);
     }
 
     /**

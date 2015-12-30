@@ -135,4 +135,13 @@ class Bing extends Platform implements PlatformInterface
 
         return 'not implemented';
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function getAdDataFromAdParams($idsite, array $adParams)
+    {
+        //Not implemented yet
+        return null;
+    }
 }
