@@ -17,32 +17,32 @@ use Piwik\Plugins\AOM\Settings;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
-    public function import($startDate, $endDate)
+    public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'] as $id => $account) {
             if (array_key_exists('active', $account) && true === $account['active']) {
-                $this->importAccount($account, $startDate, $endDate);
+                foreach ($this->getPeriodAsArrayOfDates() as $date) {
+                    $this->importAccount($id, $account, $date);
+                }
             } else {
-                var_dump('Skipping inactive account.'); // TODO: Use better logging!
+                $this->logger->info('Skipping inactive account.');
             }
         }
     }
 
-    private function importAccount($account, $startDate, $endDate)
+    /**
+     * @param string $id
+     * @param array $account
+     * @param string $date
+     * @throws \Exception
+     */
+    private function importAccount($id, $account, $date)
     {
-        // Delete existing data for the specified period
-        // TODO: this might be more complicated when we already merged / assigned data to visits!?!
-        // TODO: There might be more than 100000 rows?!
-        Db::deleteAllRows(
-            FacebookAds::getDataTableName(),
-            'WHERE date >= ? AND date <= ?',
-            'date',
-            100000,
-            [$startDate, $endDate]
-        );
+        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(FacebookAds::getDataTableName(), $account['websiteId'], $date);
 
         Api::init(
             $account['clientId'],
@@ -66,8 +66,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         ], [
             'level' => InsightsLevels::AD,
             'time_range' => [
-                'since' => $startDate,
-                'until' => $endDate,
+                'since' => $date,
+                'until' => $date,
             ],
         ]);
 
@@ -76,8 +76,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             Db::query(
                 'INSERT INTO ' . FacebookAds::getDataTableName()
                     . ' (idsite, date, account_id, account_name, campaign_id, campaign_name, adset_id, adset_name, '
-                    . 'ad_id, ad_name, impressions, inline_link_clicks, spend) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    . 'ad_id, ad_name, impressions, inline_link_clicks, spend, ts_created) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $account['websiteId'],
                     $insight->getData()[InsightsFields::DATE_START],

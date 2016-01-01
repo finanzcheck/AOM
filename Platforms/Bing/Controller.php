@@ -7,6 +7,7 @@
 namespace Piwik\Plugins\AOM\Platforms\Bing;
 
 use Piwik\Common;
+use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ControllerInterface;
@@ -69,7 +70,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
         header(
             'Location: https://login.live.com/oauth20_authorize.srf?client_id='
             . $configuration[AOM::PLATFORM_BING]['accounts'][$id]['clientId'] . '&scope=bingads.manage'
-            . '&response_type=code&redirect_uri=' . urlencode('http://' . $_SERVER['SERVER_NAME']
+            . '&response_type=code&redirect_uri=' . urlencode(rtrim(Option::get('piwikUrl'), '/')
             . '?module=AOM&action=platformAction&platform=Bing&method=processAccessTokenCode&id=' . $id
         ));
         exit;
@@ -118,7 +119,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
         $url = 'https://login.live.com/oauth20_token.srf?client_id='
             . $configuration[AOM::PLATFORM_BING]['accounts'][$id]['clientId'] . '&client_secret='
             . $configuration[AOM::PLATFORM_BING]['accounts'][$id]['clientSecret'] . '&code=' . $code
-            . '&grant_type=authorization_code&redirect_uri=' . urlencode('http://' . $_SERVER['SERVER_NAME']
+            . '&grant_type=authorization_code&redirect_uri=' . urlencode(rtrim(Option::get('piwikUrl'), '/')
             . '?module=AOM&action=platformAction&platform=Bing&method=processAccessTokenCode&id=' . $id);
 
         $response = file_get_contents($url, null, $context);

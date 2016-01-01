@@ -31,7 +31,8 @@ class Installer implements InstallerInterface
                         impressions INTEGER NOT NULL,
                         clicks INTEGER NOT NULL,
                         cost FLOAT NOT NULL,
-                        conversions INTEGER NOT NULL
+                        conversions INTEGER NOT NULL,
+                        ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
             Db::exec($sql);
         } catch (\Exception $e) {

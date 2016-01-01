@@ -12,8 +12,11 @@ To obtain data (campaign names, costs, ad impressions, etc.) from the advertisin
 and configured within the settings of this plugin. 
 
 To map individual visits with the data from the advertising platforms, all links from the platforms must have additional 
-params that supply the required data to this plugin. This data is stored in `piwik_log_visit.aom_ad_params`. 
-When a visitor returns with other tracking params, a new visit starts automatically. 
+params that supply mapping-related data like campaign and ad IDs to this plugin. This data is stored in 
+`piwik_log_visit.aom_ad_params`. When a visitor returns with other tracking params, a new visit starts automatically. 
+
+Background jobs import and merge the data from the advertising platforms with individual visits. Merged data is is 
+stored in `piwik_log_visit.aom_ad_data`.
 
 
 ### Google AdWords
@@ -45,9 +48,9 @@ A typical link at Google AdWords (with the prefix "aom") should have the followi
     
 When a Google AdWords ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
 
-    {"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","targetId":"kwd-118607649","creative":"47609133356","placement":"","network":"g","device":"m","adPosition":"1t2","locPhysical":"20228","locInterest":"1004074"}
-    {"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","network":"d","device":"c","adPosition":"none","locPhysical":"9041542","locInterest":""}
-    {"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","targetId":"aud-55070239676","creative":"47609140676","placement":"carfansofamerica.com","network":"d","device":"c","adPosition":"none","locPhysical":"9042649","locInterest":""}
+    {"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","feedItemId":"","targetId":"kwd-118607649","creative":"47609133356","placement":"","target":"","network":"g","device":"m","adPosition":"1t2","locPhysical":"20228","locInterest":"1004074"}
+    {"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","feedItemId":"","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","target":"","network":"d","device":"c","adPosition":"none","locPhysical":"9041542","locInterest":""}
+    {"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","feedItemId":"","targetId":"aud-55070239676","creative":"47609140676","placement":"carfansofamerica.com","target":"","network":"d","device":"c","adPosition":"none","locPhysical":"9042649","locInterest":""}
 
 Placements are shortened when the length of the entire JSON is more than 1,024 characters.
 
@@ -206,9 +209,10 @@ To install AOM, follow Piwik's "[How to install a plugin](http://piwik.org/faq/p
 Run `composer install` in `plugins/AOM` to install dependencies, such as the Facebook Ads and Google AdWords SDKs.
 Configure this plugin (e.g. provide API credentials to advertiser's platforms).
 
-Set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/) to automatically import data from the advertiser's 
-platforms. The auto archiving cron job executes the `core:archive command` which triggers 
+Set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/) to automatically import and merge data from the 
+advertiser's platforms. The auto archiving cron job executes the `core:archive command` which triggers 
 [Piwik's TaskScheduler](https://developer.piwik.org/api-reference/Piwik/TaskScheduler) and thus this plugin's tasks. 
+You can import and merge data manually by running `./console core:run-scheduled-tasks --force`.
 
 
 

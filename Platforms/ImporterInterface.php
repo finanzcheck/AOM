@@ -9,11 +9,18 @@ namespace Piwik\Plugins\AOM\Platforms;
 interface ImporterInterface
 {
     /**
-     * Imports platform data for the specified period.
+     * Sets the period to import.
      *
      * @param string $startDate YYYY-MM-DD
-     * @param string $endDate   YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
      * @return mixed
      */
-    public function import($startDate, $endDate);
+    public function setPeriod($startDate, $endDate);
+
+    /**
+     * Imports platform data.
+     *
+     * @return mixed
+     */
+    public function import();
 }

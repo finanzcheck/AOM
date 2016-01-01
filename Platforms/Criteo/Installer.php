@@ -34,7 +34,8 @@ class Installer implements InstallerInterface
                         conversions INTEGER NOT NULL,
                         conversions_value FLOAT NOT NULL,
                         conversions_post_view INTEGER NOT NULL,
-                        conversions_post_view_value FLOAT NOT NULL
+                        conversions_post_view_value FLOAT NOT NULL,
+                        ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
             Db::exec($sql);
         } catch (\Exception $e) {

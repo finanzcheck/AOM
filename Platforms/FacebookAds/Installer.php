@@ -28,7 +28,8 @@ class Installer implements InstallerInterface
                         ad_name VARCHAR(255) NOT NULL,
                         impressions INTEGER NOT NULL,
                         inline_link_clicks INTEGER NOT NULL,
-                        spend FLOAT NOT NULL
+                        spend FLOAT NOT NULL,
+                        ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
             Db::exec($sql);
         } catch (\Exception $e) {

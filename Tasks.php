@@ -7,14 +7,28 @@
 namespace Piwik\Plugins\AOM;
 
 use Piwik\Scheduler\Schedule\Schedule;
+use Psr\Log\LoggerInterface;
 
 class Tasks extends \Piwik\Plugin\Tasks
 {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     public function schedule()
     {
-        foreach (AOM::getPlatforms() as $platform) {
+        foreach (AOM::getPlatforms() as $platformName) {
 
-            $platform = AOM::getPlatformInstance($platform);
+            $platform = AOM::getPlatformInstance($platformName);
 
             if ($platform->isActive()) {
 
@@ -24,6 +38,9 @@ class Tasks extends \Piwik\Plugin\Tasks
                 $schedule = Schedule::getScheduledTimeForPeriod(Schedule::PERIOD_HOUR);
 
                 $this->custom($platform, 'import', null, $schedule);
+
+            } else {
+                $this->logger->info('Skipping inactive platform "' . $platformName. '".');
             }
         }
     }

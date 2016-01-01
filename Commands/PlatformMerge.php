@@ -6,9 +6,11 @@
  */
 namespace Piwik\Plugins\AOM\Commands;
 
+use Piwik\Container\StaticContainer;
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Settings;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,6 +21,23 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class PlatformMerge extends ConsoleCommand
 {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @param string|null $name
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct($name = null, LoggerInterface $logger = null)
+    {
+        // TODO: Replace StaticContainer with DI
+        $this->logger = $logger ?: StaticContainer::get('Psr\Log\LoggerInterface');
+
+        parent::__construct($name);
+    }
+
     protected function configure()
     {
         $this
@@ -32,22 +51,22 @@ class PlatformMerge extends ConsoleCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (!in_array($input->getOption('platform'), AOM::getPlatforms())) {
-            $output->writeln('Platform "' . $input->getOption('platform') . '" is not supported.');
-            $output->writeln('Platform must be one of: ' . implode(', ', AOM::getPlatforms()));
+            $this->logger->warning('Platform "' . $input->getOption('platform') . '" is not supported.');
+            $this->logger->warning('Platform must be one of: ' . implode(', ', AOM::getPlatforms()));
             return;
         }
 
         // Is platform active?
         $settings = new Settings();
         if (!$settings->{'platform' . $input->getOption('platform') . 'IsActive'}->getValue()) {
-            $output->writeln('Platform "' . $input->getOption('platform') . '" is not active.');
+            $this->logger->warning('Platform "' . $input->getOption('platform') . '" is not active.');
             return;
         }
 
-        $platform = AOM::getPlatformInstance($input->getOption('platform'));
+        $platform = AOM::getPlatformInstance($input->getOption('platform'), null, $this->logger);
         $platform->merge($input->getOption('startDate'), $input->getOption('endDate'));
 
-        $output->writeln($input->getOption('platform') . '-merge for period from '
+        $this->logger->info($input->getOption('platform') . '-merge for period from '
             . $input->getOption('startDate') . ' until ' . $input->getOption('endDate') . ' successful.');
     }
 }

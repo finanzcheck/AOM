@@ -7,6 +7,7 @@
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use Piwik\Common;
+use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ControllerInterface;
@@ -145,7 +146,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
      */
     private function getRedirectURI()
     {
-        return 'http://' . $_SERVER['SERVER_NAME']
-            . '?module=AOM&action=platformAction&platform=AdWords&method=processOAuthRedirect';
+        return rtrim(Option::get('piwikUrl'), '/')
+        . '?module=AOM&action=platformAction&platform=AdWords&method=processOAuthRedirect';
     }
 }

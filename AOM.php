@@ -6,8 +6,10 @@
  */
 namespace Piwik\Plugins\AOM;
 
+use Piwik\Container\StaticContainer;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Tracker\Action;
+use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
 {
@@ -86,14 +88,30 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
+     * Returns the instance
      * @param string $platform
+     * @param null|string $class
+     * @param null|LoggerInterface $logger
      * @return PlatformInterface
+     * @throws \Exception
      */
-    public static function getPlatformInstance($platform)
+    public static function getPlatformInstance($platform, $class = null, LoggerInterface $logger = null)
     {
-        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . $platform;
+        if (!in_array($platform, AOM::getPlatforms())) {
+            throw new \Exception('Platform "' . $platform . '" not supported.');
+        }
+        if (!in_array($class, [null, 'Importer', 'Merger'])) {
+            throw new \Exception('Class "' . $class . '" not supported. Must be either "Importer" or "Merger".');
+        }
 
-        return new $className();
+        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . (null === $class ? $platform : $class);
+
+        // TODO: Replace StaticContainer with DI
+        if (!($logger instanceof LoggerInterface)) {
+            $logger = StaticContainer::get('Psr\Log\LoggerInterface');
+        }
+
+        return new $className($logger);
     }
 
     /**
@@ -120,16 +138,18 @@ class AOM extends \Piwik\Plugin
         return null;
     }
 
-
     /**
-     * Tries to find some Ad data for this visit
-     * @param Action $url
+     * Tries to find some Ad data for this visit.
+     *
+     * @param Action $action
      * @return mixed
+     * @throws \Piwik\Exception\UnexpectedWebsiteFoundException
+     * @internal param Action $url
      */
     public static function getAdData(Action $action)
     {
         $params = self::getAdParamsFromUrl($action->getActionUrl());
-        if(!$params) {
+        if (!$params) {
             return null;
         }
 

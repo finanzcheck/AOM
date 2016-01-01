@@ -107,36 +107,6 @@ class Bing extends Platform implements PlatformInterface
     }
 
     /**
-     * Builds a string key from the ad data to reference explicit platform data.
-     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
-     *
-     * @see http://help.bingads.microsoft.com/apex/index/3/en-us/51091
-     *
-     * @param array $adParams
-     * @return mixed
-     */
-    public function getAdKeyFromAdParams(array $adParams)
-    {
-        // TODO: When to use {TargetId} and when to use {OrderItemId}?!
-
-        // Regular keyword ("kwd-" in {TargetId})
-        // TODO: Not sure about this implementation...
-        if (array_key_exists('campaignId', $adParams)
-            && array_key_exists('adGroupId', $adParams)
-            && array_key_exists('orderItemId', $adParams)
-            && (substr($adParams['orderItemId'], 0, strlen($adParams['orderItemId'])) === 'kwd-')
-        ) {
-            return $adParams['campaignId'] . '|' . $adParams['adGroupId'] . '|' . $adParams['orderItemId'];
-        }
-
-        // Remarketing list ("aud-" in {TargetId})
-
-        // TODO: Implement me!
-
-        return 'not implemented';
-    }
-
-    /**
      * @inheritdoc
      */
     public function getAdDataFromAdParams($idsite, array $adParams)

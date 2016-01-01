@@ -7,7 +7,6 @@
 namespace Piwik\Plugins\AOM\Platforms\Criteo;
 
 use Exception;
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -18,32 +17,30 @@ use SoapHeader;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
-    public function import($startDate, $endDate)
+    public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_CRITEO]['accounts'] as $id => $account) {
             if (array_key_exists('active', $account) && true === $account['active']) {
-                $this->importAccount($account, $startDate, $endDate);
+                foreach ($this->getPeriodAsArrayOfDates() as $date) {
+                    $this->importAccount($id, $account, $date);
+                }
             } else {
-                var_dump('Skipping inactive account.'); // TODO: Use better logging!
+                $this->logger->info('Skipping inactive account.');
             }
         }
     }
 
-    private function importAccount($account, $startDate, $endDate)
+    /**
+     * @param array $account
+     * @param string $date
+     */
+    private function importAccount($id, $account, $date)
     {
-        // Delete existing data for the specified period
-        // TODO: this might be more complicated when we already merged / assigned data to visits!?!
-        // TODO: There might be more than 100000 rows?!
-        Db::deleteAllRows(
-            Criteo::getDataTableName(),
-            'WHERE date >= ? AND date <= ?',
-            'date',
-            100000,
-            [$startDate, $endDate]
-        );
+        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(Criteo::getDataTableName(), $account['websiteId'], $date);
 
         $soapClient = new SoapClient('https://advertising.criteo.com/api/v201010/advertiserservice.asmx?WSDL', [
             'soap_version' => SOAP_1_2,
@@ -87,8 +84,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $scheduleReportJobParameters->reportJob->reportSelector = new \stdClass();
             $scheduleReportJobParameters->reportJob->reportType = 'Campaign';
             $scheduleReportJobParameters->reportJob->aggregationType = 'Daily';
-            $scheduleReportJobParameters->reportJob->startDate = $startDate;
-            $scheduleReportJobParameters->reportJob->endDate = $endDate;
+            $scheduleReportJobParameters->reportJob->startDate = $date;
+            $scheduleReportJobParameters->reportJob->endDate = $date;
             $scheduleReportJobParameters->reportJob->selectedColumns = [];
             $scheduleReportJobParameters->reportJob->isResultGzipped = false;
             $result = $soapClient->__soapCall('scheduleReportJob', [$scheduleReportJobParameters]);
@@ -119,7 +116,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                  Db::query(
                     'INSERT INTO ' . Criteo::getDataTableName() . ' (idsite, date, campaign_id, campaign, '
                     . 'impressions, clicks, cost, conversions, conversions_value, conversions_post_view, '
-                    . 'conversions_post_view_value) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    . 'conversions_post_view_value, ts_created) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                     [
                         $account['websiteId'],
                         $row['dateTime'],

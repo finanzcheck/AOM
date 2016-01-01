@@ -78,22 +78,6 @@ class Criteo extends Platform implements PlatformInterface
     }
 
     /**
-     * Builds a string key from the ad data to reference explicit platform data.
-     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
-     *
-     * @param array $adParams
-     * @return mixed
-     */
-    public function getAdKeyFromAdParams(array $adParams)
-    {
-        if (array_key_exists('campaignId', $adParams)) {
-            return 'criteo' . '-' . $adParams['campaignId'];
-        }
-
-        return null;
-    }
-
-    /**
      * @inheritdoc
      */
     public function getAdDataFromAdParams($idsite, array $adParams)
@@ -102,35 +86,47 @@ class Criteo extends Platform implements PlatformInterface
     }
 
     /**
-     * @param $idsite
-     * @param $date
-     * @param $campaignId
-     * @return null
+     * @param int $idsite
+     * @param string $date
+     * @param int $campaignId
+     * @return array|null
      * @throws Exception
      */
     public static function getAdData($idsite, $date, $campaignId)
     {
-        $result = DB::fetchAll('SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE idsite = ? AND date = ? AND campaign_id = ?', [$idsite, $date, $campaignId]);
-        if(count($result) > 0) {
+        // Exact match
+        $result = DB::fetchAll(
+            'SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE idsite = ? AND date = ? AND campaign_id = ?',
+            [
+                $idsite,
+                $date,
+                $campaignId,
+            ]
+        );
+        if (count($result) > 1) {
+            throw new \Exception('Found more than one match for exact match.');
+        } elseif (1 === count($result)) {
             return $result[0];
         }
-        //No direct match found seach for historic data
-        $result = DB::fetchAll('SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE idsite = ? AND campaign_id = ? ORDER BY date DESC', [$idsite, $campaignId]);
-        if(count($result) > 0) {
-            //Remove date spcific information
-            unset($result[0]['impressions']);
-            unset($result[0]['clicks']);
-            unset($result[0]['cost']);
-            unset($result[0]['conversions']);
-            unset($result[0]['conversions_value']);
-            unset($result[0]['conversions_post_view']);
-            unset($result[0]['conversions_post_view_value']);
 
-            return $result[0];
+        // No exact match found; search for historic data
+        $result = DB::fetchAll(
+            'SELECT * FROM ' . Criteo::getDataTableName()
+                . ' WHERE idsite = ? AND campaign_id = ? ORDER BY date DESC LIMIT 1',
+            [
+                $idsite,
+                $campaignId
+            ]
+        );
+        if (count($result) > 0) {
+
+            // Keep generic date-independent information only
+            return [
+                'campaign_id' => $campaignId,
+                'campaign' => $result[0]['campaign'],
+            ];
         }
 
         return null;
     }
-
-
 }

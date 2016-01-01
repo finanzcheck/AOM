@@ -35,7 +35,9 @@ class CriteoTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        $this->criteo = new Criteo();
+        // TODO: Replace StaticContainer with DI
+        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
+        $this->criteo = new Criteo($logger);
 
 
         // set up your test here if needed

@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -15,32 +14,64 @@ use ReportUtils;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
-    public function import($startDate, $endDate)
+    /**
+     * When no period is provided, AdWords (re)imports the last 3 days unless they have been (re)imported today.
+     * Today's data is always being reimported.
+     *
+     * @param string|null $startDate
+     * @param string|null $endDate
+     * @return mixed|void
+     */
+    public function setPeriod($startDate = null, $endDate = null)
+    {
+        // Overwrite default period
+        if (null === $startDate || null === $endDate) {
+
+            $startDate = date('Y-m-d');
+
+            // (Re)import the last 3 days unless they have been (re)imported today
+            for ($i = -3; $i <= -1; $i++) {
+                if (Db::fetchOne('SELECT DATE(MAX(ts_created)) FROM ' . AdWords::getDataTableName()
+                        . ' WHERE date = "' . date('Y-m-d', strtotime($i . ' day', time())) . '"') != date('Y-m-d')
+                ) {
+                    $startDate = date('Y-m-d', strtotime($i . ' day', time()));
+                    break;
+                }
+            }
+
+            $endDate = date('Y-m-d');
+            $this->logger->info('Identified period from ' . $startDate. ' until ' . $endDate . ' to import.');
+        }
+
+        parent::setPeriod($startDate, $endDate);
+    }
+
+    public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
-        foreach ($configuration[AOM::PLATFORM_AD_WORDS]['accounts'] as $id => $account) {
+        foreach ($configuration[AOM::PLATFORM_AD_WORDS]['accounts'] as $id => $account) {;
             if (array_key_exists('active', $account) && true === $account['active']) {
-                $this->importAccount($account, $startDate, $endDate);
+                foreach ($this->getPeriodAsArrayOfDates() as $date) {
+                    $this->importAccount($id, $account, $date);
+                }
             } else {
-                var_dump('Skipping inactive account.'); // TODO: Use better logging!
+                $this->logger->info('Skipping inactive account.');
             }
         }
     }
 
-    private function importAccount($account, $startDate, $endDate)
+    /**
+     * @param string $id
+     * @param array $account
+     * @param string $date
+     * @throws \Exception
+     */
+    private function importAccount($id, $account, $date)
     {
-        // Delete existing data for the specified period
-        // TODO: this might be more complicated when we already merged / assigned data to visits!?!
-        // TODO: There might be more than 100000 rows?!
-        Db::deleteAllRows(
-            AdWords::getDataTableName(),
-            'WHERE date >= ? AND date <= ?',
-            'date',
-            100000,
-            [$startDate, $endDate]
-        );
+        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(AdWords::getDataTableName(), $account['websiteId'], $date);
 
         $user = AdWords::getAdWordsUser($account);
 
@@ -53,8 +84,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AveragePosition, Conversions, '
             . 'Device, QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
             . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
-            . str_replace('-', '', $startDate) . ','
-            . str_replace('-', '', $endDate),
+            . str_replace('-', '', $date) . ','
+            . str_replace('-', '', $date),
             null,
             $user,
             'XML',
@@ -97,9 +128,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             }
 
             Db::query(
-                'INSERT INTO ' . AdWords::getDataTableName() . ' (idsite, date, account, campaign_id, campaign, '
-                . 'ad_group_id, ad_group, keyword_id, keyword_placement, criteria_type, network, device, impressions, '
-                . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO ' . AdWords::getDataTableName()
+                    . ' (idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
+                    . 'keyword_placement, criteria_type, network, device, impressions, clicks, cost, conversions, '
+                    . 'ts_created) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $account['websiteId'],
                     $row['day'],

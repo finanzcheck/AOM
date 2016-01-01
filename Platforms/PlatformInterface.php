@@ -7,9 +7,20 @@
 namespace Piwik\Plugins\AOM\Platforms;
 
 use Piwik\Plugins\AOM\Settings;
+use Psr\Log\LoggerInterface;
 
 interface PlatformInterface
 {
+    /**
+     * Returns the platform's data table name.
+     */
+    public static function getDataTableName();
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger();
+
     /**
      * Returns this plugin's settings.
      *
@@ -40,6 +51,7 @@ interface PlatformInterface
 
     /**
      * Imports platform data for the specified period.
+     * If no period has been specified, the platform detects the period to import on its own.
      *
      * @param string $startDate YYYY-MM-DD
      * @param string $endDate   YYYY-MM-DD
@@ -67,8 +79,8 @@ interface PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams);
 
     /**
-     * Extracts advertisement data s from the ad params and stores it in piwik_log_visit.aom_ad_data.
-     * Ad this point it it likely that there is no actual ad data available. In this case historical data is used to
+     * Extracts advertisement data from the ad params and stores it in piwik_log_visit.aom_ad_data.
+     * At this point it is likely that there is no actual ad data available. In this case historical data is used to
      * add some basic information.
      * The implementation of this method must ensure a consistently ordered JSON.
      *
@@ -77,20 +89,6 @@ interface PlatformInterface
      * @return mixed
      */
     public function getAdDataFromAdParams($idSite, array $adParams);
-
-    /**
-     * Builds a string key from the ad data to reference explicit platform data.
-     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
-     *
-     * @param array $adParams
-     * @return mixed
-     */
-    public function getAdKeyFromAdParams(array $adParams);
-
-    /**
-     * Returns the platform's data table name.
-     */
-    public static function getDataTableName();
 
     /**
      * Enriches a visit with platform specific information (e.g. campaign name, creative, cpc).

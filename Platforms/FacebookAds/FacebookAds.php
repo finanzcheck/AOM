@@ -70,20 +70,6 @@ class FacebookAds extends Platform implements PlatformInterface
     }
 
     /**
-     * Builds a string key from the ad data to reference explicit platform data.
-     * This key is only built when all required ad data is available. It is being stored in piwik_log_visit.aom_ad_key.
-     *
-     * @param array $adParams
-     * @return mixed
-     */
-    public function getAdKeyFromAdParams(array $adParams)
-    {
-        // TODO: Implement me!
-
-        return 'not implemented';
-    }
-
-    /**
      * @inheritdoc
      */
     public function getAdDataFromAdParams($idsite, array $adParams)

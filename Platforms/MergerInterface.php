@@ -9,11 +9,18 @@ namespace Piwik\Plugins\AOM\Platforms;
 interface MergerInterface
 {
     /**
-     * Merges platform data for the specified period.
+     * Sets the period to merge.
      *
      * @param string $startDate YYYY-MM-DD
-     * @param string $endDate   YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
      * @return mixed
      */
-    public function merge($startDate, $endDate);
+    public function setPeriod($startDate, $endDate);
+
+    /**
+     * Merges platform data.
+     *
+     * @return mixed
+     */
+    public function merge();
 }

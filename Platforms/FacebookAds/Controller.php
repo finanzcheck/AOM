@@ -10,6 +10,7 @@ use Facebook\Exceptions\FacebookResponseException;
 use Facebook\Exceptions\FacebookSDKException;
 use Facebook\Facebook;
 use Piwik\Common;
+use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ControllerInterface;
@@ -71,7 +72,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
         $fb = $this->getFacebookApiClient($configuration, $id);
         $helper = $fb->getRedirectLoginHelper();
         $loginUrl = $helper->getLoginUrl(
-            'http://' . $_SERVER['SERVER_NAME']
+            Option::get('piwikUrl')
                 . '?module=AOM&action=platformAction&platform=FacebookAds&method=processAccessTokenCode&id=' . $id,
             ['ads_read']
         );

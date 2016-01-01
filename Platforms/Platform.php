@@ -8,18 +8,37 @@ namespace Piwik\Plugins\AOM\Platforms;
 
 use Exception;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Settings;
+use Psr\Log\LoggerInterface;
 
 abstract class Platform
 {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
     /**
      * @var Settings
      */
     private $settings;
 
-    public function __construct()
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function __construct(LoggerInterface $logger)
     {
         $this->settings = new Settings();
+        $this->logger = $logger;
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
     }
 
     /**
@@ -79,7 +98,7 @@ abstract class Platform
 
     /**
      * Imports platform data for the specified period.
-     * If no period has been specified, we'll try to important yesterdays data only.
+     * If no period has been specified, the platform detects the period to import on its own (usually "yesterday").
      *
      * @param string $startDate YYYY-MM-DD
      * @param string $endDate   YYYY-MM-DD
@@ -91,20 +110,10 @@ abstract class Platform
             return;
         }
 
-        // Validate start and end date
-        if (null === $startDate || null === $endDate) {
-
-            // TODO: Consider site timezone here?!
-            $startDate = date('Y-m-d', strtotime('-1 day', time()));
-            $endDate = date('Y-m-d', strtotime('-1 day', time()));
-        }
-
-        // Instantiate importer and inject platform
-        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $this->getUnqualifiedClassName() . '\\Importer';
-
         /** @var ImporterInterface $importer */
-        $importer = new $className($this);
-        $importer->import($startDate, $endDate);
+        $importer = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Importer', $this->getLogger());
+        $importer->setPeriod($startDate, $endDate);
+        $importer->import();
     }
 
     /**
@@ -122,19 +131,16 @@ abstract class Platform
         }
 
         // Validate start and end date
+        // TODO: Consider site timezone here?!
         if (null === $startDate || null === $endDate) {
-
-            // TODO: Consider site timezone here?!
             $startDate = date('Y-m-d', strtotime('-1 day', time()));
             $endDate = date('Y-m-d', strtotime('-1 day', time()));
         }
 
-        // Instantiate merger and inject platform
-        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $this->getUnqualifiedClassName() . '\\Merger';
-
         /** @var MergerInterface $merger */
-        $merger = new $className($this);
-        $merger->merge($startDate, $endDate);
+        $merger = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Merger', $this->getLogger());
+        $merger->setPeriod($startDate, $endDate);
+        $merger->merge();
     }
 
     /**

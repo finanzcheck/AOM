@@ -20,8 +20,8 @@ use Bing\Reporting\ReportTime;
 use Bing\Reporting\SortOrder;
 use Bing\Reporting\SubmitGenerateReportRequest;
 use Exception;
-use Piwik\Common;
 use Piwik\Db;
+use Piwik\Option;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Settings;
@@ -34,31 +34,34 @@ include 'ClientProxy.php';
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
-    public function import($startDate, $endDate)
+    public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_BING]['accounts'] as $id => $account) {
             if (array_key_exists('active', $account) && true === $account['active']) {
-                $this->importAccount($id, $account, $startDate, $endDate);
+                foreach ($this->getPeriodAsArrayOfDates() as $date) {
+                    $this->importAccount($id, $account, $date);
+                }
             } else {
-                var_dump('Skipping inactive account.'); // TODO: Use better logging!
+                $this->logger->info('Skipping inactive account.');
             }
         }
     }
 
-    private function importAccount($id, $account, $startDate, $endDate)
+    /**
+     * @param string $id
+     * @param array $account
+     * @param string $date
+     * @throws Exception
+     */
+    private function importAccount($id, $account, $date)
     {
-        $data = $this->getBingReport($id, $account, $startDate, $endDate);
+        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(Bing::getDataTableName(), $account['websiteId'], $date);
 
-        Db::deleteAllRows(
-            Bing::getDataTableName(),
-            'WHERE date >= ? AND date <= ?',
-            'date',
-            1000000,
-            [$startDate, $endDate]
-        );
+        $data = $this->getBingReport($id, $account, $date);
 
         $result = simplexml_load_string($data);
         foreach ($result->Table->Row as $row) {
@@ -67,9 +70,9 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             Db::query(
                 'INSERT INTO ' . Bing::getDataTableName()
-                . ' (idsite, date, account_id, account, campaign_id, campaign, '
-                . 'ad_group_id, ad_group, keyword_id, keyword, impressions, '
-                . 'clicks, cost, conversions) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    . ' (idsite, date, account_id, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
+                    . 'keyword, impressions, clicks, cost, conversions, ts_created) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $account['websiteId'],
                     $date,
@@ -90,10 +93,12 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         }
     }
 
-    public function getBingReport($id, $account, $startDate, $endDate)
+    public function getBingReport($id, $account, $date)
     {
-        // Always refresh token as it expires after 60m
-        $this->refreshToken($id, $account);
+        // Always refresh access token as it expires after 60m
+        $this->refreshAccessToken($id, $account);
+
+        $settings = new Settings();
 
         try {
             $proxy = ClientProxy::ConstructWithAccountId(
@@ -105,9 +110,9 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 $account['accessToken'],
 
             // TODO: Keep proxy settings?!
-                $this->platform->getSettings()->proxyIsActive->getValue(),
-                isset($this->platform->getSettings()->proxyHost) ? $this->platform->getSettings()->proxyHost->getValue() : null,
-                isset($this->platform->getSettings()->proxyPort) ? $this->platform->getSettings()->proxyPort->getValue() : null
+                $settings->proxyIsActive->getValue(),
+                isset($settings->proxyHost) ? $settings->proxyHost->getValue() : null,
+                isset($settings->proxyPort) ? $settings->proxyPort->getValue() : null
             );
 
             // Build a keyword performance report request,
@@ -125,13 +130,13 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             $report->Time = new ReportTime();
             $report->Time->CustomDateRangeStart = new Date();
-            $report->Time->CustomDateRangeStart->Month = explode('-', $startDate)[1];
-            $report->Time->CustomDateRangeStart->Day = explode('-', $startDate)[2];
-            $report->Time->CustomDateRangeStart->Year = explode('-', $startDate)[0];
+            $report->Time->CustomDateRangeStart->Month = explode('-', $date)[1];
+            $report->Time->CustomDateRangeStart->Day = explode('-', $date)[2];
+            $report->Time->CustomDateRangeStart->Year = explode('-', $date)[0];
             $report->Time->CustomDateRangeEnd = new Date();
-            $report->Time->CustomDateRangeEnd->Month = explode('-', $endDate)[1];
-            $report->Time->CustomDateRangeEnd->Day = explode('-', $endDate)[2];
-            $report->Time->CustomDateRangeEnd->Year = explode('-', $endDate)[0];
+            $report->Time->CustomDateRangeEnd->Month = explode('-', $date)[1];
+            $report->Time->CustomDateRangeEnd->Day = explode('-', $date)[2];
+            $report->Time->CustomDateRangeEnd->Year = explode('-', $date)[0];
 
             $report->Columns = array(
                 KeywordPerformanceReportColumn::TimePeriod,
@@ -173,7 +178,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             $reportRequestId = $proxy->GetService()->SubmitGenerateReport($request)->ReportRequestId;
 
-            printf("Report Request ID: %s\n\n", $reportRequestId);
+            $this->logger->info('Report Request ID is ' . $reportRequestId . '.');
 
 
             // This sample polls every 30 seconds up to 5 minutes.
@@ -207,17 +212,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     return $this->downloadFile($reportDownloadUrl);
                 } else {
                     if ($reportRequestStatus->Status == ReportRequestStatusType::Error) {
-                        printf(
-                            "The request failed. Try requesting the report " .
-                            "later.\nIf the request continues to fail, contact support.\n"
-                        );
+                        $this->logger->warning('The request failed. Try requesting the report later.');
                     } else // Pending
                     {
-                        printf(
-                            "The request is taking longer than expected.\n " .
-                            "Save the report ID (%s) and try again later.\n",
-                            $reportRequestId
-                        );
+                        $this->logger->warning('The request is taking longer than expected.');
                     }
                 }
             }
@@ -241,40 +239,44 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         }
     }
 
-    // TODO: This method is somewhere else too?! Maybe in Controller.php?!
-    private function refreshToken($id, $account)
+
+    //
+    /**
+     * TODO: There is a similar method in Bing/Controller.php.
+     *
+     * @param string $id
+     * @param array $account
+     */
+    private function refreshAccessToken($id, &$account)
     {
+        $settings = new Settings();
         $context = null;
-        if ($this->platform->getSettings()->proxyIsActive->getValue()) {
-            $context = stream_context_create(
-                [
+
+        // Add proxy when enabled
+        // TODO: Should we really keep this proxy stuff?!
+        if ($settings->proxyIsActive->getValue()) {
+            $context = stream_context_create([
                     'http' => [
-                        'proxy' => "tcp://" . $this->platform->getSettings()->proxyHost->getValue() . ":"
-                            . $this->platform->getSettings()->proxyPort->getValue(),
+                        'proxy' => 'tcp:\\\\' . $settings->proxyHost->getValue() . ':'
+                            . $settings->proxyPort->getValue(),
                         'request_fulluri' => true,
-                    ]
-                ]
+                    ]]
             );
         }
 
-        // TODO: This redirect URL is invalid!
-        $url = sprintf(
-            "https://login.live.com/oauth20_token.srf?client_id=%s&grant_type=refresh_token&redirect_uri=/oauth20_desktop.srf&refresh_token=%s",
-            $account['clientId'],
-            $account['refreshToken']
-        );
+        // Attention: This is oauth20_token.srf!
+        $url = 'https://login.live.com/oauth20_token.srf?client_id=' . $account['clientId']. '&client_secret='
+            . $account['clientSecret'] . '&grant_type=refresh_token&&refresh_token=' . $account['refreshToken']
+            . '&redirect_uri=' . urlencode('https://login.live.com/oauth20_desktop.srf');
 
         $response = file_get_contents($url, null, $context);
         $data = json_decode($response, true);
 
+        $account['accessToken'] = $data['access_token'];
 
-        $configuration = $this->platform->getSettings()->getConfiguration();
+        $configuration = $settings->getConfiguration();
         $configuration[AOM::PLATFORM_BING]['accounts'][$id]['accessToken'] = $data['access_token'];
-        $configuration[AOM::PLATFORM_BING]['accounts'][$id]['refreshToken'] = $data['refresh_token'];
-
-        // TODO: Using $this->platform->getSettings() is stupid.
-        $this->platform->getSettings()->setConfiguration($configuration);
-
+        $settings->setConfiguration($configuration);
     }
 
     private function pollGenerateReport($proxy, $reportRequestId)
