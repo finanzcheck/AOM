@@ -16,6 +16,7 @@ class Installer implements InstallerInterface
     {
         try {
             $sql = 'CREATE TABLE ' .  AdWords::getDataTableName() . ' (
+                        id_account_internal VARCHAR(50) NOT NULL,
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
                         account VARCHAR(255) NOT NULL,

@@ -44,6 +44,11 @@ class AdParams extends VisitDimension
      */
     public function shouldForceNewVisit(Request $request, Visitor $visitor, Action $action = null)
     {
+        // There might be no action (e.g. when we track a conversion)
+        if (null === $action) {
+            return false;
+        }
+
         $adParams = AOM::getAdParamsFromUrl($action->getActionUrl());
 
         // Keep Piwik's default behaviour when we do not have any ad data
@@ -59,12 +64,12 @@ class AdParams extends VisitDimension
 
         // TODO: Overwrite pk_campaign & co. because we know better...?!
 
-        // Force new visit when we have ad data for the first time
+        // Force new visit when we have ad params for the first time
         if (null === $lastVisitAdParams) {
             return true;
         }
 
-        // JSON-decode ad data (start new visit when ad data is obscure)
+        // JSON-decode ad params (start new visit when ad params is obscure)
         $lastVisitAdParams = @json_decode($lastVisitAdParams, true);
         if (json_last_error() != JSON_ERROR_NONE
             || !is_array($lastVisitAdParams)

@@ -17,15 +17,18 @@ use Piwik\Plugins\AOM\Settings;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
+    /**
+     * Imports all active accounts day by day
+     */
     public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
-        foreach ($configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'] as $id => $account) {
+        foreach ($configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'] as $accountId => $account) {
             if (array_key_exists('active', $account) && true === $account['active']) {
                 foreach ($this->getPeriodAsArrayOfDates() as $date) {
-                    $this->importAccount($id, $account, $date);
+                    $this->importAccount($accountId, $account, $date);
                 }
             } else {
                 $this->logger->info('Skipping inactive account.');
@@ -34,15 +37,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     }
 
     /**
-     * @param string $id
+     * @param string $accountId
      * @param array $account
      * @param string $date
      * @throws \Exception
      */
-    private function importAccount($id, $account, $date)
+    private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(FacebookAds::getDataTableName(), $account['websiteId'], $date);
+        $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(FacebookAds::getDataTableName(), $accountId, $account['websiteId'], $date);
 
         Api::init(
             $account['clientId'],
@@ -75,10 +78,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         foreach ($insights as $insight) {
             Db::query(
                 'INSERT INTO ' . FacebookAds::getDataTableName()
-                    . ' (idsite, date, account_id, account_name, campaign_id, campaign_name, adset_id, adset_name, '
-                    . 'ad_id, ad_name, impressions, inline_link_clicks, spend, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                    . ' (id_account_internal, idsite, date, account_id, account_name, campaign_id, campaign_name, '
+                    . 'adset_id, adset_name, ad_id, ad_name, impressions, inline_link_clicks, spend, ts_created) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
+                    $accountId,
                     $account['websiteId'],
                     $insight->getData()[InsightsFields::DATE_START],
                     $account['accountId'],

@@ -188,4 +188,19 @@ class AOM extends \Piwik\Plugin
 
         return null;
     }
+
+    /**
+     * Converts a local datetime string (Y-m-d H:i:s) into UTC and returns it as a string (Y-m-d H:i:s).
+     *
+     * @param string $localDateTime
+     * @param string $localTimeZone
+     * @return string
+     */
+    public static function convertLocalDateTimeToUTC($localDateTime, $localTimeZone)
+    {
+        $date = new \DateTime($localDateTime, new \DateTimeZone($localTimeZone));
+        $date->setTimezone(new \DateTimeZone('UTC'));
+
+        return $date->format('Y-m-d H:i:s');
+    }
 }

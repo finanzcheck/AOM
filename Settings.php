@@ -83,22 +83,27 @@ class Settings extends \Piwik\Plugin\Settings
 
     private function createParamPrefixSetting()
     {
-        $this->paramPrefix = new SystemSetting('paramPrefix', 'Parameter-Prefix');
+        $this->paramPrefix = new SystemSetting(
+            'paramPrefix',
+            Piwik::translate('AOM_PluginSettings_Setting_ParamPrefix_Title')
+        );
         $this->paramPrefix->readableByCurrentUser = true;
         $this->paramPrefix->uiControlType = static::CONTROL_TEXT;
         $this->paramPrefix->defaultValue = 'aom';
-        $this->paramPrefix->description = 'Prefix of URL-parameter, e.g. "aom" for "aom_campaign_id';
+        $this->paramPrefix->description = Piwik::translate('AOM_PluginSettings_Setting_ParamPrefix_Description');
 
         $this->addSetting($this->paramPrefix);
     }
 
     private function createPlatformAdWordsIsActiveSetting()
     {
-        $this->platformAdWordsIsActive = new SystemSetting('platformAdWordsIsActive', 'Enable AdWords');
+        $this->platformAdWordsIsActive = new SystemSetting(
+            'platformAdWordsIsActive',
+            Piwik::translate('AOM_PluginSettings_Setting_EnableAdWords_Title')
+        );
         $this->platformAdWordsIsActive->readableByCurrentUser = true;
         $this->platformAdWordsIsActive->type  = static::TYPE_BOOL;
         $this->platformAdWordsIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformAdWordsIsActive->description   = 'Enable AdWords';
         $this->platformAdWordsIsActive->defaultValue  = false;
 
         $this->addSetting($this->platformAdWordsIsActive);
@@ -106,11 +111,13 @@ class Settings extends \Piwik\Plugin\Settings
 
     private function createPlatformBingIsActiveSetting()
     {
-        $this->platformBingIsActive = new SystemSetting('platformBingIsActive', 'Enable Bing');
+        $this->platformBingIsActive = new SystemSetting(
+            'platformBingIsActive',
+            Piwik::translate('AOM_PluginSettings_Setting_EnableBing_Title')
+        );
         $this->platformBingIsActive->readableByCurrentUser = true;
         $this->platformBingIsActive->type  = static::TYPE_BOOL;
         $this->platformBingIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformBingIsActive->description   = 'Enable Bing';
         $this->platformBingIsActive->defaultValue  = false;
 
         $this->addSetting($this->platformBingIsActive);
@@ -118,11 +125,13 @@ class Settings extends \Piwik\Plugin\Settings
 
     private function createPlatformCriteoIsActiveSetting()
     {
-        $this->platformCriteoIsActive = new SystemSetting('platformCriteoIsActive', 'Enable Criteo');
+        $this->platformCriteoIsActive = new SystemSetting(
+            'platformCriteoIsActive',
+            Piwik::translate('AOM_PluginSettings_Setting_EnableCriteo_Title')
+        );
         $this->platformCriteoIsActive->readableByCurrentUser = true;
         $this->platformCriteoIsActive->type  = static::TYPE_BOOL;
         $this->platformCriteoIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformCriteoIsActive->description   = 'Enable Criteo';
         $this->platformCriteoIsActive->defaultValue  = false;
 
         $this->addSetting($this->platformCriteoIsActive);
@@ -130,11 +139,13 @@ class Settings extends \Piwik\Plugin\Settings
 
     private function createPlatformFacebookAdsIsActiveSetting()
     {
-        $this->platformFacebookAdsIsActive = new SystemSetting('platformFacebookAdsIsActive', 'Enable Facebook Ads');
+        $this->platformFacebookAdsIsActive = new SystemSetting(
+            'platformFacebookAdsIsActive',
+            Piwik::translate('AOM_PluginSettings_Setting_EnableFacebookAds_Title')
+        );
         $this->platformFacebookAdsIsActive->readableByCurrentUser = true;
         $this->platformFacebookAdsIsActive->type  = static::TYPE_BOOL;
         $this->platformFacebookAdsIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformFacebookAdsIsActive->description   = 'Enable Facebook Ads';
         $this->platformFacebookAdsIsActive->defaultValue  = false;
 
         $this->addSetting($this->platformFacebookAdsIsActive);

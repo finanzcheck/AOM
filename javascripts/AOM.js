@@ -190,7 +190,6 @@ $(document).ready(function () {
 				<td><input id="addFacebookAdsAccount_websiteId" placeholder="Website-ID" size="10" /></td>\
 				<td><input id="addFacebookAdsAccount_clientId" placeholder="Client-ID" size="15" /></td>\
 				<td><input id="addFacebookAdsAccount_clientSecret" placeholder="Client-Secret" size="20" /></td>\
-				<td><input id="addFacebookAdsAccount_userAccountId" placeholder="User-Account-ID" size="15" /></td>\
 				<td><input id="addFacebookAdsAccount_accountId" placeholder="Account-ID" size="15" /></td>\
 				<td></td>\
 				<td><input type="submit" class="submit addFacebookAdsAccount"  value="' + _pk_translate('General_Save') + '" />\
@@ -204,7 +203,6 @@ $(document).ready(function () {
                 websiteId: $('tr#' + newRowId).find('input#addFacebookAdsAccount_websiteId').val(),
                 clientId: $('tr#' + newRowId).find('input#addFacebookAdsAccount_clientId').val(),
                 clientSecret: $('tr#' + newRowId).find('input#addFacebookAdsAccount_clientSecret').val(),
-                userAccountId: $('tr#' + newRowId).find('input#addFacebookAdsAccount_userAccountId').val(),
                 accountId: $('tr#' + newRowId).find('input#addFacebookAdsAccount_accountId').val()
             });
         });

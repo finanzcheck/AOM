@@ -81,22 +81,23 @@ abstract class Importer
     /**
      * Deletes all imported data for the given date.
      *
-     * TODO: We must restrict deletion to the specified account!
      * TODO: This might be more complicated when we already merged / assigned data to visits?!
      * TODO: There might be more than 100000 rows (although this is very unlikely).
      *
      * @param string $tableName
+     * @param string $accountId
      * @param int $websiteId
      * @param string $date
      */
-    public function deleteImportedData($tableName, $websiteId, $date)
+    public function deleteImportedData($tableName, $accountId, $websiteId, $date)
     {
         Db::deleteAllRows(
             $tableName,
-            'WHERE idsite = ? AND date = ?',
+            'WHERE id_account_internal = ?, idsite = ? AND date = ?',
             'date',
             100000,
             [
+                $accountId,
                 $websiteId,
                 $date,
             ]

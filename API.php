@@ -6,6 +6,7 @@
  */
 namespace Piwik\Plugins\AOM;
 
+use Piwik\Date;
 use Exception;
 use Piwik\Period\Factory as PeriodFactory;
 use Piwik\Archive;
@@ -19,15 +20,15 @@ use Piwik\DataAccess\LogAggregator;
 use Piwik\Db;
 use Piwik\Period;
 use Piwik\Period\Range;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Segment;
 use Piwik\Site;
 
 class API extends \Piwik\Plugin\API
 {
     /**
-     * Returns all visits with marketing information within the given period.
+     * Returns all visits with marketing information within the given period, e.g.:
      * ?module=API&token_auth=...&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01&format=json
+     * ?module=API&token_auth=...&method=AOM.getVisits&idSite=1&period=range&date=2015-05-01,2015-05-10&format=json
      *
      * @param int $idSite Id Site
      * @param bool|string $period Period to restrict to when looking at the logs
@@ -43,9 +44,6 @@ class API extends \Piwik\Plugin\API
         if (Period::isMultiplePeriod($date, $period)) {
             throw new Exception('AOM.getVisits does not support multiple dates.');
         }
-
-        // TODO: This is a period and not a range?!
-        // TODO: Timezones and periods might currently not be handled correctly!!
 
         /** @var Range $period */
         $period = PeriodFactory::makePeriodFromQueryParams(Site::getTimezoneFor($idSite), $period, $date);
@@ -119,9 +117,6 @@ class API extends \Piwik\Plugin\API
             throw new Exception('AOM.getEcommerceOrdersWithVisits does not support multiple dates.');
         }
 
-        // TODO: This is a period and not a range?!
-        // TODO: Timezones and periods might currently not be handled correctly!!
-
         /** @var Range $period */
         $period = PeriodFactory::makePeriodFromQueryParams(Site::getTimezoneFor($idSite), $period, $date);
 
@@ -141,8 +136,12 @@ class API extends \Piwik\Plugin\API
                 ORDER BY server_time ASC',
             [
                 $idSite,
-                $period->getDateStart()->toString('Y-m-d 00:00:00'),
-                $period->getDateEnd()->toString('Y-m-d 23:59:59')
+                AOM::convertLocalDateTimeToUTC(
+                    $period->getDateStart()->toString('Y-m-d 00:00:00'), Site::getTimezoneFor($idSite)
+                ),
+                AOM::convertLocalDateTimeToUTC(
+                    $period->getDateEnd()->toString('Y-m-d 23:59:59'), Site::getTimezoneFor($idSite)
+                ),
             ]
         );
 
@@ -155,9 +154,11 @@ class API extends \Piwik\Plugin\API
     }
 
     /**
-     * Returns various status information which can be used for monitoring:
+     * Returns various status information that can be used for monitoring:
      * ?module=API&token_auth=...&method=AOM.getStatus&format=json
      *
+     * TODO: Add scoping for websites?
+     * 
      * @return array
      * @throws Exception
      */
@@ -191,12 +192,59 @@ class API extends \Piwik\Plugin\API
             ];
 
             foreach (AOM::getPlatforms() as $platformName) {
+
                 $platform = AOM::getPlatformInstance($platformName);
+
                 $status['platforms'][$platformName] = [
-                    'daysSinceLastImportWithResults' => intval(Db::fetchOne(
-                        'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $platform::getDataTableName()
-                    )),
+                    'daysSinceLastImportWithResults' =>
+                        (Db::fetchOne('SELECT COUNT(*) FROM ' . $platform::getDataTableName()) > 0)
+                            ? intval(Db::fetchOne(
+                                    'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $platform::getDataTableName()
+                                ))
+                            : null,
                 ];
+
+                foreach (['Hour', 'Day'] as $period) {
+
+                    $visitsWithPlatform = intval(Db::fetchOne(
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
+                            WHERE log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"',
+                        [
+                            date('Y-m-d H:i:s', strtotime('-1 ' . $period))
+                        ]));
+
+                    $visitsWithAdParams = intval(Db::fetchOne(
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
+                            WHERE log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"
+                            AND aom_ad_params IS NOT NULL AND aom_ad_params != "null"',
+                        [
+                            date('Y-m-d H:i:s', strtotime('-1 ' . $period))
+                        ]));
+
+                    $visitsWithAdData = intval(Db::fetchOne(
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
+                            WHERE log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"
+                            AND aom_ad_data IS NOT NULL AND aom_ad_data != "null"',
+                        [
+                            date('Y-m-d H:i:s', strtotime('-1 ' . $period))
+                        ]));
+
+                    $visitsWithPlatformRowId = intval(Db::fetchOne(
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
+                            WHERE log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"
+                            AND aom_platform_row_id IS NOT NULL',
+                        [
+                            date('Y-m-d H:i:s', strtotime('-1 ' . $period))
+                        ]));
+
+                    $status['platforms'][$platformName]['last' . $period] = [
+                        'visitsWithPlatform' => $visitsWithPlatform,
+                        'visitsWithAdParams' => $visitsWithAdParams,
+                        'visitsWithAdData' => $visitsWithAdData,
+                        'visitsWithPlatformRowId' => $visitsWithPlatformRowId,
+                    ];
+
+                }
             }
         }
 
@@ -205,7 +253,6 @@ class API extends \Piwik\Plugin\API
 
     /**
      * Returns all visits that match the given criteria.
-     * All visits are being enriched with advanced marketing information when applicable.
      *
      * @param int $idSite Id Site
      * @param string $visitFirstActionTimeMin
@@ -260,7 +307,8 @@ class API extends \Piwik\Plugin\API
                            campaign_id AS campaignId,'
                         : ''
                     ) . '
-                    aom_ad_params AS rawAdParams
+                    aom_ad_params AS rawAdParams,
+                    aom_ad_data AS rawAdData
                 FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
                 WHERE
                     ' . (null != $visitFirstActionTimeMin ? 'visit_first_action_time >= ? AND' : '') . '
@@ -271,10 +319,10 @@ class API extends \Piwik\Plugin\API
 
         $parameters = [];
         if (null != $visitFirstActionTimeMin) {
-            $parameters[] = $visitFirstActionTimeMin;
+            $parameters[] = AOM::convertLocalDateTimeToUTC($visitFirstActionTimeMin, Site::getTimezoneFor($idSite));
         }
         if (null != $visitFirstActionTimeMax) {
-            $parameters[] = $visitFirstActionTimeMax;
+            $parameters[] = AOM::convertLocalDateTimeToUTC($visitFirstActionTimeMax, Site::getTimezoneFor($idSite));
         }
         if (null != $idVisitor) {
             $parameters[] = $idVisitor;
@@ -287,47 +335,33 @@ class API extends \Piwik\Plugin\API
         if (is_array($visits)) {
             foreach ($visits as &$visit) {
 
-                // Make ad data JSON to associative array
-                $visit['adParams'] = array();
+                // Make ad params JSON to associative array
+                $visit['adParams'] = [];
                 if (is_array($visit) && array_key_exists('rawAdParams', $visit) || 0 === strlen($visit['rawAdParams'])) {
 
                     $adParams = @json_decode($visit['rawAdParams'], true);
 
-                    if (json_last_error() === JSON_ERROR_NONE
-                        && is_array($adParams)
-                        && array_key_exists('platform', $adParams)
-                    ) {
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($adParams)) {
                         $visit['adParams'] = $adParams;
                     }
                 }
 
-                $this->enrichVisit($visit);
+                // Make ad data JSON to associative array
+                $visit['adData'] = [];
+                if (is_array($visit) && array_key_exists('rawAdData', $visit) || 0 === strlen($visit['rawAdData'])) {
+
+                    $adParams = @json_decode($visit['rawAdData'], true);
+
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($adParams)) {
+                        $visit['adData'] = $adParams;
+                    }
+                }
 
                 unset($visit['rawAdParams']);
+                unset($visit['rawAdData']);
             }
         }
 
         return $visits;
-    }
-
-    /**
-     * Enriches a specific visit with advanced marketing information when applicable.
-     *
-     * @param array &$visit
-     * @return array
-     * @throws Exception
-     */
-    private function enrichVisit(&$visit)
-    {
-        // Platform supported?
-        if (array_key_exists('platform', $visit['adParams'])
-            && in_array($visit['adParams']['platform'], AOM::getPlatforms())
-        ) {
-            $platform = AOM::getPlatformInstance($visit['adParams']['platform']);
-
-            return $platform->enrichVisit($visit, $visit['adParams']);
-        }
-
-        return $visit;
     }
 }

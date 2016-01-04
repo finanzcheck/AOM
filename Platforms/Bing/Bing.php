@@ -28,49 +28,6 @@ class Bing extends Platform implements PlatformInterface
     }
 
     /**
-     * Enriches a specific visit with additional Bing information when this visit came from Bing.
-     *
-     * @param array &$visit
-     * @param array $ad
-     * @return array
-     * @throws \Exception
-     */
-    public function enrichVisit(array &$visit, array $ad)
-    {
-        // TODO: This method must be refactored!
-        return $visit;
-
-        $sql = 'SELECT
-                    campaign_id AS campaignId,
-                    campaign,
-                    ad_group_id AS adGroupId,
-                    ad_group AS adGroup,
-                    keyword_id AS keywordId,
-                    keyword,
-                    clicks,
-                    cost,
-                    impressions,
-                    conversions,
-                    (cost / clicks) AS cpc
-                FROM ' . self::getDataTableName() . '
-                WHERE date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?';
-
-        $results = Db::fetchRow(
-            $sql,
-            [
-                date('Y-m-d', strtotime($visit['firstActionTime'])),
-                $ad[self::AD_CAMPAIGN_ID],
-                $ad[self::AD_AD_GROUP_ID],
-                $ad[self::AD_KEYWORD_ID],
-            ]
-        );
-
-        $visit['adParams']['enriched'] = array_merge(['source' => 'Bing'], $results);
-
-        return $visit;
-    }
-
-    /**
      * Extracts advertisement platform specific data from the query params.
      *
      * @param string $paramPrefix

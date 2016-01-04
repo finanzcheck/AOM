@@ -46,15 +46,18 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         parent::setPeriod($startDate, $endDate);
     }
 
+    /**
+     * Imports all active accounts day by day
+     */
     public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
-        foreach ($configuration[AOM::PLATFORM_AD_WORDS]['accounts'] as $id => $account) {;
+        foreach ($configuration[AOM::PLATFORM_AD_WORDS]['accounts'] as $accountId => $account) {;
             if (array_key_exists('active', $account) && true === $account['active']) {
                 foreach ($this->getPeriodAsArrayOfDates() as $date) {
-                    $this->importAccount($id, $account, $date);
+                    $this->importAccount($accountId, $account, $date);
                 }
             } else {
                 $this->logger->info('Skipping inactive account.');
@@ -63,15 +66,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     }
 
     /**
-     * @param string $id
+     * @param string $accountId
      * @param array $account
      * @param string $date
      * @throws \Exception
      */
-    private function importAccount($id, $account, $date)
+    private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(AdWords::getDataTableName(), $account['websiteId'], $date);
+        $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(AdWords::getDataTableName(), $accountId, $account['websiteId'], $date);
 
         $user = AdWords::getAdWordsUser($account);
 
@@ -129,11 +132,12 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             Db::query(
                 'INSERT INTO ' . AdWords::getDataTableName()
-                    . ' (idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
-                    . 'keyword_placement, criteria_type, network, device, impressions, clicks, cost, conversions, '
-                    . 'ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                    . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
+                    . 'keyword_id, keyword_placement, criteria_type, network, device, impressions, clicks, cost, '
+                    . 'conversions, ts_created) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
+                    $accountId,
                     $account['websiteId'],
                     $row['day'],
                     $row['account'],

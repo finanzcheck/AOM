@@ -89,13 +89,4 @@ interface PlatformInterface
      * @return mixed
      */
     public function getAdDataFromAdParams($idSite, array $adParams);
-
-    /**
-     * Enriches a visit with platform specific information (e.g. campaign name, creative, cpc).
-     *
-     * @param array &$visit The visit to enrich with platform specific information.
-     * @param array $adParams Details about the ad the visitor came from.
-     * @return mixed
-     */
-    public function enrichVisit(array &$visit, array $adParams);
 }

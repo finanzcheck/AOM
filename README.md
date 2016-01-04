@@ -174,13 +174,14 @@ pk_campaign) should be used for both supported and unsupported advertising platf
 
 ## API
 
-This plugin provides the following API endpoints (add `&token_auth=...` in production environment):
+This plugin provides the following API endpoints (add `&token_auth=...` in production environment).
+You can use [Piwik's standard API params](http://developer.piwik.org/api-reference/reporting-api). 
 
 ### AOM.getVisits
 
 Returns all visits with marketing information within the given period.
 
-Example: ?module=API&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01&format=json
+Example: ?module=API&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01
 
 
 ### AOM.getEcommerceOrderWithVisits
@@ -188,7 +189,7 @@ Example: ?module=API&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01&fo
 Returns a specific ecommerce order by orderId with all visits with marketing information that happened before the 
 ecommerce order or false (when no order could be found for the given orderId).
 
-Example: ?module=API&method=AOM.getEcommerceOrderWithVisits&orderId=123&idSite=1&format=json
+Example: ?module=API&method=AOM.getEcommerceOrderWithVisits&orderId=123&idSite=1
 
 
 ### AOM.getEcommerceOrdersWithVisits
@@ -196,7 +197,14 @@ Example: ?module=API&method=AOM.getEcommerceOrderWithVisits&orderId=123&idSite=1
 Returns all ecommerce orders with all visits with marketing information that happened before the ecommerce order within 
 the given period.
 
-Example: ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&period=day&date=2015-05-01&format=json
+Example: ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&period=day&date=2015-05-01
+
+
+### AOM.getStatus
+
+Returns various status information (e.g. last imports, last visits with ad params) that can be used for monitoring.
+
+Example: ?module=API&method=AOM.getStatus
 
 
 
@@ -213,6 +221,8 @@ Set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/) to automati
 advertiser's platforms. The auto archiving cron job executes the `core:archive command` which triggers 
 [Piwik's TaskScheduler](https://developer.piwik.org/api-reference/Piwik/TaskScheduler) and thus this plugin's tasks. 
 You can import and merge data manually by running `./console core:run-scheduled-tasks --force`.
+
+Merging will only be correct, when your website's timezone matches the timezones of each advertising platform account.
 
 
 

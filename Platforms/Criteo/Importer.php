@@ -17,15 +17,18 @@ use SoapHeader;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
+    /**
+     * Imports all active accounts day by day
+     */
     public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
-        foreach ($configuration[AOM::PLATFORM_CRITEO]['accounts'] as $id => $account) {
+        foreach ($configuration[AOM::PLATFORM_CRITEO]['accounts'] as $accountId => $account) {
             if (array_key_exists('active', $account) && true === $account['active']) {
                 foreach ($this->getPeriodAsArrayOfDates() as $date) {
-                    $this->importAccount($id, $account, $date);
+                    $this->importAccount($accountId, $account, $date);
                 }
             } else {
                 $this->logger->info('Skipping inactive account.');
@@ -34,13 +37,14 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     }
 
     /**
+     * @param string $accountId
      * @param array $account
      * @param string $date
      */
-    private function importAccount($id, $account, $date)
+    private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(Criteo::getDataTableName(), $account['websiteId'], $date);
+        $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(Criteo::getDataTableName(), $accountId, $account['websiteId'], $date);
 
         $soapClient = new SoapClient('https://advertising.criteo.com/api/v201010/advertiserservice.asmx?WSDL', [
             'soap_version' => SOAP_1_2,
@@ -114,10 +118,13 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             // TODO: Use MySQL transaction to improve performance!
             foreach ($xml->table->rows->row as $row) {
                  Db::query(
-                    'INSERT INTO ' . Criteo::getDataTableName() . ' (idsite, date, campaign_id, campaign, '
-                    . 'impressions, clicks, cost, conversions, conversions_value, conversions_post_view, '
-                    . 'conversions_post_view_value, ts_created) VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                    'INSERT INTO ' . Criteo::getDataTableName()
+                        . ' (id_account_internal, idsite, date, campaign_id, campaign, impressions, clicks, cost, '
+                        . 'conversions, conversions_value, conversions_post_view, conversions_post_view_value, '
+                        . 'ts_created) '
+                        . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                     [
+                        $accountId,
                         $account['websiteId'],
                         $row['dateTime'],
                         $row['campaignID'],

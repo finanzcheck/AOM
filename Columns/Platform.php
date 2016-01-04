@@ -19,7 +19,7 @@ class Platform extends VisitDimension
 
     /**
      * The installation is already implemented based on the $columnName and $columnType.
-     * We overwrite this method to add an index on the new column too.
+     * We overwrite this method to add indices on the new column too.
      *
      * @return array
      */
@@ -28,6 +28,10 @@ class Platform extends VisitDimension
         $changes = parent::install();
 
         $changes['log_visit'][] = 'ADD INDEX index_aom_platform (aom_platform)';
+
+        // Required at least for ?module=API&method=AOM.getStatus...
+        $changes['log_visit'][] =
+            'ADD INDEX index_visit_first_action_time_aom_platform (visit_first_action_time, aom_platform)';
 
         return $changes;
     }

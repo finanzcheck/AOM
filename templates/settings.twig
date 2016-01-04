@@ -215,7 +215,6 @@
                     <th>{{ 'AOM_Settings_WebsiteId'|translate }}</th>
                     <th>{{ 'AOM_Settings_FacebookAds_ClientId'|translate }}</th>
                     <th>{{ 'AOM_Settings_FacebookAds_ClientSecret'|translate }}</th>
-                    <th>{{ 'AOM_Settings_FacebookAds_UserAccountId'|translate }}</th>
                     <th>{{ 'AOM_Settings_FacebookAds_AccountId'|translate }}</th>
                     <th>{{ 'AOM_Settings_FacebookAds_AccessToken'|translate }}</th>
                     {#<th>{{ 'General_Edit'|translate }}</th>#}
@@ -229,7 +228,6 @@
                             <td id="websiteId" class="editable">{{ account.websiteId }}</td>
                             <td id="clientId" class="editable abbreviated" data-full="{{ account.clientId }}">{{ account.clientId[0:10] }}...</td>
                             <td id="clientSecret" class="editable abbreviated" data-full="{{ account.clientSecret }}">{{ account.clientSecret[0:10] }}...</td>
-                            <td id="userAccountId" class="editable">{{ account.userAccountId }}</td>
                             <td id="accountId" class="editable">{{ account.accountId }}</td>
                             <td id="accessToken abbreviated" data-full="{{ account.accessToken }}">
                                 {% if account.accessToken is not null %}

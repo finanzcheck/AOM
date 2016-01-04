@@ -2,8 +2,14 @@
     "AOM": {
         "Menu_Settings": "AOM Settings",
         "PluginSettings_Introduction": "This is the place for some fundamental global plugin configuration. You must manage the accounts of the advertising platforms under \"AOM Settings\" in the menu.",
+        "PluginSettings_Setting_ParamPrefix_Title": "Param-Prefix",
+        "PluginSettings_Setting_ParamPrefix_Description": "Prefix of URL-parameter, e.g. \"aom\" for \"aom_campaign_id\"",
+        "PluginSettings_Setting_EnableAdWords_Title": "Enable Google AdWords",
+        "PluginSettings_Setting_EnableBing_Title": "Enable Microsoft Bing",
+        "PluginSettings_Setting_EnableCriteo_Title": "Enable Criteo",
+        "PluginSettings_Setting_EnableFacebookAds_Title": "Enable Facebook Ads",
         "Settings_Title": "Settings",
-        "Settings_Introduction": "You must activate and deactivate advertising platforms in the <a href=\"index.php?module=CoreAdminHome&action=adminPluginSettings&activated=#AOM\">plugin's settings</a> first. After that, you can manage the accounts of activated advertising platforms here.",
+        "Settings_Introduction": "You must activate and deactivate advertising platforms in the <a href=\"index.php?module=CoreAdminHome&action=adminPluginSettings&activated=#AOM\">plugin's settings</a> first. After that, you can manage the accounts of activated advertising platforms here.<br/><br/><strong>Make sure, that the timezone of each advertising platform account matches the timezone of the website that you import your data for.</strong>",
         "Settings_WebsiteId": "Website-ID",
         "Settings_AddAccount": "Add account",
         "Settings_ConfirmAccountRemove": "Are you sure you want to delete this account?",
@@ -34,7 +40,6 @@
         "Settings_FacebookAds_Introduction": "Manage your Facebook Ads accounts:",
         "Settings_FacebookAds_ClientId": "Client-ID",
         "Settings_FacebookAds_ClientSecret": "Client-Secret",
-        "Settings_FacebookAds_UserAccountId": "User-Account-ID",
         "Settings_FacebookAds_AccountId": "Account-ID",
         "Settings_FacebookAds_AccessToken": "Access Token",
         "Settings_FacebookAds_GetAccessToken": "Get new token"

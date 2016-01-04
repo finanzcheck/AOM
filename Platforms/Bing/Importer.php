@@ -21,7 +21,6 @@ use Bing\Reporting\SortOrder;
 use Bing\Reporting\SubmitGenerateReportRequest;
 use Exception;
 use Piwik\Db;
-use Piwik\Option;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Settings;
@@ -34,15 +33,18 @@ include 'ClientProxy.php';
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
+    /**
+     * Imports all active accounts day by day
+     */
     public function import()
     {
         $settings = new Settings();
         $configuration = $settings->getConfiguration();
 
-        foreach ($configuration[AOM::PLATFORM_BING]['accounts'] as $id => $account) {
+        foreach ($configuration[AOM::PLATFORM_BING]['accounts'] as $accountId => $account) {
             if (array_key_exists('active', $account) && true === $account['active']) {
                 foreach ($this->getPeriodAsArrayOfDates() as $date) {
-                    $this->importAccount($id, $account, $date);
+                    $this->importAccount($accountId, $account, $date);
                 }
             } else {
                 $this->logger->info('Skipping inactive account.');
@@ -51,17 +53,17 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     }
 
     /**
-     * @param string $id
+     * @param string $accountId
      * @param array $account
      * @param string $date
      * @throws Exception
      */
-    private function importAccount($id, $account, $date)
+    private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import account ' . $id. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(Bing::getDataTableName(), $account['websiteId'], $date);
+        $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->deleteImportedData(Bing::getDataTableName(), $accountId, $account['websiteId'], $date);
 
-        $data = $this->getBingReport($id, $account, $date);
+        $data = $this->getBingReport($accountId, $account, $date);
 
         $result = simplexml_load_string($data);
         foreach ($result->Table->Row as $row) {
@@ -70,10 +72,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             Db::query(
                 'INSERT INTO ' . Bing::getDataTableName()
-                    . ' (idsite, date, account_id, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
-                    . 'keyword, impressions, clicks, cost, conversions, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                    . ' (id_account_internal, idsite, date, account_id, account, campaign_id, campaign, ad_group_id, '
+                    . 'ad_group, keyword_id, keyword, impressions, clicks, cost, conversions, ts_created) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
+                    $accountId,
                     $account['websiteId'],
                     $date,
                     $row->AccountId->attributes()['value'],
@@ -93,10 +96,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         }
     }
 
-    public function getBingReport($id, $account, $date)
+    public function getBingReport($accountId, $account, $date)
     {
         // Always refresh access token as it expires after 60m
-        $this->refreshAccessToken($id, $account);
+        $this->refreshAccessToken($accountId, $account);
 
         $settings = new Settings();
 
@@ -244,10 +247,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     /**
      * TODO: There is a similar method in Bing/Controller.php.
      *
-     * @param string $id
+     * @param string $accountId
      * @param array $account
      */
-    private function refreshAccessToken($id, &$account)
+    private function refreshAccessToken($accountId, &$account)
     {
         $settings = new Settings();
         $context = null;
@@ -275,7 +278,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $account['accessToken'] = $data['access_token'];
 
         $configuration = $settings->getConfiguration();
-        $configuration[AOM::PLATFORM_BING]['accounts'][$id]['accessToken'] = $data['access_token'];
+        $configuration[AOM::PLATFORM_BING]['accounts'][$accountId]['accessToken'] = $data['access_token'];
         $settings->setConfiguration($configuration);
     }
 

@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 
-use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
@@ -21,24 +20,6 @@ class FacebookAds extends Platform implements PlatformInterface
     public static function getDataTableName()
     {
         return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_FACEBOOK_ADS));
-    }
-
-    /**
-     * Enriches a specific visit with additional Facebook information when this visit came from Facebook.
-     *
-     * @param array &$visit
-     * @param array $adParams
-     * @return array
-     * @throws \Exception
-     */
-    public function enrichVisit(array &$visit, array $adParams)
-    {
-        // TODO: This method must be refactored!
-        $results = [];
-
-        $visit['adParams'] = array_merge($adParams, ($results ? $results : []));
-
-        return $visit;
     }
 
     /**

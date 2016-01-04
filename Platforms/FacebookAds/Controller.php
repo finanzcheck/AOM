@@ -22,11 +22,10 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
      * @param int $websiteId
      * @param string $clientId
      * @param string $clientSecret
-     * @param string $userAccountId
      * @param string $accountId
      * @return bool
      */
-    public function addAccount($websiteId, $clientId, $clientSecret, $userAccountId, $accountId)
+    public function addAccount($websiteId, $clientId, $clientSecret, $accountId)
     {
         Piwik::checkUserHasAdminAccess($idSites = [$websiteId]);
 
@@ -37,7 +36,6 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             'websiteId' => $websiteId,
             'clientId' => $clientId,
             'clientSecret' => $clientSecret,
-            'userAccountId' => $userAccountId,
             'accountId' => $accountId,
             'accessToken' => null,
             'active' => true,

@@ -24,38 +24,6 @@ class Criteo extends Platform implements PlatformInterface
     }
 
     /**
-     * Enriches a specific visit with additional Criteo information when this visit came from Criteo.
-     *
-     * @param array &$visit
-     * @param array $adParams
-     * @return array
-     * @throws \Exception
-     */
-    public function enrichVisit(array &$visit, array $adParams)
-    {
-        $sql = 'SELECT
-                    campaign_id AS campaignId,
-                    campaign,
-                    (cost / clicks) AS cpc
-                FROM ' . self::getDataTableName() . '
-                WHERE
-                    date = ? AND
-                    campaign_id = ?';
-
-        $results = Db::fetchRow(
-            $sql,
-            [
-                date('Y-m-d', strtotime($visit['firstActionTime'])),
-                $adParams['campaignId'],
-            ]
-        );
-
-        $visit['adParams'] = array_merge($adParams, ($results ? $results : []));
-
-        return $visit;
-    }
-
-    /**
      * Extracts advertisement platform specific data from the query params.
      *
      * @param string $paramPrefix

@@ -55,6 +55,10 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     public function merge()
     {
         // Get all relevant visits
+        // TODO: Convert local datetime into UTC before querying visits (by iterating website for website?)
+        // TODO: Example AOM::convertLocalDateTimeToUTC($this->startDate, Site::getTimezoneFor($idsite))
+        // TODO: The example returns 2015-12-19 23:00:00 for startDate 2015-12-20 00:00:00 for Europe/Berlin.
+        // We assume that the website's timezone matches the timezone of all advertising platforms.
         $visits = DB::fetchAll(
             'SELECT * FROM  ' . Common::prefixTable('log_visit')
                 . '  WHERE visit_first_action_time >= ? AND visit_first_action_time <= ? AND aom_platform = ?',
