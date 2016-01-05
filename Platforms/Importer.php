@@ -93,7 +93,7 @@ abstract class Importer
     {
         Db::deleteAllRows(
             $tableName,
-            'WHERE id_account_internal = ?, idsite = ? AND date = ?',
+            'WHERE id_account_internal = ? AND idsite = ? AND date = ?',
             'date',
             100000,
             [
