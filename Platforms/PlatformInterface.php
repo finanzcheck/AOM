@@ -14,7 +14,12 @@ interface PlatformInterface
     /**
      * Returns the platform's data table name.
      */
-    public static function getDataTableName();
+    public static function getDataTableNameStatic();
+
+    /**
+     * Returns the platform's data table name.
+     */
+    public function getDataTableName();
 
     /**
      * @return LoggerInterface

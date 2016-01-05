@@ -15,7 +15,7 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' . FacebookAds::getDataTableName() . ' (
+            $sql = 'CREATE TABLE ' . FacebookAds::getDataTableNameStatic() . ' (
                         id_account_internal VARCHAR(50) NOT NULL,
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
@@ -41,7 +41,7 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_facebook ON ' . FacebookAds::getDataTableName()
+            $sql = 'CREATE INDEX index_aom_facebook ON ' . FacebookAds::getDataTableNameStatic()
                 . ' (idsite, date, account_id)';  // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
@@ -54,6 +54,6 @@ class Installer implements InstallerInterface
 
     public function uninstallPlugin()
     {
-        Db::dropTables(FacebookAds::getDataTableName());
+        Db::dropTables(FacebookAds::getDataTableNameStatic());
     }
 }

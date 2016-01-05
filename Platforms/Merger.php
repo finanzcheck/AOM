@@ -6,11 +6,17 @@
  */
 namespace Piwik\Plugins\AOM\Platforms;
 
+use Piwik\Common;
 use Piwik\Db;
 use Psr\Log\LoggerInterface;
 
 abstract class Merger
 {
+    /**
+     * @var Platform
+     */
+    protected $platform;
+
     /**
      * @var LoggerInterface
      */
@@ -52,6 +58,82 @@ abstract class Merger
         } else {
             $this->startDate = date('Y-m-d', strtotime('-1 day', time()));
             $this->endDate = date('Y-m-d');
+        }
+    }
+
+    /**
+     * @param Platform $platform
+     */
+    public function setPlatform($platform)
+    {
+        $this->platform = $platform;
+    }
+
+    /**
+     * Returns all relevant visits
+     *
+     * @return array
+     * @throws \Exception
+     */
+    protected function getVisits()
+    {
+        // TODO: Convert local datetime into UTC before querying visits (by iterating website for website?)
+        // TODO: Example AOM::convertLocalDateTimeToUTC($this->startDate, Site::getTimezoneFor($idsite))
+        // TODO: The example returns 2015-12-19 23:00:00 for startDate 2015-12-20 00:00:00 for Europe/Berlin.
+        // We assume that the website's timezone matches the timezone of all advertising platforms.
+        return DB::fetchAll(
+            'SELECT * FROM  ' . Common::prefixTable('log_visit')
+            . '  WHERE visit_first_action_time >= ? AND visit_first_action_time <= ? AND aom_platform = ?',
+            [
+                $this->startDate,
+                $this->endDate,
+                $this->platform->getName(),
+            ]
+        );
+    }
+
+    /**
+     * Returns all relevant ad data
+     *
+     * @return array
+     * @throws \Exception
+     */
+    protected function getAdData()
+    {
+        return DB::fetchAll(
+            'SELECT * FROM ' . $this->platform->getDataTableName() . ' WHERE date >= ? AND date <= ?',
+            [
+                $this->startDate,
+                $this->endDate,
+            ]
+        );
+    }
+
+    /**
+     * Updates several visits
+     *
+     * @param array $updateVisits contains a map with two entries: idvisit and an array for setting fields
+     * @throws \Exception
+     */
+    protected function updateVisits(array $updateVisits)
+    {
+        // TODO: Use only one statement
+        foreach($updateVisits as list($idvisit, $updates)) {
+            $sql = 'UPDATE ' . Common::prefixTable('log_visit') . ' SET ';
+
+            $firstUpdate = true;
+            foreach($updates as $key => $val) {
+                if($firstUpdate) {
+                    $firstUpdate = false;
+                } else {
+                    $sql.= ', ';
+                }
+                $sql.= $key.' = \''. $val.'\'';
+            }
+
+            $sql.= ' WHERE idvisit = ' . $idvisit;
+
+            DB::exec($sql);
         }
     }
 }

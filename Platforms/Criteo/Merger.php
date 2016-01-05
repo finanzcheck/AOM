@@ -54,75 +54,44 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
     public function merge()
     {
-        // Get all relevant visits
-        // TODO: Convert local datetime into UTC before querying visits (by iterating website for website?)
-        // TODO: Example AOM::convertLocalDateTimeToUTC($this->startDate, Site::getTimezoneFor($idsite))
-        // TODO: The example returns 2015-12-19 23:00:00 for startDate 2015-12-20 00:00:00 for Europe/Berlin.
-        // We assume that the website's timezone matches the timezone of all advertising platforms.
-        $visits = DB::fetchAll(
-            'SELECT * FROM  ' . Common::prefixTable('log_visit')
-                . '  WHERE visit_first_action_time >= ? AND visit_first_action_time <= ? AND aom_platform = ?',
-            [
-                $this->startDate,
-                $this->endDate,
-                AOM::PLATFORM_CRITEO,
-            ]
-        );
-
-        // Get all relevant ad data
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE date >= ? AND date <= ?',
-            [
-                $this->startDate,
-                $this->endDate,
-            ]
-        );
-
         $adDataMap = [];
-        foreach ($result as $row) {
+        foreach ($this->getAdData() as $row) {
             $adDataMap[$this->buildKeyFromAdData($row)] = $row;
         }
 
         // Update visits
         $updateStatements = [];
-        foreach ($visits as $visit) {
+        foreach ($this->getVisits() as $visit) {
             $data = null;
 
             $key = $this->buildKeyFromVisit($visit);
             if (isset($adDataMap[$key])) {
                 // Set aom_ad_data
-                $updateStatements[] = 'UPDATE ' . Common::prefixTable(
-                        'log_visit'
-                    ) . ' SET aom_ad_data = \'' . json_encode(
-                        $adDataMap[$key]
-                    ) . '\', aom_platform_row_id = ' . $adDataMap[$key]['id'] .
-                    ' WHERE idvisit = ' . $visit['idvisit'];
+                $updateMap = [
+                    'aom_ad_data' => json_encode($adDataMap[$key]),
+                    'aom_platform_row_id' => $adDataMap[$key]['id']
+                ];
             } else {
-
                 // Search for historical data
                 list($idsite, $date, $campaignId) = $this->getIdsFromVisit($visit);
                 $data = Criteo::getAdData($idsite, $date, $campaignId);
                 if ($data) {
-
-                    $updateStatements[] = 'UPDATE ' . Common::prefixTable(
-                            'log_visit'
-                        ) . ' SET aom_ad_data = \'' . json_encode($data) . '\'' .
-                        ' WHERE idvisit = ' . $visit['idvisit'];
+                    $updateMap = [
+                        'aom_ad_data' => json_encode($data),
+                        'aom_platform_row_id' => 'null'
+                    ];
                 } elseif ($visit['aom_platform_row_id'] || $visit['aom_ad_data']) {
-
                     // Unset aom_ad_data
-                    $updateStatements[] = 'UPDATE ' . Common::prefixTable(
-                            'log_visit'
-                        ) . ' SET aom_ad_data = null, aom_platform_row_id = null' .
-                        ' WHERE idvisit = ' . $visit['idvisit'];
+                    $updateMap = [
+                        'aom_ad_data' => 'null',
+                        'aom_platform_row_id' => 'null'
+                    ];
                 }
             }
+            $updateStatements[] = [$visit['idvisit'], $updateMap];
         }
 
-        // TODO: Use only one statement
-        foreach ($updateStatements as $statement) {
-            DB::exec($statement);
-        }
+        $this->updateVisits($updateStatements);
 
         $this->logger->info('Merged data.');
     }

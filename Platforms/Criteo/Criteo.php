@@ -18,7 +18,7 @@ class Criteo extends Platform implements PlatformInterface
     /**
      * Returns the platform's data table name.
      */
-    public static function getDataTableName()
+    public static function getDataTableNameStatic()
     {
         return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_CRITEO));
     }
@@ -64,7 +64,7 @@ class Criteo extends Platform implements PlatformInterface
     {
         // Exact match
         $result = DB::fetchAll(
-            'SELECT * FROM ' . Criteo::getDataTableName() . ' WHERE idsite = ? AND date = ? AND campaign_id = ?',
+            'SELECT * FROM ' . Criteo::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND campaign_id = ?',
             [
                 $idsite,
                 $date,
@@ -79,7 +79,7 @@ class Criteo extends Platform implements PlatformInterface
 
         // No exact match found; search for historic data
         $result = DB::fetchAll(
-            'SELECT * FROM ' . Criteo::getDataTableName()
+            'SELECT * FROM ' . Criteo::getDataTableNameStatic()
                 . ' WHERE idsite = ? AND campaign_id = ? ORDER BY date DESC LIMIT 1',
             [
                 $idsite,

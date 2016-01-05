@@ -7,6 +7,7 @@
 namespace Piwik\Plugins\AOM\Platforms;
 
 use Exception;
+use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Settings;
@@ -140,6 +141,7 @@ abstract class Platform
         /** @var MergerInterface $merger */
         $merger = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Merger', $this->getLogger());
         $merger->setPeriod($startDate, $endDate);
+        $merger->setPlatform($this);
         $merger->merge();
     }
 
@@ -152,4 +154,25 @@ abstract class Platform
     {
         return substr(strrchr(get_class($this), '\\'), 1);
     }
+
+    /**
+     * Returns the Name of this Platform
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->getUnqualifiedClassName();
+    }
+
+    /**
+     * Returns the platform's data table name.
+     *
+     * @return string
+     */
+    public function getDataTableName()
+    {
+        return Common::prefixTable('aom_' . strtolower($this->getName()));
+    }
+
 }

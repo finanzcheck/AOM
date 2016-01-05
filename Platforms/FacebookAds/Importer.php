@@ -45,7 +45,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     private function importAccount($accountId, $account, $date)
     {
         $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(FacebookAds::getDataTableName(), $accountId, $account['websiteId'], $date);
+        $this->deleteImportedData(FacebookAds::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
 
         Api::init(
             $account['clientId'],
@@ -77,7 +77,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // TODO: Use MySQL transaction to improve performance!
         foreach ($insights as $insight) {
             Db::query(
-                'INSERT INTO ' . FacebookAds::getDataTableName()
+                'INSERT INTO ' . FacebookAds::getDataTableNameStatic()
                     . ' (id_account_internal, idsite, date, account_id, account_name, campaign_id, campaign_name, '
                     . 'adset_id, adset_name, ad_id, ad_name, impressions, inline_link_clicks, spend, ts_created) '
                     . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',

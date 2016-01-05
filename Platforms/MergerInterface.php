@@ -23,4 +23,9 @@ interface MergerInterface
      * @return mixed
      */
     public function merge();
+
+    /**
+     * @param Platform $platform
+     */
+    public function setPlatform($platform);
 }

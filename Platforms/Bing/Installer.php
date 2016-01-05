@@ -15,7 +15,7 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' . Bing::getDataTableName() . ' (
+            $sql = 'CREATE TABLE ' . Bing::getDataTableNameStatic() . ' (
                         id_account_internal VARCHAR(50) NOT NULL,
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
@@ -42,7 +42,7 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_bing ON ' . Bing::getDataTableName() . ' (date, campaign_id)'; // TODO...
+            $sql = 'CREATE INDEX index_aom_bing ON ' . Bing::getDataTableNameStatic() . ' (date, campaign_id)'; // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
             // ignore error if index already exists (1061)
@@ -55,6 +55,6 @@ class Installer implements InstallerInterface
 
     public function uninstallPlugin()
     {
-        Db::dropTables(Bing::getDataTableName());
+        Db::dropTables(Bing::getDataTableNameStatic());
     }
 }

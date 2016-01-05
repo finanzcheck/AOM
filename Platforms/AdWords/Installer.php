@@ -15,7 +15,8 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' .  AdWords::getDataTableName() . ' (
+            $sql = 'CREATE TABLE ' .  AdWords::getDataTableNameStatic() . ' (
+                        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                         id_account_internal VARCHAR(50) NOT NULL,
                         idsite INTEGER NOT NULL,
                         date DATE NOT NULL,
@@ -44,7 +45,7 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_adwords ON ' . AdWords::getDataTableName()
+            $sql = 'CREATE INDEX index_aom_adwords ON ' . AdWords::getDataTableNameStatic()
                 . ' (date, campaign_id, ad_group_id, keyword_id)';  // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
@@ -57,6 +58,6 @@ class Installer implements InstallerInterface
 
     public function uninstallPlugin()
     {
-        Db::dropTables(AdWords::getDataTableName());
+        Db::dropTables(AdWords::getDataTableNameStatic());
     }
 }

@@ -22,7 +22,7 @@ class Bing extends Platform implements PlatformInterface
     /**
      * Returns the platform's data table name.
      */
-    public static function getDataTableName()
+    public static function getDataTableNameStatic()
     {
         return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_BING));
     }

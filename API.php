@@ -197,9 +197,9 @@ class API extends \Piwik\Plugin\API
 
                 $status['platforms'][$platformName] = [
                     'daysSinceLastImportWithResults' =>
-                        (Db::fetchOne('SELECT COUNT(*) FROM ' . $platform::getDataTableName()) > 0)
+                        (Db::fetchOne('SELECT COUNT(*) FROM ' . $platform::getDataTableNameStatic()) > 0)
                             ? intval(Db::fetchOne(
-                                    'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $platform::getDataTableName()
+                                    'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $platform::getDataTableNameStatic()
                                 ))
                             : null,
                 ];

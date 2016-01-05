@@ -64,7 +64,7 @@ class AdWords extends Platform implements PlatformInterface
     /**
      * Returns the platform's data table name.
      */
-    public static function getDataTableName()
+    public static function getDataTableNameStatic()
     {
         return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_AD_WORDS));
     }
@@ -170,4 +170,34 @@ class AdWords extends Platform implements PlatformInterface
         //Not implemented yet
         return null;
     }
+
+    public static function getAdData($idsite, $date, $campaignId, $adGroupId)
+    {
+        // Exact match
+        //TODO?
+
+        // No exact match found; search for historic data
+        $result = DB::fetchAll(
+            'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
+            [
+                $idsite,
+                $campaignId,
+                $adGroupId
+            ]
+        );
+
+        if (count($result) > 0) {
+
+            // Keep generic date-independent information only
+            return [
+                'campaign_id' => $campaignId,
+                'campaign' => $result[0]['campaign'],
+                'ad_group_id' => $adGroupId,
+                'ad_group' => $result[0]['ad_group'],
+            ];
+        }
+
+        return null;
+    }
+
 }
