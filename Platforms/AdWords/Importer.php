@@ -85,7 +85,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $xmlString = ReportUtils::DownloadReportWithAwql(
             'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZoneId, CampaignId, CampaignName, '
             . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AveragePosition, Conversions, '
-            . 'Device, QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
+            . 'QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
             . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
             . str_replace('-', '', $date) . ','
             . str_replace('-', '', $date),
@@ -123,19 +123,12 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 $network = AdWords::$networks[(string) $row['network']];
             }
 
-            if (!in_array((string) $row['device'], array_keys(AdWords::$devices))) {
-                var_dump('Device "' . (string) $row['device'] . '" not supported.');
-                continue;
-            } else {
-                $device = AdWords::$devices[(string) $row['device']];
-            }
-
             Db::query(
                 'INSERT INTO ' . AdWords::getDataTableNameStatic()
                     . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-                    . 'keyword_id, keyword_placement, criteria_type, network, device, impressions, clicks, cost, '
+                    . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
                     . 'conversions, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $accountId,
                     $account['websiteId'],
@@ -149,7 +142,6 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $row['keywordPlacement'],
                     $criteriaType,
                     $network,
-                    $device,
                     $row['impressions'],
                     $row['clicks'],
                     ($row['cost'] / 1000000),

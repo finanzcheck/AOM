@@ -46,21 +46,6 @@ class AdWords extends Platform implements PlatformInterface
         self::NETWORK_SEARCH_NETWORK => 's',
     ];
 
-    const DEVICE_COMPUTERS = 'Computers';
-    const DEVICE_MOBILE_DEVICES_WITH_FULL_BROWSERS = 'Mobile devices with full browsers';
-    const DEVICE_TABLETS_WITH_FULL_BROWSERS = 'Tablets with full browsers';
-    const DEVICE_OTHER = 'Other';
-
-    /**
-     * @var array All supported devices
-     */
-    public static $devices = [
-        self::DEVICE_COMPUTERS => 'c',
-        self::DEVICE_MOBILE_DEVICES_WITH_FULL_BROWSERS => 'm',
-        self::DEVICE_TABLETS_WITH_FULL_BROWSERS => 't',
-        self::DEVICE_OTHER => 'o',  // TODO: "other" exists, but is "o" correct?!
-    ];
-
     /**
      * Returns the platform's data table name.
      */
@@ -112,10 +97,6 @@ class AdWords extends Platform implements PlatformInterface
 
         if (array_key_exists($paramPrefix . '_network', $queryParams)) {
             $adParams['network'] = $queryParams[$paramPrefix . '_network'];
-        }
-
-        if (array_key_exists($paramPrefix . '_device', $queryParams)) {
-            $adParams['device'] = $queryParams[$paramPrefix . '_device'];
         }
 
         if (array_key_exists($paramPrefix . '_ad_position', $queryParams)) {

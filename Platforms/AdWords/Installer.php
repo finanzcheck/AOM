@@ -29,7 +29,6 @@ class Installer implements InstallerInterface
                         keyword_placement VARCHAR(255) NOT NULL,
                         criteria_type VARCHAR(255) NOT NULL,
                         network CHAR(1) NOT NULL,
-                        device CHAR(1) NOT NULL,
                         impressions INTEGER NOT NULL,
                         clicks INTEGER NOT NULL,
                         cost FLOAT NOT NULL,

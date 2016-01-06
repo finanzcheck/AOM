@@ -13,10 +13,10 @@ use Piwik\Plugins\AOM\Platforms\MergerInterface;
 
 /*
 Query for single keyword
-select count(*), date, campaign_id, ad_group_id, keyword_id, device from piwik_aom_adwords group by date, campaign_id, ad_group_id, keyword_id, device order by count(*) desc
+select count(*), date, campaign_id, ad_group_id, keyword_id from piwik_aom_adwords group by date, campaign_id, ad_group_id, keyword_id  order by count(*) desc
 
 Query for single display
-select count(*), date, campaign_id, ad_group_id, device from piwik_aom_adwords where network = 'd'  group by date, campaign_id, ad_group_id, keyword_id, device order by count(*) desc
+select count(*), date, campaign_id, ad_group_id  from piwik_aom_adwords where network = 'd'  group by date, campaign_id, ad_group_id order by count(*) desc
 
 *
  */
@@ -101,9 +101,6 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
     public function merge()
     {
-
-        //TODO: Devices?
-
         $adDataMap = [];
         foreach ($this->getAdData() as $row) {
             //TODO: Dublicate filter
