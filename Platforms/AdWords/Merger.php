@@ -16,8 +16,7 @@ Query for single keyword
 select count(*), date, campaign_id, ad_group_id, keyword_id from piwik_aom_adwords group by date, campaign_id, ad_group_id, keyword_id  order by count(*) desc
 
 Query for single display
-select count(*), date, campaign_id, ad_group_id  from piwik_aom_adwords where network = 'd'  group by date, campaign_id, ad_group_id order by count(*) desc
-
+select count(*), date, campaign_id, ad_group_id, keyword_placement  from piwik_aom_adwords where network = 'd'  group by date, campaign_id, ad_group_id, keyword_placement order by count(*) DESC
 *
  */
 
@@ -37,6 +36,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                 $adData['date'],
                 $adData['campaign_id'],
                 $adData['ad_group_id'],
+                $adData['keyword_placement'],
             ]);
         }
 
@@ -62,6 +62,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
         $ids['campaign_id'] = isset($adParams->campaignId) ? $adParams->campaignId : null;
         $ids['ad_group_id'] = isset($adParams->adGroupId) ? $adParams->adGroupId : null;
         $ids['network'] = isset($adParams->network) ? $adParams->network : null;
+        $ids['placement'] = isset($adParams->placement) ? $adParams->placement : null;
         $ids['keyword_id'] = null;
         if (isset($adParams->targetId)) {
             if (strpos($adParams->targetId, 'kwd-') !== false) {
@@ -87,6 +88,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                 $ids['date'],
                 $ids['campaign_id'],
                 $ids['ad_group_id'],
+                $ids['placement'],
             ]);
         }
 
@@ -116,9 +118,6 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
             $key = $this->buildKeyFromVisit($visit);
             if (isset($adDataMap[$key])) {
                 $ids = $this->getIdsFromVisit($visit);
-                echo $ids['network'].$adDataMap[$key]['network'].$visit['aom_ad_params']."\n";
-
-
 
                 // Set aom_ad_data
                 $updateMap = [
