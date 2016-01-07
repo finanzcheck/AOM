@@ -6,9 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
-use Piwik\Common;
 use Piwik\Db;
-use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
 
 /*
@@ -114,11 +112,9 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
         $nonMatchedVisits = [];
         foreach ($this->getVisits() as $visit) {
             $data = null;
-
             $key = $this->buildKeyFromVisit($visit);
-            if (isset($adDataMap[$key])) {
-                $ids = $this->getIdsFromVisit($visit);
 
+            if (isset($adDataMap[$key])) {
                 // Set aom_ad_data
                 $updateMap = [
                     'aom_ad_data' => json_encode($adDataMap[$key]),
@@ -130,10 +126,11 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
             }
         }
 
+
         // Search for historical data
         foreach ($nonMatchedVisits as $visit) {
             $ids = $this->getIdsFromVisit($visit);
-            $data = AdWords::getAdData($visit['idsite'], 'TODO', $ids['campaign_id'], $ids['ad_group_id']);
+            $data = AdWords::getHistoricalAdData($visit['idsite'], $ids['campaign_id'], $ids['ad_group_id']);
             if ($data) {
                 $updateMap = [
                     'aom_ad_data' => json_encode($data),

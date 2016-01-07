@@ -16,11 +16,12 @@ use Piwik\Tests\Framework\Fixture;
 
 /**
  * @group AOM
- * @group CriteoTest
+ * @group CriteoMergingTest
  * @group AOM_Integration
+ * @group AOM_Merging
  * @group Plugins
  */
-class CriteoTest extends IntegrationTestCase
+class CriteoMergingTest extends IntegrationTestCase
 {
     /**
      * @var Fixture
@@ -67,7 +68,7 @@ class CriteoTest extends IntegrationTestCase
         $data = $this->criteo->getAdDataFromAdParams(1, ['campaignId' => 14111]);
 
         $this->assertEquals('Camp Name', $data['campaign']);
-        $this->assertArrayNotHasKey('costs', $data);
+        $this->assertArrayNotHasKey('cost', $data);
     }
 
     public function testExactMatch()
@@ -80,4 +81,4 @@ class CriteoTest extends IntegrationTestCase
 
 }
 
-CriteoTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();
+CriteoMergingTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();

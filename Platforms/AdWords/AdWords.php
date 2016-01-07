@@ -148,16 +148,68 @@ class AdWords extends Platform implements PlatformInterface
      */
     public function getAdDataFromAdParams($idsite, array $adParams)
     {
-        //Not implemented yet
-        return null;
+        $data = $this->getAdData($idsite, date('Y-m-d'), $adParams);
+        if(!$data) {
+            $data = $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId']);
+        }
+        return $data;
     }
 
-    public static function getAdData($idsite, $date, $campaignId, $adGroupId)
+    public static function getAdData($idsite, $date, $adParams)
     {
-        // Exact match
-        //TODO?
+        if ($adParams['network'] == 'd') {
+            $result = DB::fetchAll(
+                'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? and network = ? AND
+                campaign_id = ? AND ad_group_id = ? AND keyword_placement = ?',
+                [
+                    $idsite,
+                    $date,
+                    'd',
+                    $adParams['campaignId'],
+                    $adParams['adGroupId'],
+                    $adParams['placement']
+                ]
+            );
+        } else {
+            $targetId = $adParams['targetId'];
+            if (strpos($adParams['targetId'], 'kwd-') !== false) {
+                $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
+            }
 
-        // No exact match found; search for historic data
+            $result = DB::fetchAll(
+                'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND
+                campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
+                [
+                    $idsite,
+                    $date,
+                    $adParams['campaignId'],
+                    $adParams['adGroupId'],
+                    $targetId
+                ]
+            );
+        }
+
+        if (count($result) > 1) {
+            throw new \Exception('Found more than one match for exact match.');
+        } elseif(count($result) == 0) {
+            return null;
+        }
+
+        return $result[0];
+    }
+
+
+    /**
+     * Searches for historical AdData
+     *
+     * @param $idsite
+     * @param $campaignId
+     * @param $adGroupId
+     * @return array|null
+     * @throws \Exception
+     */
+    public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
+    {
         $result = DB::fetchAll(
             'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
             [
@@ -168,7 +220,6 @@ class AdWords extends Platform implements PlatformInterface
         );
 
         if (count($result) > 0) {
-
             // Keep generic date-independent information only
             return [
                 'campaign_id' => $campaignId,
@@ -180,5 +231,4 @@ class AdWords extends Platform implements PlatformInterface
 
         return null;
     }
-
 }
