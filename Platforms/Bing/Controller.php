@@ -102,19 +102,6 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             throw new \Exception('No code in URI.');
         }
 
-        $context = null;
-
-        // Add proxy when enabled
-        // TODO: Should we really keep this proxy stuff?!
-        if ($settings->proxyIsActive->getValue()) {
-            $context = stream_context_create([
-                'http' => [
-                    'proxy' => 'tcp:\\\\' . $settings->proxyHost->getValue() . ':' . $settings->proxyPort->getValue(),
-                    'request_fulluri' => true,
-                ]]
-            );
-        }
-
         // The value for the 'redirect_uri' must exactly match the redirect URI used to obtain the authorization code.
         $url = 'https://login.live.com/oauth20_token.srf?client_id='
             . $configuration[AOM::PLATFORM_BING]['accounts'][$id]['clientId'] . '&client_secret='
@@ -122,7 +109,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             . '&grant_type=authorization_code&redirect_uri=' . urlencode(rtrim(Option::get('piwikUrl'), '/')
             . '?module=AOM&action=platformAction&platform=Bing&method=processAccessTokenCode&id=' . $id);
 
-        $response = file_get_contents($url, null, $context);
+        $response = Bing::urlGetContents($url);
         $data = json_decode($response, true);
 
         $configuration[AOM::PLATFORM_BING]['accounts'][$id]['accessToken'] = $data['access_token'];

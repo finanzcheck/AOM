@@ -110,12 +110,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 null,
                 $account['developerToken'],
                 $account['accountId'],
-                $account['accessToken'],
-
-            // TODO: Keep proxy settings?!
-                $settings->proxyIsActive->getValue(),
-                isset($settings->proxyHost) ? $settings->proxyHost->getValue() : null,
-                isset($settings->proxyPort) ? $settings->proxyPort->getValue() : null
+                $account['accessToken']
             );
 
             // Build a keyword performance report request,
@@ -253,26 +248,14 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     private function refreshAccessToken($accountId, &$account)
     {
         $settings = new Settings();
-        $context = null;
-
-        // Add proxy when enabled
-        // TODO: Should we really keep this proxy stuff?!
-        if ($settings->proxyIsActive->getValue()) {
-            $context = stream_context_create([
-                    'http' => [
-                        'proxy' => 'tcp:\\\\' . $settings->proxyHost->getValue() . ':'
-                            . $settings->proxyPort->getValue(),
-                        'request_fulluri' => true,
-                    ]]
-            );
-        }
 
         // Attention: This is oauth20_token.srf!
         $url = 'https://login.live.com/oauth20_token.srf?client_id=' . $account['clientId']. '&client_secret='
             . $account['clientSecret'] . '&grant_type=refresh_token&&refresh_token=' . $account['refreshToken']
             . '&redirect_uri=' . urlencode('https://login.live.com/oauth20_desktop.srf');
 
-        $response = file_get_contents($url, null, $context);
+        $response = Bing::urlGetContents($url);
+
         $data = json_decode($response, true);
 
         $account['accessToken'] = $data['access_token'];

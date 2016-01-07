@@ -19,9 +19,6 @@ Class ClientProxy
 	private $customerId;
 	private $service;
     private $namespace;
-    private $httpProxy = false;
-    private $httpProxyHost;
-    private $httpProxyPort;
 
 	// Converts long types found in SOAP responses to string types in PHP.
 	private function from_long_xml($xmlFragmentString)
@@ -40,15 +37,9 @@ Class ClientProxy
 		$this->wsdlUrl = $wsdl;
 	}
 
-    public static function ConstructWithCredentials($wsdl, $username, $password, $token, $authenticationToken, $httpProxy, $httpHost, $httpPort)
+    public static function ConstructWithCredentials($wsdl, $username, $password, $token, $authenticationToken)
 	{
 		$thisClient = new ClientProxy($wsdl);
-        if($httpProxy) {
-            $thisClient->httpProxy = true;
-            $thisClient->httpProxyHost = $httpHost;
-            $thisClient->httpProxyPort = $httpPort;
-        }
-		
         $thisClient->authenticationToken = $authenticationToken;
 		$thisClient->username = $username;
 		$thisClient->password = $password;
@@ -58,15 +49,9 @@ Class ClientProxy
 		return $thisClient;
 	}
 	
-	public static function ConstructWithAccountId($wsdl, $username, $password, $token, $accountId, $authenticationToken, $httpProxy, $httpHost, $httpPort)
+	public static function ConstructWithAccountId($wsdl, $username, $password, $token, $accountId, $authenticationToken)
 	{
 		$thisClient = new ClientProxy($wsdl);
-        if($httpProxy) {
-            $thisClient->httpProxy = true;
-            $thisClient->httpProxyHost = $httpHost;
-            $thisClient->httpProxyPort = $httpPort;
-        }
-
         $thisClient->authenticationToken = $authenticationToken;
 		$thisClient->username = $username;
 		$thisClient->password = $password;
@@ -186,20 +171,6 @@ Class ClientProxy
                 ),
             )
         );
-
-        if($this->httpProxy) {
-            $options['proxy_host'] = $this->httpProxyHost;
-            $options['proxy_port'] = $this->httpProxyPort;
-
-            $options["stream_context"] = stream_context_create(
-                array(
-                    'ssl' => array(
-                        'verify_peer' => false,
-                        'verify_peer_name' => false,
-                    )
-                )
-            );
-        }
 
 		$proxy = @new SOAPClient($this->wsdlUrl, $options);
 

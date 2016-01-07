@@ -45,21 +45,7 @@ class Settings extends \Piwik\Plugin\Settings
      */
     public $platformFacebookAdsIsActive;
 
-    /**
-     * @var SystemSetting
-     */
-    public $proxyIsActive;
 
-    /**
-     * @var SystemSetting
-     */
-    public $proxyHost;
-
-    /**
-     * @var SystemSetting
-     */
-    public $proxyPort;
-    
     protected function init()
     {
         $this->setIntroduction(Piwik::translate('AOM_PluginSettings_Introduction'));
@@ -72,13 +58,6 @@ class Settings extends \Piwik\Plugin\Settings
         $this->createPlatformBingIsActiveSetting();
         $this->createPlatformCriteoIsActiveSetting();
         $this->createPlatformFacebookAdsIsActiveSetting();
-
-        // Add proxy settings
-        $this->createProxyIsActiveSetting();
-        if ($this->proxyIsActive->getValue()) {
-            $this->createProxyHostSetting();
-            $this->createProxyPortSetting();
-        }
     }
 
     private function createParamPrefixSetting()
@@ -149,37 +128,6 @@ class Settings extends \Piwik\Plugin\Settings
         $this->platformFacebookAdsIsActive->defaultValue  = false;
 
         $this->addSetting($this->platformFacebookAdsIsActive);
-    }
-
-    private function createProxyIsActiveSetting() {
-        $this->proxyIsActive = new SystemSetting('proxyIsActive', 'Enable Proxy');
-        $this->proxyIsActive->readableByCurrentUser = true;
-        $this->proxyIsActive->type  = static::TYPE_BOOL;
-        $this->proxyIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->proxyIsActive->description   = 'Enable Proxy';
-        $this->proxyIsActive->defaultValue  = false;
-
-        $this->addSetting($this->proxyIsActive);
-    }
-
-    private function createProxyHostSetting()
-    {
-        $this->proxyHost = new SystemSetting('proxyHost', 'Proxy Host');
-        $this->proxyHost->readableByCurrentUser = true;
-        $this->proxyHost->uiControlType = static::CONTROL_TEXT;
-        $this->proxyHost->description = 'Proxy Host, e.g. "proxy.internal"';
-
-        $this->addSetting($this->proxyHost);
-    }
-
-    private function createProxyPortSetting()
-    {
-        $this->proxyPort = new SystemSetting('proxyPort', 'Proxy Port');
-        $this->proxyPort->readableByCurrentUser = true;
-        $this->proxyPort->uiControlType = static::CONTROL_TEXT;
-        $this->proxyPort->description = 'Proxy Port, e.g. "3128"';
-
-        $this->addSetting($this->proxyPort);
     }
 
     public function getConfiguration()
