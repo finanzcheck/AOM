@@ -58,11 +58,10 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
         foreach ($this->getAdData() as $row) {
             $adDataMap[$this->buildKeyFromAdData($row)] = $row;
         }
-
         // Update visits
         $updateStatements = [];
         foreach ($this->getVisits() as $visit) {
-            $data = null;
+            $updateMap = null;
 
             $key = $this->buildKeyFromVisit($visit);
             if (isset($adDataMap[$key])) {
@@ -75,6 +74,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                 // Search for historical data
                 list($idsite, $date, $campaignId) = $this->getIdsFromVisit($visit);
                 $data = Criteo::getAdData($idsite, $date, $campaignId);
+
                 if ($data) {
                     $updateMap = [
                         'aom_ad_data' => json_encode($data),
@@ -88,7 +88,9 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                     ];
                 }
             }
-            $updateStatements[] = [$visit['idvisit'], $updateMap];
+            if($updateMap) {
+                $updateStatements[] = [$visit['idvisit'], $updateMap];
+            }
         }
 
         $this->updateVisits($updateStatements);

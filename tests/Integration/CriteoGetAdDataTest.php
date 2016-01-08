@@ -16,12 +16,12 @@ use Piwik\Tests\Framework\Fixture;
 
 /**
  * @group AOM
- * @group CriteoMergingTest
+ * @group CriteoGetAdDataTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
  */
-class CriteoMergingTest extends IntegrationTestCase
+class CriteoGetAdDataTest extends IntegrationTestCase
 {
     /**
      * @var Fixture
@@ -40,20 +40,18 @@ class CriteoMergingTest extends IntegrationTestCase
         $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
         $this->criteo = new Criteo($logger);
 
-
         // set up your test here if needed
-        Db::exec(
-            'INSERT INTO piwik_aom_criteo (`id`, `idsite`, `date`, `campaign_id`, `campaign`, `impressions`, `clicks`, `cost`, `conversions`, `conversions_value`, `conversions_post_view`, `conversions_post_view_value`)
-            VALUES
-	        (19,1,\'2015-12-28\',14111,\'Camp Name\',7570,13,36.4,0,0,2,37400);'
+        Db::query(
+            'INSERT INTO ' . Criteo::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
+            'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
+            [1,'2015-12-28',14111,'Camp Name',7570,13,36.4]
         );
 
-        Db::exec(
-            'INSERT INTO piwik_aom_criteo (`id`, `idsite`, `date`, `campaign_id`, `campaign`, `impressions`, `clicks`, `cost`, `conversions`, `conversions_value`, `conversions_post_view`, `conversions_post_view_value`)
-            VALUES
-	        (20,1,\''.date('Y-m-d').'\',14112,\'Camp Name2\',7570,13,36.4,0,0,2,37400);'
+        Db::query(
+            'INSERT INTO ' . Criteo::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
+            'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
+            [1,date('Y-m-d'),14112,'Camp Name2',7570,13,36.4]
         );
-
     }
 
     public function tearDown()
@@ -81,4 +79,4 @@ class CriteoMergingTest extends IntegrationTestCase
 
 }
 
-CriteoMergingTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();
+CriteoGetAdDataTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();
