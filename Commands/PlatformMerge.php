@@ -63,10 +63,11 @@ class PlatformMerge extends ConsoleCommand
             return;
         }
 
+        // TODO: Validate startDate and endDate as both are required!
+
         $platform = AOM::getPlatformInstance($input->getOption('platform'), null, $this->logger);
         $platform->merge($input->getOption('startDate'), $input->getOption('endDate'));
 
-        $this->logger->info($input->getOption('platform') . '-merge for period from '
-            . $input->getOption('startDate') . ' until ' . $input->getOption('endDate') . ' successful.');
+        $this->logger->info($input->getOption('platform') . '-merge successful.');
     }
 }

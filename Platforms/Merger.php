@@ -8,6 +8,8 @@ namespace Piwik\Plugins\AOM\Platforms;
 
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\SitesManager\API as APISitesManager;
 use Psr\Log\LoggerInterface;
 
 abstract class Merger
@@ -43,22 +45,14 @@ abstract class Merger
 
     /**
      * Sets the period that should be merged.
-     * Merges yesterday's and today's data as default.
-     *
-     * TODO: Consider site timezone here?!
      *
      * @param null|string $startDate YYYY-MM-DD
      * @param null|string $endDate YYYY-MM-DD
      */
     public function setPeriod($startDate = null, $endDate = null)
     {
-        if (null !== $startDate && null !== $endDate) {
-            $this->startDate = $startDate;
-            $this->endDate = $endDate;
-        } else {
-            $this->startDate = date('Y-m-d', strtotime('-1 day', time()));
-            $this->endDate = date('Y-m-d');
-        }
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     /**
@@ -70,36 +64,50 @@ abstract class Merger
     }
 
     /**
-     * Returns all relevant visits
+     * Returns all relevant visits.
+     * During merging website and date scopes are being considered.
      *
      * @return array
      * @throws \Exception
      */
     protected function getVisits()
     {
-        // TODO: Convert local datetime into UTC before querying visits (by iterating website for website?)
-        // TODO: Example AOM::convertLocalDateTimeToUTC($this->startDate, Site::getTimezoneFor($idsite))
-        // TODO: The example returns 2015-12-19 23:00:00 for startDate 2015-12-20 00:00:00 for Europe/Berlin.
         // We assume that the website's timezone matches the timezone of all advertising platforms.
 
-        return DB::fetchAll(
-            'SELECT * FROM  ' . Common::prefixTable('log_visit')
-            . '  WHERE visit_first_action_time >= ? AND visit_first_action_time <= ? AND aom_platform = ?',
-            [
-                $this->startDate,
-                $this->endDate,
-                $this->platform->getName(),
-            ]
-        );
+        $visits = [];
+
+        // We get visits per website to consider the website's individual timezones.
+        foreach (APISitesManager::getInstance()->getAllSites() as $site) {
+            $visits = array_merge(
+                $visits,
+                DB::fetchAll(
+                    'SELECT * FROM  ' . Common::prefixTable('log_visit') . '
+                        WHERE
+                            idsite = ? AND aom_platform = ? AND
+                            visit_first_action_time >= ? AND visit_first_action_time <= ?',
+                    [
+                        $site['idsite'],
+                        $this->platform->getName(),
+                        AOM::convertLocalDateTimeToUTC($this->startDate . ' 00:00:00', $site['timezone']),
+                        AOM::convertLocalDateTimeToUTC($this->endDate . ' 23:59:59', $site['timezone']),
+                    ]
+                )
+            );
+        }
+
+        $this->logger->debug('Got ' . count($visits) . ' visits.');
+
+        return $visits;
     }
 
     /**
-     * Returns all relevant ad data
+     * Returns all platform data within the period.
+     * During merging website and date scopes are being considered.
      *
      * @return array
      * @throws \Exception
      */
-    protected function getAdData()
+    protected function getPlatformData()
     {
         return DB::fetchAll(
             'SELECT * FROM ' . $this->platform->getDataTableName() . ' WHERE date >= ? AND date <= ?',
@@ -111,9 +119,9 @@ abstract class Merger
     }
 
     /**
-     * Updates several visits
+     * Updates several visits with the given data.
      *
-     * @param array $updateVisits contains a map with two entries: idvisit and an array for setting fields
+     * @param array $updateVisits A map with two entries: idvisit and an array for fields and values to be set
      * @throws \Exception
      */
     protected function updateVisits(array $updateVisits)
@@ -123,16 +131,16 @@ abstract class Merger
             $sql = 'UPDATE ' . Common::prefixTable('log_visit') . ' SET ';
 
             $firstUpdate = true;
-            foreach($updates as $key => $val) {
-                if($firstUpdate) {
+            foreach ($updates as $key => $val) {
+                if ($firstUpdate) {
                     $firstUpdate = false;
                 } else {
-                    $sql.= ', ';
+                    $sql .= ', ';
                 }
-                $sql.= $key.' = \''. $val.'\'';
+                $sql .= $key.' = \''. $val.'\'';
             }
 
-            $sql.= ' WHERE idvisit = ' . $idvisit;
+            $sql .= ' WHERE idvisit = ' . $idvisit;
 
             DB::exec($sql);
         }

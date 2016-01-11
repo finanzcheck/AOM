@@ -32,7 +32,7 @@ class AdParamsExtractionTest extends SystemTestCase
         $this->assertEquals(
             '{"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","feedItemId":"",'
                 . '"targetId":"kwd-118607649","creative":"47609133356","placement":"","target":"","network":"g",'
-                . '"device":"m","adPosition":"1t2","locPhysical":"20228","locInterest":"1004074"}',
+                . '"adPosition":"1t2","locPhysical":"20228","locInterest":"1004074"}',
             Db::fetchOne('SELECT aom_ad_params FROM piwik_log_visit WHERE user_id = "c1aed2f5b1f79d27951b0b309ff42919"')
         );
     }

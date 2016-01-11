@@ -6,8 +6,11 @@
  */
 namespace Piwik\Plugins\AOM;
 
+use Piwik\Common;
 use Piwik\Container\StaticContainer;
+use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Site;
 use Piwik\Tracker\Action;
 use Psr\Log\LoggerInterface;
 
@@ -54,6 +57,28 @@ class AOM extends \Piwik\Plugin
             $platform = self::getPlatformInstance($platform);
             $platform->installPlugin();
         }
+
+        try {
+            $sql = 'CREATE TABLE ' . Common::prefixTable('aom_visits') . ' (
+                        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        idsite INTEGER NOT NULL,
+                        piwik_idvisit INTEGER,
+                        piwik_visit_first_action_time_utc DATETIME NOT NULL,
+                        platform INTEGER NOT NULL,
+                        criteo_campaign_id INTEGER,
+                        criteo_campaign VARCHAR(255),
+                        cost FLOAT NOT NULL,
+                        ts_created TIMESTAMP
+                    )  DEFAULT CHARSET=utf8';
+            Db::exec($sql);
+        } catch (\Exception $e) {
+            // ignore error if table already exists (1050 code is for 'table already exists')
+            if (!Db::get()->isErrNo($e, '1050')) {
+                throw $e;
+            }
+        }
+
+        // TODO: Create indices!
     }
 
     /**
@@ -202,5 +227,44 @@ class AOM extends \Piwik\Plugin
         $date->setTimezone(new \DateTimeZone('UTC'));
 
         return $date->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Converts a UTC datetime string (Y-m-d H:i:s) into website's local time and returns it as a string (Y-m-d H:i:s).
+     *
+     * @param string $dateTime
+     * @param int $idsite
+     * @return string
+     */
+    public static function convertUTCToLocalDateTime($dateTime, $idsite)
+    {
+        $date = new \DateTime($dateTime);
+        $date->setTimezone(new \DateTimeZone(Site::getTimezoneFor($idsite)));
+
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Returns all dates within the period, e.g. ['2015-12-20','2015-12-21']
+     *
+     * @param string $startDate YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
+     * @return array
+     */
+    public static function getPeriodAsArrayOfDates($startDate, $endDate)
+    {
+        $start = new \DateTime($startDate);
+        $end = new \DateTime($endDate);
+        $invert = $start > $end;
+
+        $dates = [];
+        $dates[] = $start->format('Y-m-d');
+
+        while ($start != $end) {
+            $start->modify(($invert ? '-' : '+') . '1 day');
+            $dates[] = $start->format('Y-m-d');
+        }
+
+        return $dates;
     }
 }

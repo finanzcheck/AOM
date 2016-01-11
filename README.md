@@ -63,7 +63,9 @@ full URI (e.g. http://local.piwik.de?module=AOM&action=platformAction&platform=A
 being an authorized redirect URI.
  
 AdWords data can is being (re)imported for the last 3 days (as old data might change). You can (re)import data manually  
-by executing `./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20`.
+by executing `./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20`. You can merge 
+imported data manually by executing 
+`./console aom:merge --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20`.
 
 
 ### Microsoft Bing Ads
@@ -98,7 +100,8 @@ This requires a [mobile or desktop client app](https://account.live.com/develope
 Piwik's URI (e.g. http://local.piwik.de/) must be added at Bing to the app's valid redirect URLs under "API settings". 
 
 Bing's data is being imported once a day. You can (re)import data manually by executing 
-`./console aom:import --platform=Bing --startDate=2015-12-20 --endDate=2015-12-20`.
+`./console aom:import --platform=Bing --startDate=2015-12-20 --endDate=2015-12-20`. You can merge imported data manually
+by executing `./console aom:merge --platform=Bing --startDate=2015-12-20 --endDate=2015-12-20`.
 
 
 ### Criteo
@@ -125,7 +128,8 @@ When a Criteo ad is clicked, data like the following can be found in `piwik_log_
 #### Importing & merging
 
 Criteo's data is being imported once a day. You can (re)import data manually by executing 
-`./console aom:import --platform=Criteo --startDate=2015-12-20 --endDate=2015-12-20`.
+`./console aom:import --platform=Criteo --startDate=2015-12-20 --endDate=2015-12-20`. You can merge imported data
+manually by executing `./console aom:merge --platform=Criteo --startDate=2015-12-20 --endDate=2015-12-20`.
   
 Merging is solely based on Criteo's campaign ID.  
 
@@ -160,7 +164,8 @@ This requires a [Facebook App with Marketing API access](https://developers.face
 Piwik's URI (e.g. http://local.piwik.de/) must be added to the app's valid OAuth redirect URIs. 
 
 Facebook Ads' data is being imported once a day. You can (re)import data manually by executing 
-`./console aom:import --platform=FacebookAds --startDate=2015-12-20 --endDate=2015-12-20`.
+`./console aom:import --platform=FacebookAds --startDate=2015-12-20 --endDate=2015-12-20`. You can merge imported data
+manually by executing `./console aom:merge --platform=FacebookAds --startDate=2015-12-20 --endDate=2015-12-20`.
 
 
 ## Other advertising platforms and Piwik's default tracking params
@@ -170,6 +175,15 @@ You should not use any of the params listed above when the advertising platform 
 Piwik's [default tracking params](http://piwik.org/docs/tracking-campaigns/) (pk_kwd and the even more important 
 pk_campaign) should be used for both supported and unsupported advertising platforms.
 
+
+
+## Allocate costs to Piwik visits
+ 
+Executing `./console aom:replenish-visits --startDate=2015-12-20 --endDate=2015-12-20` allocates platform costs to 
+(merged) Piwik visits and stores the results in piwik_aom_visits for further processing (e.g. by a data warehouse). 
+There might be more visits in piwik_aom_visits then in piwik_log_visits when there a platform costs that could not be 
+assigned to visit from piwik_log_visits.
+ 
 
 
 ## API

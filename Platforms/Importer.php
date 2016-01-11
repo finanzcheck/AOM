@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms;
 
-use DateTime;
 use Piwik\Db;
 use Psr\Log\LoggerInterface;
 
@@ -54,28 +53,6 @@ abstract class Importer
             $this->startDate = date('Y-m-d', strtotime('-1 day', time()));
             $this->endDate = date('Y-m-d');
         }
-    }
-
-    /**
-     * Returns all dates within the period, e.g. ['2015-12-20','2015-12-21']
-     *
-     * @return array
-     */
-    public function getPeriodAsArrayOfDates()
-    {
-        $start = new DateTime($this->startDate);
-        $end = new DateTime($this->endDate);
-        $invert = $start > $end;
-
-        $dates = [];
-        $dates[] = $start->format('Y-m-d');
-
-        while ($start != $end) {
-            $start->modify(($invert ? '-' : '+') . '1 day');
-            $dates[] = $start->format('Y-m-d');
-        }
-
-        return $dates;
     }
 
     /**

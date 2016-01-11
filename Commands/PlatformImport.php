@@ -45,6 +45,7 @@ class PlatformImport extends ConsoleCommand
             ->addOption('platform', null, InputOption::VALUE_REQUIRED)
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
+            ->addOption('merge', null, InputOption::VALUE_OPTIONAL, 'Merge after import', false)
             ->setDescription('Import an advertising platform\'s data for a specific period.');
     }
 
@@ -64,7 +65,7 @@ class PlatformImport extends ConsoleCommand
         }
 
         $platform = AOM::getPlatformInstance($input->getOption('platform'), null, $this->logger);
-        $platform->import($input->getOption('startDate'), $input->getOption('endDate'));
+        $platform->import($input->getOption('merge'), $input->getOption('startDate'), $input->getOption('endDate'));
 
         $this->logger->info($input->getOption('platform') . '-import successful.');
     }

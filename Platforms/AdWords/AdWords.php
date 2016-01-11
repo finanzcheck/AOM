@@ -33,17 +33,26 @@ class AdWords extends Platform implements PlatformInterface
         self::CRITERIA_TYPE_USER_LIST,
     ];
 
-    const NETWORK_DISPLAY_NETWORK = 'Display Network';
-    const NETWORK_GOOGLE_SEARCH = 'Google Search';
-    const NETWORK_SEARCH_NETWORK = 'Search Network';
+    /**
+     * @see https://developers.google.com/adwords/api/docs/appendix/reports/all-reports#adnetworktype2
+     */
+    const NETWORK_CONTENT = 'Display Network';
+    const NETWORK_SEARCH = 'Google Search';
+    const NETWORK_SEARCH_PARTNERS = 'Search Network';
+    const NETWORK_YOUTUBE_SEARCH = 'YouTube Search';
+    const NETWORK_YOUTUBE_WATCH = 'YouTube Videos';
+    const NETWORK_UNKNOWN = 'unknown';
 
     /**
      * @var array All supported networks
      */
     public static $networks = [
-        self::NETWORK_DISPLAY_NETWORK => 'd',
-        self::NETWORK_GOOGLE_SEARCH => 'g',
-        self::NETWORK_SEARCH_NETWORK => 's',
+        self::NETWORK_CONTENT => 'd',
+        self::NETWORK_SEARCH => 'g',
+        self::NETWORK_SEARCH_PARTNERS => 's',
+        self::NETWORK_YOUTUBE_SEARCH => null,
+        self::NETWORK_YOUTUBE_WATCH => null,
+        self::NETWORK_UNKNOWN => null,
     ];
 
     /**

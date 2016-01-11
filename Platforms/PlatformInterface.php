@@ -56,22 +56,24 @@ interface PlatformInterface
 
     /**
      * Imports platform data for the specified period.
-     * If no period has been specified, the platform detects the period to import on its own.
+     * If no period has been specified, the platform detects the period to import on its own (usually "yesterday").
+     * When triggered via scheduled tasks, imported platform data is being merged automatically afterwards.
      *
+     * @param bool $mergeAfterwards
      * @param string $startDate YYYY-MM-DD
-     * @param string $endDate   YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
      * @return mixed
      */
-    public function import($startDate = null, $endDate = null);
+    public function import($mergeAfterwards = false, $startDate = null, $endDate = null);
 
     /**
      * Merges platform data for the specified period.
      *
      * @param string $startDate YYYY-MM-DD
-     * @param string $endDate   YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
      * @return mixed
      */
-    public function merge($startDate = null, $endDate = null);
+    public function merge($startDate, $endDate);
 
     /**
      * Extracts advertisement platform specific data from the query params and stores it in piwik_log_visit.aom_ad_params.

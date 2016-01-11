@@ -100,12 +100,15 @@ abstract class Platform
     /**
      * Imports platform data for the specified period.
      * If no period has been specified, the platform detects the period to import on its own (usually "yesterday").
+     * When triggered via scheduled tasks, imported platform data is being merged automatically afterwards.
      *
+     * @param bool $mergeAfterwards
      * @param string $startDate YYYY-MM-DD
-     * @param string $endDate   YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
      * @return mixed
+     * @throws Exception
      */
-    public function import($startDate = null, $endDate = null)
+    public function import($mergeAfterwards = false, $startDate = null, $endDate = null)
     {
         if (!$this->isActive()) {
             return;
@@ -115,6 +118,10 @@ abstract class Platform
         $importer = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Importer', $this->getLogger());
         $importer->setPeriod($startDate, $endDate);
         $importer->import();
+
+        if ($mergeAfterwards) {
+            $this->merge($startDate, $endDate);
+        }
     }
 
     /**
@@ -122,20 +129,13 @@ abstract class Platform
      * If no period has been specified, we'll try to merge yesterdays data only.
      *
      * @param string $startDate YYYY-MM-DD
-     * @param string $endDate   YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
      * @return mixed
      */
-    public function merge($startDate = null, $endDate = null)
+    public function merge($startDate, $endDate)
     {
         if (!$this->isActive()) {
             return;
-        }
-
-        // Validate start and end date
-        // TODO: Consider site timezone here?!
-        if (null === $startDate || null === $endDate) {
-            $startDate = date('Y-m-d', strtotime('-1 day', time()));
-            $endDate = date('Y-m-d', strtotime('-1 day', time()));
         }
 
         /** @var MergerInterface $merger */
@@ -146,7 +146,7 @@ abstract class Platform
     }
 
     /**
-     * Returns the platform's unqualified class name
+     * Returns the platform's unqualified class name.
      *
      * @return string
      */
@@ -156,7 +156,7 @@ abstract class Platform
     }
 
     /**
-     * Returns the Name of this Platform
+     * Returns the platform's name.
      *
      * @return string
      */
@@ -174,5 +174,4 @@ abstract class Platform
     {
         return Common::prefixTable('aom_' . strtolower($this->getName()));
     }
-
 }

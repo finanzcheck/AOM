@@ -7,7 +7,9 @@
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
+use Piwik\Site;
 
 /*
 Query for single keyword
@@ -54,7 +56,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     protected function getIdsFromVisit(array $visit)
     {
         $ids = [];
-        $ids['date'] = substr($visit['visit_first_action_time'], 0, 10);
+        $ids['date'] = substr(AOM::convertUTCToLocalDateTime($visit['visit_first_action_time'], $visit['idsite']), 0, 10);
         $ids['idsite'] = $visit['idsite'];
         $adParams = @json_decode($visit['aom_ad_params']);
         $ids['campaign_id'] = isset($adParams->campaignId) ? $adParams->campaignId : null;
@@ -101,9 +103,11 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
     public function merge()
     {
+        $platformData = $this->getPlatformData();
+
         $adDataMap = [];
-        foreach ($this->getAdData() as $row) {
-            //TODO: Dublicate filter
+        foreach ($platformData as $row) {
+            //TODO: Duplicate filter
             $adDataMap[$this->buildKeyFromAdData($row)] = $row;
         }
 
@@ -113,8 +117,9 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
         foreach ($this->getVisits() as $visit) {
             $data = null;
             $key = $this->buildKeyFromVisit($visit);
-
             if (isset($adDataMap[$key])) {
+
+
                 // Set aom_ad_data
                 $updateMap = [
                     'aom_ad_data' => json_encode($adDataMap[$key]),
@@ -126,7 +131,6 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
             }
         }
 
-
         // Search for historical data
         foreach ($nonMatchedVisits as $visit) {
             $ids = $this->getIdsFromVisit($visit);
@@ -137,6 +141,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                     'aom_platform_row_id' => 'null'
                 ];
             } elseif ($visit['aom_platform_row_id'] || $visit['aom_ad_data']) {
+
                 // Unset aom_ad_data
                 $updateMap = [
                     'aom_ad_data' => 'null',
@@ -148,6 +153,8 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
         $this->updateVisits($updateStatements);
 
-        $this->logger->info('Merged data ('.count($nonMatchedVisits).' without direct match out of '.count($this->getAdData()).')');
+        $this->logger->info(
+            'Merged data (' . count($nonMatchedVisits) . ' without direct match out of ' . count($platformData) . ')'
+        );
     }
 }

@@ -37,7 +37,7 @@ class Tasks extends \Piwik\Plugin\Tasks
                 // specified additional logic (e.g. for reimporting data under specific circumstances)
                 $schedule = Schedule::getScheduledTimeForPeriod(Schedule::PERIOD_HOUR);
 
-                $this->custom($platform, 'import', null, $schedule);
+                $this->custom($platform, 'import', true, $schedule);
 
             } else {
                 $this->logger->info('Skipping inactive platform "' . $platformName. '".');

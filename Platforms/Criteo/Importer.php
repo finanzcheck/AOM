@@ -27,7 +27,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
         foreach ($configuration[AOM::PLATFORM_CRITEO]['accounts'] as $accountId => $account) {
             if (array_key_exists('active', $account) && true === $account['active']) {
-                foreach ($this->getPeriodAsArrayOfDates() as $date) {
+                foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
                     $this->importAccount($accountId, $account, $date);
                 }
             } else {
