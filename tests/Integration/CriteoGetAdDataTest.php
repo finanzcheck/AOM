@@ -63,18 +63,20 @@ class CriteoGetAdDataTest extends IntegrationTestCase
 
     public function testAlternativeMatch()
     {
-        $data = $this->criteo->getAdDataFromAdParams(1, ['campaignId' => 14111]);
+        list($rowId, $data) = $this->criteo->getAdDataFromAdParams(1, ['campaignId' => 14111]);
 
         $this->assertEquals('Camp Name', $data['campaign']);
         $this->assertArrayNotHasKey('cost', $data);
+        $this->assertEquals(null, $rowId);
     }
 
     public function testExactMatch()
     {
-        $data = $this->criteo->getAdDataFromAdParams(1, ['campaignId' => 14112]);
+        list($rowId, $data) = $this->criteo->getAdDataFromAdParams(1, ['campaignId' => 14112]);
 
         $this->assertEquals('Camp Name2', $data['campaign']);
         $this->assertEquals(36.4, $data['cost']);
+        $this->assertEquals(2, $rowId);
     }
 
 }

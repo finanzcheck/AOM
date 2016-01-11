@@ -74,7 +74,7 @@ class Criteo extends Platform implements PlatformInterface
         if (count($result) > 1) {
             throw new \Exception('Found more than one match for exact match.');
         } elseif (1 === count($result)) {
-            return $result[0];
+            return [$result[0]['id'], $result[0]];
         }
 
         // No exact match found; search for historic data
@@ -87,14 +87,16 @@ class Criteo extends Platform implements PlatformInterface
             ]
         );
         if (count($result) > 0) {
-
             // Keep generic date-independent information only
             return [
-                'campaign_id' => $campaignId,
-                'campaign' => $result[0]['campaign'],
+                null,
+                [
+                    'campaign_id' => $campaignId,
+                    'campaign' => $result[0]['campaign'],
+                ]
             ];
         }
 
-        return null;
+        return [null, null];
     }
 }

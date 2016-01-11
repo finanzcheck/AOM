@@ -169,13 +169,12 @@ class AOM extends \Piwik\Plugin
      * @param Action $action
      * @return mixed
      * @throws \Piwik\Exception\UnexpectedWebsiteFoundException
-     * @internal param Action $url
      */
     public static function getAdData(Action $action)
     {
         $params = self::getAdParamsFromUrl($action->getActionUrl());
         if (!$params) {
-            return null;
+            return [null, null];
         }
 
         $platform = self::getPlatformInstance($params['platform']);

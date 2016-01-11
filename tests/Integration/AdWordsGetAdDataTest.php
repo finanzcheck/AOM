@@ -131,26 +131,30 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
 
     public function testExactMatch()
     {
-        $data = $this->adwords->getAdDataFromAdParams(1, ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1005, 'targetId' => 'kwd-55555']);
+        list($rowId, $data) = $this->adwords->getAdDataFromAdParams(1, ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1005, 'targetId' => 'kwd-55555']);
 
         $this->assertEquals('Campaign 1', $data['campaign']);
         $this->assertEquals(2.57, $data['cost']);
+        $this->assertEquals(1, $rowId);
+
     }
 
     public function testExactMatchDisplay()
     {
-        $data = $this->adwords->getAdDataFromAdParams(1, ['network' => 'd', 'adGroupId' => 126, 'campaignId' => 1005, 'placement' => 'www.test.de']);
+        list($rowId, $data) =  $this->adwords->getAdDataFromAdParams(1, ['network' => 'd', 'adGroupId' => 126, 'campaignId' => 1005, 'placement' => 'www.test.de']);
 
+        $this->assertEquals(3, $rowId);
         $this->assertEquals('Campaign 2', $data['campaign']);
         $this->assertEquals(8.9, $data['cost']);
     }
 
     public function testAlternativeMatch()
     {
-        $data = $this->adwords->getAdDataFromAdParams(1, ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1006, 'targetId' => 'kwd-66']);
+        list($rowId, $data) =  $this->adwords->getAdDataFromAdParams(1, ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1006, 'targetId' => 'kwd-66']);
 
         $this->assertEquals('Campaign Old', $data['campaign']);
         $this->assertArrayNotHasKey('cost', $data);
+        $this->assertEquals(null, $rowId);
     }
 }
 

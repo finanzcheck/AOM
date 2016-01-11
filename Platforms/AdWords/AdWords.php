@@ -158,8 +158,8 @@ class AdWords extends Platform implements PlatformInterface
     public function getAdDataFromAdParams($idsite, array $adParams)
     {
         $data = $this->getAdData($idsite, date('Y-m-d'), $adParams);
-        if(!$data) {
-            $data = $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId']);
+        if(!$data[0]) {
+            $data = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
         }
         return $data;
     }
@@ -204,7 +204,7 @@ class AdWords extends Platform implements PlatformInterface
             return null;
         }
 
-        return $result[0];
+        return [$result[0]['id'], $result[0]];
     }
 
 

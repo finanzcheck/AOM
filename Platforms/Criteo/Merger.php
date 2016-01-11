@@ -74,12 +74,12 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
             } else {
                 // Search for historical data
                 list($idsite, $date, $campaignId) = $this->getIdsFromVisit($visit);
-                $data = Criteo::getAdData($idsite, $date, $campaignId);
+                list($rowId, $data) = Criteo::getAdData($idsite, $date, $campaignId);
 
                 if ($data) {
                     $updateMap = [
                         'aom_ad_data' => json_encode($data),
-                        'aom_platform_row_id' => 'null'
+                        'aom_platform_row_id' => $rowId
                     ];
                 } elseif ($visit['aom_platform_row_id'] || $visit['aom_ad_data']) {
 
