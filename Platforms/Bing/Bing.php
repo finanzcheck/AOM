@@ -68,9 +68,83 @@ class Bing extends Platform implements PlatformInterface
      */
     public function getAdDataFromAdParams($idsite, array $adParams)
     {
-        //Not implemented yet
+        $data = $this->getAdData($idsite, date('Y-m-d'), $adParams);
+        if(!$data[0]) {
+            $data = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
+        }
+        return $data;
+    }
+
+    /**
+     * Searches for matching ad data
+     * @param $idsite
+     * @param $date
+     * @param $adParams
+     * @return array|null
+     * @throws \Exception
+     */
+    public static function getAdData($idsite, $date, $adParams)
+    {
+        $targetId = $adParams['targetId'];
+        if (strpos($adParams['targetId'], 'kwd-') !== false) {
+            $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
+        }
+
+        $result = DB::fetchAll(
+            'SELECT * FROM ' . Bing::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND
+                campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
+            [
+                $idsite,
+                $date,
+                $adParams['campaignId'],
+                $adParams['adGroupId'],
+                $targetId
+            ]
+        );
+
+        if (count($result) > 1) {
+            throw new \Exception('Found more than one match for exact match.');
+        } elseif (count($result) == 0) {
+            return null;
+        }
+
+        return [$result[0]['id'], $result[0]];
+    }
+
+
+    /**
+     * Searches for historical AdData
+     *
+     * @param $idsite
+     * @param $campaignId
+     * @param $adGroupId
+     * @return array|null
+     * @throws \Exception
+     */
+    public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
+    {
+        $result = DB::fetchAll(
+            'SELECT * FROM ' . Bing::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
+            [
+                $idsite,
+                $campaignId,
+                $adGroupId
+            ]
+        );
+
+        if (count($result) > 0) {
+            // Keep generic date-independent information only
+            return [
+                'campaign_id' => $campaignId,
+                'campaign' => $result[0]['campaign'],
+                'ad_group_id' => $adGroupId,
+                'ad_group' => $result[0]['ad_group'],
+            ];
+        }
+
         return null;
     }
+
 
     /**
      * Retrieves the given URI

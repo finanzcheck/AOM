@@ -146,7 +146,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 KeywordPerformanceReportColumn::AdGroupName,
                 KeywordPerformanceReportColumn::Keyword,
                 KeywordPerformanceReportColumn::KeywordId,
-                KeywordPerformanceReportColumn::DeviceType,
+//                KeywordPerformanceReportColumn::DeviceType,
                 KeywordPerformanceReportColumn::BidMatchType,
                 KeywordPerformanceReportColumn::Clicks,
                 KeywordPerformanceReportColumn::Impressions,
