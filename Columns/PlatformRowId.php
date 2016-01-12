@@ -39,11 +39,17 @@ class PlatformRowId extends VisitDimension
      * @param Request $request
      * @param Visitor $visitor
      * @param Action|null $action
-     * @return mixed The value to be saved in 'aom_ad_params'. By returning boolean false no value will be saved.
+     * @return mixed The value to be saved in 'aom_platform_row_id'.
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
+        // There might be no action (e.g. when we track a conversion)
+        if (null === $action) {
+            return false;
+        }
+
         list($rowId, $data) = AOM::getAdData($action);
+
         return $rowId;
     }
 }

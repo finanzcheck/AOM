@@ -79,7 +79,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             Db::query(
                 'INSERT INTO ' . FacebookAds::getDataTableNameStatic()
                     . ' (id_account_internal, idsite, date, account_id, account_name, campaign_id, campaign_name, '
-                    . 'adset_id, adset_name, ad_id, ad_name, impressions, inline_link_clicks, cost, ts_created) '
+                    . 'adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost, ts_created) '
                     . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $accountId,

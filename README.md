@@ -15,8 +15,16 @@ To map individual visits with the data from the advertising platforms, all links
 params that supply mapping-related data like campaign and ad IDs to this plugin. This data is stored in 
 `piwik_log_visit.aom_ad_params`. When a visitor returns with other tracking params, a new visit starts automatically. 
 
-Background jobs import and merge the data from the advertising platforms with individual visits. Merged data is is 
-stored in `piwik_log_visit.aom_ad_data`.
+Background jobs import and merge the data from the advertising platforms with individual visits. Importing and merging
+is done automatically When you have set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/). 
+You can (re)import data manually by executing 
+`./console aom:import --platform={platformName} --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD`. You can merge imported 
+data manually by executing `./console aom:merge --platform={platformName} --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD`.
+
+Imported data is stored in `piwik_aom_{platformName}`. Every advertising platform's data is aggregated on a daily basis 
+in the timezone of the advertising platform's account. Merging will only be correct, when your website's timezone 
+matches the timezones of each advertising platform account. Merged data is stored in `piwik_log_visit.aom_ad_data`. 
+
 
 
 ### Google AdWords
@@ -62,10 +70,7 @@ This requires a [web application in the Google API console](https://code.google.
 full URI (e.g. http://local.piwik.de?module=AOM&action=platformAction&platform=AdWords&method=processOAuthRedirect) 
 being an authorized redirect URI.
  
-AdWords data can is being (re)imported for the last 3 days (as old data might change). You can (re)import data manually  
-by executing `./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20`. You can merge 
-imported data manually by executing 
-`./console aom:merge --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20`.
+AdWords data can is being (re)imported for the last 3 days (as old data might change). 
 
 
 ### Microsoft Bing Ads
@@ -99,9 +104,7 @@ For importing and merging you must activate Bing and provide API credentials wit
 This requires a [mobile or desktop client app](https://account.live.com/developers/applications) at Bing.
 Piwik's URI (e.g. http://local.piwik.de/) must be added at Bing to the app's valid redirect URLs under "API settings". 
 
-Bing's data is being imported once a day. You can (re)import data manually by executing 
-`./console aom:import --platform=Bing --startDate=2015-12-20 --endDate=2015-12-20`. You can merge imported data manually
-by executing `./console aom:merge --platform=Bing --startDate=2015-12-20 --endDate=2015-12-20`.
+Bing's data is being imported once a day. 
 
 
 ### Criteo
@@ -127,9 +130,7 @@ When a Criteo ad is clicked, data like the following can be found in `piwik_log_
 
 #### Importing & merging
 
-Criteo's data is being imported once a day. You can (re)import data manually by executing 
-`./console aom:import --platform=Criteo --startDate=2015-12-20 --endDate=2015-12-20`. You can merge imported data
-manually by executing `./console aom:merge --platform=Criteo --startDate=2015-12-20 --endDate=2015-12-20`.
+Criteo's data is being imported once a day. 
   
 Merging is solely based on Criteo's campaign ID.  
 
@@ -163,9 +164,7 @@ For importing and merging you must activate Facebook Ads and provide API credent
 This requires a [Facebook App with Marketing API access](https://developers.facebook.com/docs/marketing-api/quickstart). 
 Piwik's URI (e.g. http://local.piwik.de/) must be added to the app's valid OAuth redirect URIs. 
 
-Facebook Ads' data is being imported once a day. You can (re)import data manually by executing 
-`./console aom:import --platform=FacebookAds --startDate=2015-12-20 --endDate=2015-12-20`. You can merge imported data
-manually by executing `./console aom:merge --platform=FacebookAds --startDate=2015-12-20 --endDate=2015-12-20`.
+Facebook Ads' data is being imported once a day.
 
 
 ## Other advertising platforms and Piwik's default tracking params

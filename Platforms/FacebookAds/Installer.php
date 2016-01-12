@@ -29,7 +29,7 @@ class Installer implements InstallerInterface
                         ad_id BIGINT NOT NULL,
                         ad_name VARCHAR(255) NOT NULL,
                         impressions INTEGER NOT NULL,
-                        inline_link_clicks INTEGER NOT NULL,
+                        clicks INTEGER NOT NULL,
                         cost FLOAT NOT NULL,
                         ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';

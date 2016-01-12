@@ -64,9 +64,10 @@ class AOM extends \Piwik\Plugin
                         idsite INTEGER NOT NULL,
                         piwik_idvisit INTEGER,
                         piwik_visit_first_action_time_utc DATETIME NOT NULL,
-                        platform INTEGER NOT NULL,
-                        criteo_campaign_id INTEGER,
-                        criteo_campaign VARCHAR(255),
+                        date_website_timezone DATE NOT NULL,
+                        channel VARCHAR(100),
+                        campaign_data VARCHAR(5000),
+                        platform_data VARCHAR(5000),
                         cost FLOAT NOT NULL,
                         ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
@@ -164,7 +165,7 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Tries to find some Ad data for this visit.
+     * Tries to find some ad data for this visit.
      *
      * @param Action $action
      * @return mixed

@@ -28,7 +28,13 @@ class AdData extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
+        // There might be no action (e.g. when we track a conversion)
+        if (null === $action) {
+            return false;
+        }
+
         list($rowId, $data) = AOM::getAdData($action);
+
         return json_encode($data);
     }
 }
