@@ -164,6 +164,14 @@ class AdWords extends Platform implements PlatformInterface
         return $data;
     }
 
+    /**
+     * Searches for matching ad data
+     * @param $idsite
+     * @param $date
+     * @param $adParams
+     * @return array|null
+     * @throws \Exception
+     */
     public static function getAdData($idsite, $date, $adParams)
     {
         if ($adParams['network'] == 'd') {

@@ -61,7 +61,7 @@ class CriteoGetAdDataTest extends IntegrationTestCase
         parent::tearDown();
     }
 
-    public function testAlternativeMatch()
+    public function testHistoricalMatch()
     {
         list($rowId, $data) = $this->criteo->getAdDataFromAdParams(1, ['campaignId' => 14111]);
 
