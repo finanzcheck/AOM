@@ -84,7 +84,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // https://developers.google.com/adwords/api/docs/appendix/reports/criteria-performance-report?hl=de
         $xmlString = ReportUtils::DownloadReportWithAwql(
             'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZoneId, CampaignId, CampaignName, '
-            . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AveragePosition, Conversions, '
+            . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, Conversions, '
             . 'QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
             . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
             . str_replace('-', '', $date) . ','
@@ -116,11 +116,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 $criteriaType = strtolower((string) $row['criteriaType']);
             }
 
-            if (!in_array((string) $row['network'], array_keys(AdWords::$networks))) {
-                var_dump('Network "' . (string) $row['network'] . '" not supported.');
+            if (!in_array((string) $row['networkWithSearchPartners'], array_keys(AdWords::$networks))) {
+                var_dump('Network "' . (string) $row['networkWithSearchPartners'] . '" not supported.');
                 continue;
             } else {
-                $network = AdWords::$networks[(string) $row['network']];
+                $network = AdWords::$networks[(string) $row['networkWithSearchPartners']];
             }
 
             Db::query(

@@ -37,8 +37,8 @@ class AdWords extends Platform implements PlatformInterface
      * @see https://developers.google.com/adwords/api/docs/appendix/reports/all-reports#adnetworktype2
      */
     const NETWORK_CONTENT = 'Display Network';
-    const NETWORK_SEARCH = 'Google Search';
-    const NETWORK_SEARCH_PARTNERS = 'Search Network';
+    const NETWORK_SEARCH = 'Google search';
+    const NETWORK_SEARCH_PARTNERS = 'Search partners';
     const NETWORK_YOUTUBE_SEARCH = 'YouTube Search';
     const NETWORK_YOUTUBE_WATCH = 'YouTube Videos';
     const NETWORK_UNKNOWN = 'unknown';
