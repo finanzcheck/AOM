@@ -40,13 +40,12 @@ class BingGetAdDataTest extends IntegrationTestCase
         $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
         $this->Bing = new Bing($logger);
 
-
         Db::query(
             'INSERT INTO ' . Bing::getDataTableNameStatic()
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-            . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
+            . 'keyword_id, keyword, impressions, clicks, cost, '
             . 'conversions, ts_created) '
-            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
             [
                 '1000',
                 '1',
@@ -57,9 +56,7 @@ class BingGetAdDataTest extends IntegrationTestCase
                 '123',
                 'adGroup 1',
                 '55555',
-                'keywords',
-                'keyword',
-                'g',
+                'Wolf',
                 170,
                 12,
                 2.57,
@@ -70,9 +67,9 @@ class BingGetAdDataTest extends IntegrationTestCase
         Db::query(
             'INSERT INTO ' . Bing::getDataTableNameStatic()
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-            . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
+            . 'keyword_id, keyword, impressions, clicks, cost, '
             . 'conversions, ts_created) '
-            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
             [
                 '1000',
                 '1',
@@ -83,9 +80,7 @@ class BingGetAdDataTest extends IntegrationTestCase
                 '123',
                 'adGroup 1',
                 '66',
-                'keywords',
-                'keyword',
-                'g',
+                'Cat',
                 170,
                 12,
                 7.8,
@@ -108,7 +103,6 @@ class BingGetAdDataTest extends IntegrationTestCase
         $this->assertEquals('Campaign 1', $data['campaign']);
         $this->assertEquals(2.57, $data['cost']);
         $this->assertEquals(1, $rowId);
-
     }
 
     public function testAlternativeMatch()
@@ -118,6 +112,15 @@ class BingGetAdDataTest extends IntegrationTestCase
         $this->assertEquals('Campaign Old', $data['campaign']);
         $this->assertArrayNotHasKey('cost', $data);
         $this->assertEquals(null, $rowId);
+    }
+
+    public function testNoMatch()
+    {
+        list($rowId, $data) = $this->Bing->getAdDataFromAdParams(1, ['adGroupId' => 998, 'campaignId' => 1005, 'targetId' => 'kwd-55555']);
+
+        $this->assertEquals(null, $rowId);
+        $this->assertEquals(null, $data);
+
     }
 }
 
