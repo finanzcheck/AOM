@@ -9,7 +9,6 @@ namespace Piwik\Plugins\AOM\tests\Fixtures;
 use Piwik\Plugins\AOM\Settings;
 use Piwik\Tests\Framework\Fixture;
 use Piwik;
-use Piwik\Date;
 
 class BasicFixtures extends Fixture
 {
@@ -25,10 +24,6 @@ class BasicFixtures extends Fixture
         // since we're changing the list of activated plugins, we have to make sure file caches are reset
         Piwik\Cache::flushAll();
 
-        $testVars = new Piwik\Tests\Framework\TestingEnvironmentVariables();
-        $testVars->disableAOM = false;
-        $testVars->save();
-
         $settings = new Settings();
         $settings->paramPrefix->setValue('aom');
         $settings->platformAdWordsIsActive->setValue(true);
@@ -36,7 +31,6 @@ class BasicFixtures extends Fixture
         $settings->platformCriteoIsActive->setValue(true);
         $settings->platformFacebookAdsIsActive->setValue(true);
         $settings->save();
-
     }
 
     public function tearDown()
@@ -50,27 +44,13 @@ class BasicFixtures extends Fixture
         $this->assertTrue($idSite === $this->idSite);
     }
 
-
-
     public function provideContainerConfig()
     {
-        $testVars = new Piwik\Tests\Framework\TestingEnvironmentVariables();
-
         return [
             'observers.global' => \DI\add([
-                ['Environment.bootstrapped', function () use ($testVars) {
+                ['Environment.bootstrapped', function () {
                     $plugins = Piwik\Config::getInstance()->Plugins['Plugins'];
-                    $index = array_search('AOM', $plugins);
-
-                    if ($testVars->disableAOM) {
-                        if ($index !== false) {
-                            unset($plugins[$index]);
-                        }
-                    } else {
-                        if ($index === false) {
-                            $plugins[] = 'AOM';
-                        }
-                    }
+                    $plugins[] = 'AOM';
                     Piwik\Config::getInstance()->Plugins['Plugins'] = $plugins;
                 }],
             ]),
