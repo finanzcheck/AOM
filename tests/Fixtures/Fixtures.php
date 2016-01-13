@@ -11,7 +11,7 @@ use Piwik\Tests\Framework\Fixture;
 use Piwik;
 use Piwik\Date;
 
-class Fixtures extends Fixture
+class Fixtures extends BasicFixtures
 {
     public $dateTime = '2015-12-01 01:23:45';
     public $idSite = 1;
@@ -26,10 +26,6 @@ class Fixtures extends Fixture
         Piwik\Cache::flushAll();
 
         // TODO: Write tests with plugin being disabled (see AdvancedCampaignReporting)
-        $testVars = new Piwik\Tests\Framework\TestingEnvironmentVariables();
-        $testVars->disableAOM = false;
-        $testVars->save();
-
         $settings = new Settings();
         $settings->paramPrefix->setValue('aom');
         $settings->platformAdWordsIsActive->setValue(true);
@@ -41,25 +37,6 @@ class Fixtures extends Fixture
         $this->trackCampaignVisits($this->dateTime);
     }
 
-    public function tearDown()
-    {
-        // empty
-    }
-
-    private function setUpWebsite()
-    {
-        $idSite = self::createWebsite($this->dateTime, $ecommerce = 1);
-        $this->assertTrue($idSite === $this->idSite);
-
-//        $this->idGoal1 = \Piwik\Plugins\Goals\API::getInstance()->addGoal(
-//            $this->idSite, 'title match', 'title', self::THIS_PAGE_VIEW_IS_GOAL_CONVERSION, 'contains',
-//            $caseSensitive = false, $revenue = 10, $allowMultipleConversions = true
-//        );
-//
-//        $this->idGoal2 = \Piwik\Plugins\Goals\API::getInstance()->addGoal(
-//            $this->idSite, 'title match', 'manually', '', 'contains'
-//        );
-    }
 
     /**
      * @param string $dateTime
@@ -171,30 +148,5 @@ class Fixtures extends Fixture
     protected function moveTimeForward(\PiwikTracker $t, $hourForward, $dateTime)
     {
         $t->setForceVisitDateTime(Date::factory($dateTime)->addHour($hourForward)->getDatetime());
-    }
-
-    public function provideContainerConfig()
-    {
-        $testVars = new Piwik\Tests\Framework\TestingEnvironmentVariables();
-
-        return [
-            'observers.global' => \DI\add([
-                ['Environment.bootstrapped', function () use ($testVars) {
-                    $plugins = Piwik\Config::getInstance()->Plugins['Plugins'];
-                    $index = array_search('AOM', $plugins);
-
-                    if ($testVars->disableAOM) {
-                        if ($index !== false) {
-                            unset($plugins[$index]);
-                        }
-                    } else {
-                        if ($index === false) {
-                            $plugins[] = 'AOM';
-                        }
-                    }
-                    Piwik\Config::getInstance()->Plugins['Plugins'] = $plugins;
-                }],
-            ]),
-        ];
     }
 }

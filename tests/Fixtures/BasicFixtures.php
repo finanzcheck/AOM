@@ -38,7 +38,7 @@ class BasicFixtures extends Fixture
         // empty
     }
 
-    private function setUpWebsite()
+    protected function setUpWebsite()
     {
         $idSite = self::createWebsite($this->dateTime, $ecommerce = 1);
         $this->assertTrue($idSite === $this->idSite);
