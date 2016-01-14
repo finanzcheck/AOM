@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -16,7 +14,7 @@ use Piwik\Tests\Framework\Fixture;
 
 /**
  * @group AOM
- * @group AdWordsGetAdDataTest
+ * @group AOM_AdWordsGetAdDataTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
@@ -28,17 +26,16 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-
-    /** @var  Adwords */
-    private  $adwords;
+    /**
+     * @var Adwords
+     */
+    private $adwords;
 
     public function setUp()
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $this->adwords = new AdWords($logger);
+        $this->adwords = new AdWords();
 
 
         Db::query(
@@ -93,7 +90,6 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
             ]
         );
 
-
         Db::query(
             'INSERT INTO ' . AdWords::getDataTableNameStatic()
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
@@ -119,7 +115,6 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
                 1,
             ]
         );
-
     }
 
     public function tearDown()
@@ -131,7 +126,10 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
 
     public function testExactMatch()
     {
-        list($rowId, $data) = $this->adwords->getAdDataFromAdParams(1, ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1005, 'targetId' => 'kwd-55555']);
+        list($rowId, $data) = $this->adwords->getAdDataFromAdParams(
+            1,
+            ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1005, 'targetId' => 'kwd-55555']
+        );
 
         $this->assertEquals('Campaign 1', $data['campaign']);
         $this->assertEquals(2.57, $data['cost']);
@@ -141,7 +139,10 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
 
     public function testExactMatchDisplay()
     {
-        list($rowId, $data) =  $this->adwords->getAdDataFromAdParams(1, ['network' => 'd', 'adGroupId' => 126, 'campaignId' => 1005, 'placement' => 'www.test.de']);
+        list($rowId, $data) = $this->adwords->getAdDataFromAdParams(
+            1,
+            ['network' => 'd', 'adGroupId' => 126, 'campaignId' => 1005, 'placement' => 'www.test.de']
+        );
 
         $this->assertEquals(3, $rowId);
         $this->assertEquals('Campaign 2', $data['campaign']);
@@ -150,7 +151,10 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
 
     public function testAlternativeMatch()
     {
-        list($rowId, $data) =  $this->adwords->getAdDataFromAdParams(1, ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1006, 'targetId' => 'kwd-66']);
+        list($rowId, $data) = $this->adwords->getAdDataFromAdParams(
+            1,
+            ['network' => 'g', 'adGroupId' => 123, 'campaignId' => 1006, 'targetId' => 'kwd-66']
+        );
 
         $this->assertEquals('Campaign Old', $data['campaign']);
         $this->assertArrayNotHasKey('cost', $data);

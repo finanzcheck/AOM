@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -16,7 +14,7 @@ use Piwik\Tests\Framework\Fixture;
 
 /**
  * @group AOM
- * @group FacebookAdsGetAdDataTest
+ * @group AOM_FacebookAdsGetAdDataTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
@@ -28,27 +26,28 @@ class FacebookAdsGetAdDataTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-
-    /** @var  FacebookAds */
-    private  $FacebookAds;
+    /** @var
+     * FacebookAds
+     */
+    private $FacebookAds;
 
     public function setUp()
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $this->FacebookAds = new FacebookAds($logger);
+        $this->FacebookAds = new FacebookAds();
 
         // set up your test here if needed
         Db::query(
-            'INSERT INTO ' . FacebookAds::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
+            'INSERT INTO ' . FacebookAds::getDataTableNameStatic()
+            . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
             'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
             [1, date('Y-m-d'), 14111, 'Campaign 1', 333, 'AdSet1', 222, "AdName", 7570, 13, 36.4]
         );
 
         Db::query(
-            'INSERT INTO ' . FacebookAds::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
+            'INSERT INTO ' . FacebookAds::getDataTableNameStatic()
+            . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
             'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
             [1, '2015-12-28', 14113, 'Campaign 2', 334, 'AdSet2', 777, "AdName2", 800, 100, 16.4]
         );
@@ -78,7 +77,6 @@ class FacebookAdsGetAdDataTest extends IntegrationTestCase
         $this->assertEquals(36.4, $data['cost']);
         $this->assertEquals(1, $rowId);
     }
-
 }
 
 FacebookAdsGetAdDataTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();

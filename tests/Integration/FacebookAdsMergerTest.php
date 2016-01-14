@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -30,12 +28,11 @@ class FacebookAdsMergerTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-    private function addVisit($idvisit, $adParams, $platform = "FacebookAds")
+    private function addVisit($idvisit, $adParams, $platform = 'FacebookAds')
     {
-           Db::query(
+       Db::query(
             'INSERT INTO ' . Common::prefixTable('log_visit')
-            . ' (idvisit, idsite, idvisitor, visit_first_action_time, '
-            . 'aom_platform, aom_ad_params) '
+            . ' (idvisit, idsite, idvisitor, visit_first_action_time, aom_platform, aom_ad_params) '
             . 'VALUES (?, 1, 1, NOW(), ?, ?)',
             [
                 $idvisit,
@@ -56,9 +53,7 @@ class FacebookAdsMergerTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $merger = new Merger($logger);
+        $merger = new Merger();
 
         Db::query(
             'INSERT INTO ' . FacebookAds::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
@@ -78,7 +73,7 @@ class FacebookAdsMergerTest extends IntegrationTestCase
         $this->addVisit(3, '{"platform":"FacebookAds","campaignId":"9999"}');
 
         $merger->setPeriod(date('Y-m-d'), date("Ymd", strtotime("+1 day")));
-        $merger->setPlatform(new FacebookAds($logger));
+        $merger->setPlatform(new FacebookAds());
         $merger->merge();
     }
 

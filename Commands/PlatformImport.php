@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Commands;
 
-use Piwik\Container\StaticContainer;
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Settings;
@@ -32,8 +31,7 @@ class PlatformImport extends ConsoleCommand
      */
     public function __construct($name = null, LoggerInterface $logger = null)
     {
-        // TODO: Replace StaticContainer with DI
-        $this->logger = $logger ?: StaticContainer::get('Psr\Log\LoggerInterface');
+        $this->logger = AOM::getTasksLogger();
 
         parent::__construct($name);
     }
@@ -64,7 +62,7 @@ class PlatformImport extends ConsoleCommand
             return;
         }
 
-        $platform = AOM::getPlatformInstance($input->getOption('platform'), null, $this->logger);
+        $platform = AOM::getPlatformInstance($input->getOption('platform'));
         $platform->import($input->getOption('merge'), $input->getOption('startDate'), $input->getOption('endDate'));
 
         $this->logger->info($input->getOption('platform') . '-import successful.');

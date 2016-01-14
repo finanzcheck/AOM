@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -16,7 +14,7 @@ use Piwik\Tests\Framework\Fixture;
 
 /**
  * @group AOM
- * @group CriteoGetAdDataTest
+ * @group AOM_CriteoGetAdDataTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
@@ -28,27 +26,28 @@ class CriteoGetAdDataTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-
-    /** @var  Criteo */
-    private  $criteo;
+    /**
+     * @var Criteo
+     */
+    private $criteo;
 
     public function setUp()
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $this->criteo = new Criteo($logger);
+        $this->criteo = new Criteo();
 
         // set up your test here if needed
         Db::query(
-            'INSERT INTO ' . Criteo::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
+            'INSERT INTO ' . Criteo::getDataTableNameStatic()
+            . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
             [1,'2015-12-28',14111,'Camp Name',7570,13,36.4]
         );
 
         Db::query(
-            'INSERT INTO ' . Criteo::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
+            'INSERT INTO ' . Criteo::getDataTableNameStatic()
+            . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
             [1,date('Y-m-d'),14112,'Camp Name2',7570,13,36.4]
         );
@@ -78,7 +77,6 @@ class CriteoGetAdDataTest extends IntegrationTestCase
         $this->assertEquals(36.4, $data['cost']);
         $this->assertEquals(2, $rowId);
     }
-
 }
 
 CriteoGetAdDataTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();

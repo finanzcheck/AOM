@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -16,7 +14,7 @@ use Piwik\Tests\Framework\Fixture;
 
 /**
  * @group AOM
- * @group BingGetAdDataTest
+ * @group AOM_BingGetAdDataTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
@@ -36,9 +34,7 @@ class BingGetAdDataTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $this->Bing = new Bing($logger);
+        $this->Bing = new Bing();
 
         Db::query(
             'INSERT INTO ' . Bing::getDataTableNameStatic()
@@ -98,7 +94,10 @@ class BingGetAdDataTest extends IntegrationTestCase
 
     public function testExactMatch()
     {
-        list($rowId, $data) = $this->Bing->getAdDataFromAdParams(1, ['adGroupId' => 123, 'campaignId' => 1005, 'targetId' => 'kwd-55555']);
+        list($rowId, $data) = $this->Bing->getAdDataFromAdParams(
+            1,
+            ['adGroupId' => 123, 'campaignId' => 1005, 'targetId' => 'kwd-55555']
+        );
 
         $this->assertEquals('Campaign 1', $data['campaign']);
         $this->assertEquals(2.57, $data['cost']);
@@ -107,7 +106,10 @@ class BingGetAdDataTest extends IntegrationTestCase
 
     public function testAlternativeMatch()
     {
-        list($rowId, $data) =  $this->Bing->getAdDataFromAdParams(1, ['adGroupId' => 123, 'campaignId' => 1006, 'targetId' => 'kwd-66']);
+        list($rowId, $data) = $this->Bing->getAdDataFromAdParams(
+            1,
+            ['adGroupId' => 123, 'campaignId' => 1006, 'targetId' => 'kwd-66']
+        );
 
         $this->assertEquals('Campaign Old', $data['campaign']);
         $this->assertArrayNotHasKey('cost', $data);
@@ -116,7 +118,10 @@ class BingGetAdDataTest extends IntegrationTestCase
 
     public function testNoMatch()
     {
-        list($rowId, $data) = $this->Bing->getAdDataFromAdParams(1, ['adGroupId' => 998, 'campaignId' => 1005, 'targetId' => 'kwd-55555']);
+        list($rowId, $data) = $this->Bing->getAdDataFromAdParams(
+            1,
+            ['adGroupId' => 998, 'campaignId' => 1005, 'targetId' => 'kwd-55555']
+        );
 
         $this->assertEquals(null, $rowId);
         $this->assertEquals(null, $data);

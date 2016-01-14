@@ -23,7 +23,7 @@ class FacebookAds extends Platform implements PlatformInterface
     }
 
     /**
-     * Extracts advertisement platform specific data from the query params.
+     * Extracts advertisement platform specific data from the query params and validates it.
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -31,23 +31,26 @@ class FacebookAds extends Platform implements PlatformInterface
      */
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
-        $adParams = [
+        // Validate required params
+        $missingParams = array_diff(
+            [$paramPrefix . '_campaign_id', $paramPrefix . '_adset_id', $paramPrefix . '_ad_id',],
+            array_keys($queryParams)
+        );
+        if (count($missingParams)) {
+            $this->getLogger()->warning(
+                'Visit with platform ' . AOM::PLATFORM_FACEBOOK_ADS . ' without required param/s: '
+                . implode(', ', $missingParams)
+            );
+
+            return null;
+        }
+
+        return [
             'platform' => AOM::PLATFORM_FACEBOOK_ADS,
+            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+            'adsetId' => $queryParams[$paramPrefix . '_adset_id'],
+            'adId' => $queryParams[$paramPrefix . '_ad_id'],
         ];
-
-        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_adset_id', $queryParams)) {
-            $adParams['adsetId'] = $queryParams[$paramPrefix . '_adset_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
-            $adParams['adId'] = $queryParams[$paramPrefix . '_ad_id'];
-        }
-
-        return $adParams;
     }
 
     /**

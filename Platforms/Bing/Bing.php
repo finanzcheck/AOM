@@ -28,7 +28,7 @@ class Bing extends Platform implements PlatformInterface
     }
 
     /**
-     * Extracts advertisement platform specific data from the query params.
+     * Extracts advertisement platform specific data from the query params and validates it.
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -36,31 +36,34 @@ class Bing extends Platform implements PlatformInterface
      */
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
-        $adParams = [
+        // Validate required params
+        $missingParams = array_diff(
+            [
+                $paramPrefix . '_campaign_id',
+                $paramPrefix . '_ad_group_id',
+                $paramPrefix . '_order_item_id',
+                $paramPrefix . '_target_id',
+                $paramPrefix . '_ad_id',
+            ],
+            array_keys($queryParams)
+        );
+        if (count($missingParams)) {
+            $this->getLogger()->warning(
+                'Visit with platform ' . AOM::PLATFORM_BING . ' without required param/s: '
+                . implode(', ', $missingParams)
+            );
+
+            return null;
+        }
+
+        return [
             'platform' => AOM::PLATFORM_BING,
+            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+            'adGroupId' => $queryParams[$paramPrefix . '_ad_group_id'],
+            'orderItemId' => $queryParams[$paramPrefix . '_order_item_id'],
+            'targetId' => $queryParams[$paramPrefix . '_target_id'],
+            'adId' => $queryParams[$paramPrefix . '_ad_id'],
         ];
-
-        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
-            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_order_item_id', $queryParams)) {
-            $adParams['orderItemId'] = $queryParams[$paramPrefix . '_order_item_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
-            $adParams['targetId'] = $queryParams[$paramPrefix . '_target_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
-            $adParams['adId'] = $queryParams[$paramPrefix . '_ad_id'];
-        }
-
-        return $adParams;
     }
 
     /**
@@ -76,7 +79,8 @@ class Bing extends Platform implements PlatformInterface
     }
 
     /**
-     * Searches for matching ad data
+     * Searches for matching ad data.
+     *
      * @param $idsite
      * @param $date
      * @param $adParams
@@ -111,9 +115,8 @@ class Bing extends Platform implements PlatformInterface
         return [$result[0]['id'], $result[0]];
     }
 
-
     /**
-     * Searches for historical AdData
+     * Searches for historical ad data.
      *
      * @param $idsite
      * @param $campaignId
@@ -145,9 +148,9 @@ class Bing extends Platform implements PlatformInterface
         return null;
     }
 
-
     /**
-     * Retrieves the given URI
+     * Retrieves contents from the given URI.
+     *
      * @param $url
      * @return bool|mixed|string
      */

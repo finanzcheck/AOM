@@ -9,7 +9,6 @@ namespace Piwik\Plugins\AOM\Platforms\AdWords;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
-use Piwik\Site;
 
 /*
 Query for single keyword

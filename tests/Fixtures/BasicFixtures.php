@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\tests\Fixtures;
 use Piwik\Plugins\AOM\Settings;
 use Piwik\Tests\Framework\Fixture;
 use Piwik;
+use Psr\Log\NullLogger;
 
 class BasicFixtures extends Fixture
 {

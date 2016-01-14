@@ -64,7 +64,7 @@ class AdWords extends Platform implements PlatformInterface
     }
 
     /**
-     * Extracts advertisement platform specific data from the query params.
+     * Extracts advertisement platform specific data from the query params and validates it.
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -72,50 +72,48 @@ class AdWords extends Platform implements PlatformInterface
      */
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
+        // Validate required params
+        $missingParams = array_diff(
+            [
+                $paramPrefix . '_campaign_id',
+                $paramPrefix . '_ad_group_id',
+                $paramPrefix . '_feed_item_id',
+                $paramPrefix . '_target_id',
+                $paramPrefix . '_creative',
+                $paramPrefix . '_placement',
+                $paramPrefix . '_target',
+                $paramPrefix . '_network',
+            ],
+            array_keys($queryParams)
+        );
+        if (count($missingParams)) {
+            $this->getLogger()->warning(
+                'Visit with platform ' . AOM::PLATFORM_AD_WORDS . ' without required param/s: '
+                . implode(', ', $missingParams)
+            );
+
+            return null;
+        }
+
         $adParams = [
             'platform' => AOM::PLATFORM_AD_WORDS,
+            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+            'adGroupId' => $queryParams[$paramPrefix . '_ad_group_id'],
+            'feedItemId' => $queryParams[$paramPrefix . '_feed_item_id'],
+            'targetId' => $queryParams[$paramPrefix . '_target_id'],
+            'creative' => $queryParams[$paramPrefix . '_creative'],
+            'placement' => $queryParams[$paramPrefix . '_placement'],
+            'target' => $queryParams[$paramPrefix . '_target'],
+            'network' => $queryParams[$paramPrefix . '_network'],
         ];
 
-        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
-            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_feed_item_id', $queryParams)) {
-            $adParams['feedItemId'] = $queryParams[$paramPrefix . '_feed_item_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
-            $adParams['targetId'] = $queryParams[$paramPrefix . '_target_id'];
-        }
-
-        if (array_key_exists($paramPrefix . '_creative', $queryParams)) {
-            $adParams['creative'] = $queryParams[$paramPrefix . '_creative'];
-        }
-
-        if (array_key_exists($paramPrefix . '_placement', $queryParams)) {
-            $adParams['placement'] = $queryParams[$paramPrefix . '_placement'];
-        }
-
-        if (array_key_exists($paramPrefix . '_target', $queryParams)) {
-            $adParams['target'] = $queryParams[$paramPrefix . '_target'];
-        }
-
-        if (array_key_exists($paramPrefix . '_network', $queryParams)) {
-            $adParams['network'] = $queryParams[$paramPrefix . '_network'];
-        }
-
+        // Add optional params
         if (array_key_exists($paramPrefix . '_ad_position', $queryParams)) {
             $adParams['adPosition'] = $queryParams[$paramPrefix . '_ad_position'];
         }
-
         if (array_key_exists($paramPrefix . '_loc_physical', $queryParams)) {
             $adParams['locPhysical'] = $queryParams[$paramPrefix . '_loc_physical'];
         }
-
         if (array_key_exists($paramPrefix . '_loc_Interest', $queryParams)) {
             $adParams['locInterest'] = $queryParams[$paramPrefix . '_loc_Interest'];
         }

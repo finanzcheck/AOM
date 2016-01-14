@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -18,7 +16,7 @@ use Piwik\Plugins\AOM\Platforms\AdWords\Merger;
 
 /**
  * @group AOM
- * @group AdWordsMergerTest
+ * @group AOM_AdWordsMergerTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
@@ -30,12 +28,11 @@ class AdWordsMergerTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-    private function addVisit($idvisit, $adParams, $platform = "AdWords")
+    private function addVisit($idvisit, $adParams, $platform = 'AdWords')
     {
-           Db::query(
+        Db::query(
             'INSERT INTO ' . Common::prefixTable('log_visit')
-            . ' (idvisit, idsite, idvisitor, visit_first_action_time, '
-            . 'aom_platform, aom_ad_params) '
+            . ' (idvisit, idsite, idvisitor, visit_first_action_time, aom_platform, aom_ad_params) '
             . 'VALUES (?, 1, 1, NOW(), ?, ?)',
             [
                 $idvisit,
@@ -51,16 +48,11 @@ class AdWordsMergerTest extends IntegrationTestCase
         return json_decode($data['aom_ad_data'], true);
     }
 
-
     public function setUp()
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $merger = new Merger($logger);
-
-
+        $merger = new Merger();
 
         Db::query(
             'INSERT INTO ' . AdWords::getDataTableNameStatic()
@@ -146,7 +138,7 @@ class AdWordsMergerTest extends IntegrationTestCase
         $this->addVisit(3, '{"platform":"AdWords","campaignId":"1005","adGroupId":"123","feedItemId":"","targetId":"aud-1212;kwd-55555","creative":"48726465596","placement":"","target":"suchen.mobile.de","network":"g","device":"t","adPosition":"none","locPhysical":"9043992","locInterest":""}');
 
         $merger->setPeriod(date('Y-m-d'), date("Ymd", strtotime("+1 day")));
-        $merger->setPlatform(new AdWords($logger));
+        $merger->setPlatform(new AdWords());
         $merger->merge();
     }
 

@@ -24,7 +24,7 @@ class Criteo extends Platform implements PlatformInterface
     }
 
     /**
-     * Extracts advertisement platform specific data from the query params.
+     * Extracts advertisement platform specific data from the query params and validates it.
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -32,17 +32,21 @@ class Criteo extends Platform implements PlatformInterface
      */
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
-        $adParams = [
-            'platform' => AOM::PLATFORM_CRITEO,
-        ];
+        // Validate required params
+        $missingParams = array_diff([$paramPrefix . '_campaign_id',], array_keys($queryParams));
+        if (count($missingParams)) {
+            $this->getLogger()->warning(
+                'Visit with platform ' . AOM::PLATFORM_CRITEO . ' without required param/s: '
+                . implode(', ', $missingParams)
+            );
 
-        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
-        } else {
-            $adParams['campaignId'] = null;
+            return null;
         }
 
-        return $adParams;
+        return [
+            'platform' => AOM::PLATFORM_CRITEO,
+            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+        ];
     }
 
     /**

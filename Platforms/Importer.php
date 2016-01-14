@@ -7,6 +7,7 @@
 namespace Piwik\Plugins\AOM\Platforms;
 
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Psr\Log\LoggerInterface;
 
 abstract class Importer
@@ -30,9 +31,12 @@ abstract class Importer
      */
     protected $endDate;
 
-    public function __construct(LoggerInterface $logger)
+    /**
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct(LoggerInterface $logger = null)
     {
-        $this->logger = $logger;
+        $this->logger = (null === $logger ? AOM::getTasksLogger() : $logger);
     }
 
     /**

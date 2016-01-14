@@ -26,12 +26,13 @@ abstract class Platform
     private $settings;
 
     /**
-     * @param LoggerInterface $logger
+     * @param LoggerInterface|null $logger
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger = null)
     {
         $this->settings = new Settings();
-        $this->logger = $logger;
+
+        $this->logger = (null === $logger ? AOM::getLogger() : $logger);
     }
 
     /**
@@ -115,7 +116,7 @@ abstract class Platform
         }
 
         /** @var ImporterInterface $importer */
-        $importer = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Importer', $this->getLogger());
+        $importer = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Importer');
         $importer->setPeriod($startDate, $endDate);
         $importer->import();
 
@@ -139,7 +140,7 @@ abstract class Platform
         }
 
         /** @var MergerInterface $merger */
-        $merger = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Merger', $this->getLogger());
+        $merger = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Merger');
         $merger->setPeriod($startDate, $endDate);
         $merger->setPlatform($this);
         $merger->merge();

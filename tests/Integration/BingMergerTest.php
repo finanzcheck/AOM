@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -18,7 +16,7 @@ use Piwik\Plugins\AOM\Platforms\Bing\Merger;
 
 /**
  * @group AOM
- * @group BingMergerTest
+ * @group AOM_BingMergerTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
@@ -30,12 +28,11 @@ class BingMergerTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-    private function addVisit($idvisit, $adParams, $platform = "Bing")
+    private function addVisit($idvisit, $adParams, $platform = 'Bing')
     {
-           Db::query(
+        Db::query(
             'INSERT INTO ' . Common::prefixTable('log_visit')
-            . ' (idvisit, idsite, idvisitor, visit_first_action_time, '
-            . 'aom_platform, aom_ad_params) '
+            . ' (idvisit, idsite, idvisitor, visit_first_action_time, aom_platform, aom_ad_params) '
             . 'VALUES (?, 1, 1, NOW(), ?, ?)',
             [
                 $idvisit,
@@ -47,7 +44,7 @@ class BingMergerTest extends IntegrationTestCase
 
     private function getVisit($id)
     {
-        $data =  DB::fetchRow('SELECT * FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?', [$id]);
+        $data = DB::fetchRow('SELECT * FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?', [$id]);
         return json_decode($data['aom_ad_data'], true);
     }
 
@@ -56,9 +53,7 @@ class BingMergerTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $merger = new Merger($logger);
+        $merger = new Merger();
 
         Db::query(
             'INSERT INTO ' . Bing::getDataTableNameStatic()
@@ -114,7 +109,7 @@ class BingMergerTest extends IntegrationTestCase
         $this->addVisit(3, '{"platform":"Bing","campaignId":"9005","adGroupId":"123","targetId":""}');
 
         $merger->setPeriod(date('Y-m-d'), date("Ymd", strtotime("+1 day")));
-        $merger->setPlatform(new Bing($logger));
+        $merger->setPlatform(new Bing());
         $merger->merge();
     }
 

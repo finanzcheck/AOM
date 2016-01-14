@@ -7,7 +7,6 @@
 namespace Piwik\Plugins\AOM\Commands;
 
 use Piwik\Common;
-use Piwik\Container\StaticContainer;
 use Piwik\Db;
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugin\Manager;
@@ -37,8 +36,7 @@ class ReplenishVisits extends ConsoleCommand
      */
     public function __construct($name = null, LoggerInterface $logger = null)
     {
-        // TODO: Replace StaticContainer with DI
-        $this->logger = $logger ?: StaticContainer::get('Psr\Log\LoggerInterface');
+        $this->logger = AOM::getTasksLogger();
 
         parent::__construct($name);
     }
@@ -85,7 +83,7 @@ class ReplenishVisits extends ConsoleCommand
 
             $this->logger->info('Processing ' . $platformName . '...');
 
-            $platform = AOM::getPlatformInstance($platformName, null, $this->logger);
+            $platform = AOM::getPlatformInstance($platformName);
 
             // Get Piwik visits that came from this platform and that we have assigned to this platform
             $platformVisits = array_filter($visits, function($visit) use ($platformName) {

@@ -6,8 +6,9 @@
  */
 namespace Piwik\Plugins\AOM;
 
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Piwik\Common;
-use Piwik\Container\StaticContainer;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Site;
@@ -16,6 +17,16 @@ use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
 {
+    /**
+     * @var LoggerInterface
+     */
+    private static $defaultLogger;
+
+    /**
+     * @var LoggerInterface
+     */
+    private static $tasksLogger;
+
     const PLATFORM_AD_WORDS = 'AdWords';
     const PLATFORM_BING = 'Bing';
     const PLATFORM_CRITEO = 'Criteo';
@@ -41,6 +52,17 @@ class AOM extends \Piwik\Plugin
     {
         // Add composer dependencies
         require_once PIWIK_INCLUDE_PATH . '/plugins/AOM/vendor/autoload.php';
+
+        // We use our own loggers
+        // TODO: Use another file when we are running tests?!
+        // TODO: Disable logging to console when running tests!
+        // TODO: Allow to configure path and log-level (for every logger)?!
+        // TODO: Use another formatter (without log-channel)
+        self::$defaultLogger = new Logger('aom');
+        self::$defaultLogger->pushHandler(new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG));
+        self::$tasksLogger = new Logger('aom-tasks');
+        self::$tasksLogger->pushHandler(new StreamHandler(PIWIK_INCLUDE_PATH . '/aom-tasks.log', Logger::DEBUG));
+        self::$tasksLogger->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
 
         parent::__construct($pluginName);
     }
@@ -80,6 +102,8 @@ class AOM extends \Piwik\Plugin
         }
 
         // TODO: Create indices!
+
+        $this->getLogger()->debug('Installed AOM.');
     }
 
     /**
@@ -91,6 +115,8 @@ class AOM extends \Piwik\Plugin
             $platform = self::getPlatformInstance($platform);
             $platform->uninstallPlugin();
         }
+
+        $this->getLogger()->debug('Uninstalled AOM.');
     }
 
     /**
@@ -114,15 +140,36 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Returns the instance
+     * This logger writes to aom.log only.
+     *
+     * @return LoggerInterface
+     */
+    public static function getLogger()
+    {
+        return self::$defaultLogger;
+    }
+
+    /**
+     * This logger writes to the console and to aom-tasks.log.
+     *
+     * @return LoggerInterface
+     */
+    public static function getTasksLogger()
+    {
+        return self::$tasksLogger;
+    }
+
+    /**
+     * Returns the required instance.
+     *
      * @param string $platform
      * @param null|string $class
-     * @param null|LoggerInterface $logger
      * @return PlatformInterface
      * @throws \Exception
      */
-    public static function getPlatformInstance($platform, $class = null, LoggerInterface $logger = null)
+    public static function getPlatformInstance($platform, $class = null)
     {
+        // Validate arguments
         if (!in_array($platform, AOM::getPlatforms())) {
             throw new \Exception('Platform "' . $platform . '" not supported.');
         }
@@ -130,12 +177,10 @@ class AOM extends \Piwik\Plugin
             throw new \Exception('Class "' . $class . '" not supported. Must be either "Importer" or "Merger".');
         }
 
-        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . (null === $class ? $platform : $class);
+        // Find the right logger for the job
+        $logger = (in_array($class, ['Importer', 'Merger']) ? self::$tasksLogger : self::$defaultLogger);
 
-        // TODO: Replace StaticContainer with DI
-        if (!($logger instanceof LoggerInterface)) {
-            $logger = StaticContainer::get('Psr\Log\LoggerInterface');
-        }
+        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . (null === $class ? $platform : $class);
 
         return new $className($logger);
     }

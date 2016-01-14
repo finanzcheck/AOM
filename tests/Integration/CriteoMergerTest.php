@@ -1,11 +1,9 @@
 <?php
 /**
- * Piwik - free/libre analytics platform
+ * AOM - Piwik Advanced Online Marketing Plugin
  *
- * @link http://piwik.org
- * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-
 namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
@@ -18,7 +16,7 @@ use Piwik\Plugins\AOM\Platforms\Criteo\Merger;
 
 /**
  * @group AOM
- * @group CriteoMergerTest
+ * @group AOM_CriteoMergerTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
@@ -30,12 +28,11 @@ class CriteoMergerTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-    private function addVisit($idvisit, $adParams, $platform = "Criteo")
+    private function addVisit($idvisit, $adParams, $platform = 'Criteo')
     {
-           Db::query(
+        Db::query(
             'INSERT INTO ' . Common::prefixTable('log_visit')
-            . ' (idvisit, idsite, idvisitor, visit_first_action_time, '
-            . 'aom_platform, aom_ad_params) '
+            . ' (idvisit, idsite, idvisitor, visit_first_action_time, aom_platform, aom_ad_params) '
             . 'VALUES (?, 1, 1, NOW(), ?, ?)',
             [
                 $idvisit,
@@ -51,23 +48,22 @@ class CriteoMergerTest extends IntegrationTestCase
         return json_decode($data['aom_ad_data'], true);
     }
 
-
     public function setUp()
     {
         parent::setUp();
 
-        // TODO: Replace StaticContainer with DI
-        $logger = Piwik\Container\StaticContainer::get('Psr\Log\LoggerInterface');
-        $merger = new Merger($logger);
+        $merger = new Merger();
 
         Db::query(
-            'INSERT INTO ' . Criteo::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
+            'INSERT INTO ' . Criteo::getDataTableNameStatic()
+            . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
             [1,'2015-12-28',14111,'Camp Name',7570,13,36.4]
         );
 
         Db::query(
-            'INSERT INTO ' . Criteo::getDataTableNameStatic() . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
+            'INSERT INTO ' . Criteo::getDataTableNameStatic()
+            . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
             [1,date('Y-m-d'),14112,'Camp Name2',7570,13,36.4]
         );
@@ -78,7 +74,7 @@ class CriteoMergerTest extends IntegrationTestCase
         $this->addVisit(3, '{"platform":"Criteo","campaignId":"9999"}');
 
         $merger->setPeriod(date('Y-m-d'), date("Ymd", strtotime("+1 day")));
-        $merger->setPlatform(new Criteo($logger));
+        $merger->setPlatform(new Criteo());
         $merger->merge();
     }
 

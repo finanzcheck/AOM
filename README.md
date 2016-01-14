@@ -39,9 +39,9 @@ The following params are supported:
 | {prefix}_platform     | true      | AdWords           |                                                                                                                                 |
 | {prefix}_campaign_id  | true      | {campaignid}      | The campaign ID.                                                                                                                |
 | {prefix}_ad_group_id  | true      | {adgroupid}       | The ad group ID.                                                                                                                |
-| {prefix}_feed_item_id | false     | {feeditemid}      | Most probably the ID of a specific [sitelink](https://developers.google.com/adwords/api/docs/guides/feed-services).             |
+| {prefix}_feed_item_id | true      | {feeditemid}      | Most probably the ID of a specific [sitelink](https://developers.google.com/adwords/api/docs/guides/feed-services).             |
 | {prefix}_target_id    | true      | {targetid}        | The ID of the keyword, dynamic search ad, remarketing list target or product partition ID that triggered an ad.                 |
-| {prefix}_creative     | false     | {creative}        | A unique ID for your ad.                                                                                                        |
+| {prefix}_creative     | true      | {creative}        | A unique ID for your ad.                                                                                                        |
 | {prefix}_placement    | true      | {placement}       | The content site where your ad was clicked or the matching placement targeting criteria for the site where your ad was clicked. |
 | {prefix}_target       | true      | {target}          | A placement category (works with placement-targeted campaigns only).                                                            |
 | {prefix}_network      | true      | {network}         | Where the click came from: "g" for Google search, "s" for a search partner, or "d" for the display network.                     |
@@ -83,11 +83,11 @@ The following params are supported:
 | Param                   | Mandatory | Contents      |
 | ----------------------- | --------- | ------------- | 
 | {prefix}_platform       | true      | Bing          |  
-| {prefix}_campaign_id    | false     | {CampaignId}  |
-| {prefix}_ad_group_id    | false     | {AdGroupId}   |
-| {prefix}_order_item_id  | false     | {OrderItemId} |
-| {prefix}_target_id      | false     | {TargetId}    |
-| {prefix}_ad_id          | false     | {AdId}        |
+| {prefix}_campaign_id    | true      | {CampaignId}  |
+| {prefix}_ad_group_id    | true      | {AdGroupId}   |
+| {prefix}_order_item_id  | true      | {OrderItemId} |
+| {prefix}_target_id      | true      | {TargetId}    |
+| {prefix}_ad_id          | true      | {AdId}        |
 
 A typical link at Microsoft Bing Ads (with the prefix "aom") should have the following params:
 
@@ -145,9 +145,9 @@ The following params must be replaced manually with their corresponding IDs:
 | Param                | Mandatory | Contents      |
 | -------------------- | --------- | ------------- | 
 | {prefix}_platform    | true      | FacebookAds   |  
-| {prefix}_campaign_id | false     | 4160286035775 |
-| {prefix}_adset_id    | false     | 6028603577541 |
-| {prefix}_ad_id       | false     | 5760286037541 |
+| {prefix}_campaign_id | true      | 4160286035775 |
+| {prefix}_adset_id    | true      | 6028603577541 |
+| {prefix}_ad_id       | true      | 5760286037541 |
 
 A typical link at FacebookAds (with the prefix "aom") should have the following params:
 
@@ -261,15 +261,26 @@ Run unit tests with `./console tests:run --group AOM_Unit`.
 Run integration tests with `./console tests:run --group AOM_Integration`.
 
 
+
+## Logging
+
+Various console-commands and background tasks (importing, merging etc.) write their logs to `aom-tasks.log`. All other 
+logs (visitor requests, requests to this plugin's API endpoints, Piwik UI interactions etc.) are written to `aom.log`. 
+All log files are stored in Piwik's main directory. 
+
+
+
 ## Changelog
 
 __0.1.0__
 * first release
 
 
+
 ## License
 
 GPL v3 / fair use
+
 
 
 ## Support
