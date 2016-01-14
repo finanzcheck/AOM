@@ -60,7 +60,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->logger->info('Will import Bing account ' . $accountId. ' for date ' . $date . ' now.');
         $this->deleteImportedData(Bing::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
 
         $data = $this->getBingReport($accountId, $account, $date);

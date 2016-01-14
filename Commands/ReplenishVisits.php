@@ -81,7 +81,7 @@ class ReplenishVisits extends ConsoleCommand
         // Process every platform
         foreach (AOM::getPlatforms() as $platformName) {
 
-            $this->logger->info('Processing ' . $platformName . '...');
+            $this->logger->debug('Processing ' . $platformName . '...');
 
             $platform = AOM::getPlatformInstance($platformName);
 
@@ -153,7 +153,7 @@ class ReplenishVisits extends ConsoleCommand
 
 
             // Platform stats
-            $this->logger->info(
+            $this->logger->debug(
                 sprintf(
                     '%d Piwik %s visits (based on aom_platform) resulted in %d %s visits.' . PHP_EOL
                         . '%s reported %d records (with at least 1 click or cost > 0) with %d clicks.' . PHP_EOL
@@ -183,7 +183,7 @@ class ReplenishVisits extends ConsoleCommand
         }
 
         // Add remaining Piwik visits (visits without aom_platform_row_id) to piwik_aom_visits.
-        $this->logger->info(
+        $this->logger->debug(
             'Will add ' . count($visits) . ' remaining visits now (Piwik visits without aom_platform_row_id).'
         );
 
@@ -203,7 +203,7 @@ class ReplenishVisits extends ConsoleCommand
             'SELECT COUNT(*) FROM ' . Common::prefixTable('aom_visits') . ' WHERE date_website_timezone = ?',
             [$date,]
         );
-        $this->logger->info(
+        $this->logger->debug(
             'Replenished ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . ' visits.'
         );
     }
@@ -286,7 +286,7 @@ class ReplenishVisits extends ConsoleCommand
             }
         }
 
-        $this->logger->info('Got ' . count($visits) . ' Piwik visits.');
+        $this->logger->debug('Got ' . count($visits) . ' Piwik visits.');
 
         return $visits;
     }

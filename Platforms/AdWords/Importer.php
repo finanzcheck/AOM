@@ -73,7 +73,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->logger->info('Will import AdWords account ' . $accountId. ' for date ' . $date . ' now.');
         $this->deleteImportedData(AdWords::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
 
         $user = AdWords::getAdWordsUser($account);

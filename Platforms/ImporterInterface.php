@@ -18,6 +18,16 @@ interface ImporterInterface
     public function setPeriod($startDate, $endDate);
 
     /**
+     * @return null|string
+     */
+    public function getStartDate();
+
+    /**
+     * @return null|string
+     */
+    public function getEndDate();
+
+    /**
      * Imports platform data.
      *
      * @return mixed

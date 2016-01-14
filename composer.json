@@ -1,7 +1,13 @@
 {
   "require": {
-    "facebook/php-sdk-v4" : "~5.0",
+    "bramus/monolog-colored-line-formatter": "~2.0",
+    "facebook/php-sdk-v4": "~5.0",
     "facebook/php-ads-sdk": "2.5.*",
-    "googleads/googleads-php-lib": "dev-master"
+    "googleads/googleads-php-lib": "7.0.0"
+  },
+  "autoload": {
+    "classmap": [
+      "vendor/googleads/googleads-php-lib/src/Google/Api/Ads/AdWords/Util/v201509"
+    ]
   }
 }

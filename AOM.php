@@ -6,6 +6,8 @@
  */
 namespace Piwik\Plugins\AOM;
 
+use Bramus\Monolog\Formatter\ColoredLineFormatter;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Piwik\Common;
@@ -57,12 +59,26 @@ class AOM extends \Piwik\Plugin
         // TODO: Use another file when we are running tests?!
         // TODO: Disable logging to console when running tests!
         // TODO: Allow to configure path and log-level (for every logger)?!
-        // TODO: Use another formatter (without log-channel)
+        $formatter = new ColoredLineFormatter(
+            null,
+            '%level_name% [%datetime%]: %message% %context% %extra%',
+            null,
+            true,
+            true
+        );
+
         self::$defaultLogger = new Logger('aom');
-        self::$defaultLogger->pushHandler(new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG));
+        $defaultLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG);
+        $defaultLoggerFileStreamHandler->setFormatter($formatter);
+        self::$defaultLogger->pushHandler($defaultLoggerFileStreamHandler);
+
         self::$tasksLogger = new Logger('aom-tasks');
-        self::$tasksLogger->pushHandler(new StreamHandler(PIWIK_INCLUDE_PATH . '/aom-tasks.log', Logger::DEBUG));
-        self::$tasksLogger->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
+        $tasksLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom-tasks.log', Logger::DEBUG);
+        $tasksLoggerFileStreamHandler->setFormatter($formatter);
+        self::$tasksLogger->pushHandler($tasksLoggerFileStreamHandler);
+        $tasksLoggerConsoleStreamHandler = new StreamHandler('php://stdout', Logger::DEBUG);
+        $tasksLoggerConsoleStreamHandler->setFormatter($formatter);
+        self::$tasksLogger->pushHandler($tasksLoggerConsoleStreamHandler);
 
         parent::__construct($pluginName);
     }

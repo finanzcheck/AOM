@@ -60,6 +60,22 @@ abstract class Importer
     }
 
     /**
+     * @return null|string
+     */
+    public function getStartDate()
+    {
+        return $this->startDate;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getEndDate()
+    {
+        return $this->endDate;
+    }
+
+    /**
      * Deletes all imported data for the given date.
      *
      * TODO: This might be more complicated when we already merged / assigned data to visits?!

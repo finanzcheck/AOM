@@ -98,7 +98,10 @@ abstract class Merger
             );
         }
 
-        $this->logger->debug('Got ' . count($visits) . ' visits.');
+        $this->logger->debug(
+            'Got ' . count($visits) . ' visits for all websites in period from ' . $this->startDate
+            . ' 00:00:00 until ' . $this->endDate . ' 23:59:59 (in the website\'s individual timezones).'
+        );
 
         return $visits;
     }
@@ -112,13 +115,20 @@ abstract class Merger
      */
     protected function getPlatformData()
     {
-        return DB::fetchAll(
+        $platformData = DB::fetchAll(
             'SELECT * FROM ' . $this->platform->getDataTableName() . ' WHERE date >= ? AND date <= ?',
             [
                 $this->startDate,
                 $this->endDate,
             ]
         );
+
+        $this->logger->debug(
+            'Got ' . count($platformData) . ' platform cost records in period from ' . $this->startDate
+            . ' 00:00:00 until ' . $this->endDate . ' 23:59:59 UTC.'
+        );
+
+        return $platformData;
     }
 
     /**

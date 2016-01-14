@@ -74,6 +74,8 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
     public function merge()
     {
+        $this->logger->info('Will merge Bing now.');
+
         $platformData = $this->getPlatformData();
 
         $adDataMap = [];

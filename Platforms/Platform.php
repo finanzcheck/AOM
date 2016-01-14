@@ -121,7 +121,9 @@ abstract class Platform
         $importer->import();
 
         if ($mergeAfterwards) {
-            $this->merge($startDate, $endDate);
+
+            // We must use the importer's period as $startDate and $endDate can be null or could have been modified
+            $this->merge($importer->getStartDate(), $importer->getStartDate());
         }
     }
 
@@ -132,6 +134,7 @@ abstract class Platform
      * @param string $startDate YYYY-MM-DD
      * @param string $endDate YYYY-MM-DD
      * @return mixed
+     * @throws Exception
      */
     public function merge($startDate, $endDate)
     {

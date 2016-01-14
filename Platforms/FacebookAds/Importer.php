@@ -44,7 +44,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->logger->info('Will import FacebookAds account ' . $accountId. ' for date ' . $date . ' now.');
         $this->deleteImportedData(FacebookAds::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
 
         Api::init(
