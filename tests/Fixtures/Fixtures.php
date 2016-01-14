@@ -6,8 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\tests\Fixtures;
 
-use Piwik\Plugins\AOM\Settings;
-use Piwik\Tests\Framework\Fixture;
 use Piwik;
 use Piwik\Date;
 
@@ -20,23 +18,10 @@ class Fixtures extends BasicFixtures
 
     public function setUp()
     {
-        $this->setUpWebsite();
-
-        // since we're changing the list of activated plugins, we have to make sure file caches are reset
-        Piwik\Cache::flushAll();
-
-        // TODO: Write tests with plugin being disabled (see AdvancedCampaignReporting)
-        $settings = new Settings();
-        $settings->paramPrefix->setValue('aom');
-        $settings->platformAdWordsIsActive->setValue(true);
-        $settings->platformBingIsActive->setValue(true);
-        $settings->platformCriteoIsActive->setValue(true);
-        $settings->platformFacebookAdsIsActive->setValue(true);
-        $settings->save();
+        parent::setUp();
 
         $this->trackCampaignVisits($this->dateTime);
     }
-
 
     /**
      * @param string $dateTime

@@ -12,11 +12,6 @@ use Piwik;
 
 class BasicFixtures extends Fixture
 {
-    public $dateTime = '2015-12-01 01:23:45';
-    public $idSite = 1;
-
-    const THIS_PAGE_VIEW_IS_GOAL_CONVERSION = 'this is a goal conversion';
-
     public function setUp()
     {
         $this->setUpWebsite();
@@ -40,8 +35,8 @@ class BasicFixtures extends Fixture
 
     protected function setUpWebsite()
     {
-        $idSite = self::createWebsite($this->dateTime, $ecommerce = 1);
-        $this->assertTrue($idSite === $this->idSite);
+        $idSite = self::createWebsite('2015-12-01 01:23:45', $ecommerce = 1);
+        $this->assertTrue($idSite === 1);
     }
 
     public function provideContainerConfig()
