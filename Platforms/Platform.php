@@ -1,0 +1,181 @@
+<?php
+/**
+ * AOM - Piwik Advanced Online Marketing Plugin
+ *
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ */
+namespace Piwik\Plugins\AOM\Platforms;
+
+use Exception;
+use Piwik\Common;
+use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Settings;
+use Psr\Log\LoggerInterface;
+
+abstract class Platform
+{
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @var Settings
+     */
+    private $settings;
+
+    /**
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct(LoggerInterface $logger = null)
+    {
+        $this->settings = new Settings();
+
+        $this->logger = (null === $logger ? AOM::getLogger() : $logger);
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    /**
+     * Returns this plugin's settings.
+     *
+     * @return Settings
+     */
+    public function getSettings()
+    {
+        return $this->settings;
+    }
+
+    /**
+     * Whether or not this platform has been activated in the plugin's configuration.
+     *
+     * @return mixed
+     */
+    public function isActive()
+    {
+        return $this->settings->{'platform' . $this->getUnqualifiedClassName() . 'IsActive'}->getValue();
+    }
+
+    /**
+     * Sets up a platform (e.g. adds tables and indices).
+     *
+     * @throws Exception
+     */
+    public function installPlugin()
+    {
+        $this->getInstaller()->installPlugin();
+    }
+
+    /**
+     * Cleans up platform specific stuff such as tables and indices when the plugin is being uninstalled.
+     *
+     * @throws Exception
+     */
+    public function uninstallPlugin()
+    {
+        $this->getInstaller()->uninstallPlugin();
+    }
+
+    /**
+     * Instantiates and returns the platform specific installer.
+     *
+     * @return InstallerInterface
+     */
+    private function getInstaller()
+    {
+        $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $this->getUnqualifiedClassName() . '\\Installer';
+
+        /** @var InstallerInterface $installer */
+        $installer = new $className($this);
+
+        return $installer;
+    }
+
+    /**
+     * Imports platform data for the specified period.
+     * If no period has been specified, the platform detects the period to import on its own (usually "yesterday").
+     * When triggered via scheduled tasks, imported platform data is being merged automatically afterwards.
+     *
+     * @param bool $mergeAfterwards
+     * @param string $startDate YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
+     * @return mixed
+     * @throws Exception
+     */
+    public function import($mergeAfterwards = false, $startDate = null, $endDate = null)
+    {
+        if (!$this->isActive()) {
+            return;
+        }
+
+        /** @var ImporterInterface $importer */
+        $importer = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Importer');
+        $importer->setPeriod($startDate, $endDate);
+        $importer->import();
+
+        if ($mergeAfterwards) {
+
+            // We must use the importer's period as $startDate and $endDate can be null or could have been modified
+            $this->merge($importer->getStartDate(), $importer->getStartDate());
+        }
+    }
+
+    /**
+     * Merges platform data for the specified period.
+     * If no period has been specified, we'll try to merge yesterdays data only.
+     *
+     * @param string $startDate YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
+     * @return mixed
+     * @throws Exception
+     */
+    public function merge($startDate, $endDate)
+    {
+        if (!$this->isActive()) {
+            return;
+        }
+
+        /** @var MergerInterface $merger */
+        $merger = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Merger');
+        $merger->setPeriod($startDate, $endDate);
+        $merger->setPlatform($this);
+        $merger->merge();
+    }
+
+    /**
+     * Returns the platform's unqualified class name.
+     *
+     * @return string
+     */
+    protected function getUnqualifiedClassName()
+    {
+        return substr(strrchr(get_class($this), '\\'), 1);
+    }
+
+    /**
+     * Returns the platform's name.
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->getUnqualifiedClassName();
+    }
+
+    /**
+     * Returns the platform's data table name.
+     *
+     * @return string
+     */
+    public function getDataTableName()
+    {
+        return Common::prefixTable('aom_' . strtolower($this->getName()));
+    }
+}

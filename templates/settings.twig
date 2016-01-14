@@ -1,0 +1,264 @@
+{% extends 'admin.twig' %}
+
+{#{% import '@CorePluginsAdmin/macros.twig' as plugins %}#}
+
+{% set title %}{{ 'AOM_Settings_Title'|translate }}{% endset %}
+
+{% block content %}
+
+    {% import 'ajaxMacros.twig' as ajax %}
+
+    <h2 piwik-enriched-headline>{{ title }}</h2>
+    <p>{{ 'AOM_Settings_Introduction'|translate|raw }}
+
+    <div class="ui-confirm" id="confirmAccountRemove">
+        <h2>{{ 'AOM_Settings_ConfirmAccountRemove'|translate }}</h2>
+        <input role="yes" type="button" value="{{ 'General_Yes'|translate }}"/>
+        <input role="no" type="button" value="{{ 'General_No'|translate }}"/>
+    </div>
+
+    {{ ajax.errorDiv('ajaxErrorAOM') }}
+    {{ ajax.loadingDiv('ajaxLoadingAOM') }}
+
+    {# AdWords #}
+    {% if adWordsIsActive %}
+        <h2>{{ 'AOM_Settings_AdWords'|translate }}</h2>
+        <p>{{ 'AOM_Settings_AdWords_Introduction'|translate|raw }}
+
+        <div class="adWordsAccounts entityContainer" style="margin-bottom:50px;">
+            <table class="entityTable dataTable" id="adWordsAccounts">
+                <thead>
+                <tr>
+                    <th>{{ 'AOM_Settings_WebsiteId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_AdWords_ClientId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_AdWords_ClientSecret'|translate }}</th>
+                    <th>{{ 'AOM_Settings_AdWords_ClientCustomerId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_AdWords_DeveloperToken'|translate }}</th>
+                    <th>{{ 'AOM_Settings_AdWords_UserAgent'|translate }}</th>
+                    <th>{{ 'AOM_Settings_AdWords_RefreshToken'|translate }}</th>
+                    {#<th>{{ 'General_Edit'|translate }}</th>#}
+                    <th>{{ 'General_Delete'|translate }}</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for id, account in accounts.AdWords.accounts %}
+                        <tr class="editable" id="{{ id }}">
+                            <td id="websiteId" class="editable">{{ account.websiteId }}</td>
+                            <td id="clientId" class="editable abbreviated" data-full="{{ account.clientId }}">{{ account.clientId[0:10] }}...</td>
+                            <td id="clientSecret" class="editable abbreviated" data-full="{{ account.clientSecret }}">{{ account.clientSecret[0:10] }}...</td>
+                            <td id="clientCustomerId" class="editable">{{ account.clientCustomerId }}</td>
+                            <td id="developerToken" class="editable abbreviated" data-full="{{ account.developerToken }}">{{ account.developerToken[0:14] }}...</td>
+                            <td id="userAgent" class="editable abbreviated" data-full="{{ account.userAgent }}">{{ account.userAgent[0:14] }}...</td>
+                            <td id="refreshToken abbreviated" data-full="{{ account.refreshToken }}">
+                                {% if account.refreshToken is not null %}
+                                    {{ account.refreshToken[0:15] }}...<br/>
+                                {% endif %}
+                                <a href="?module=AOM&action=platformAction&platform=AdWords&method=getRefreshToken&id={{ id }}">
+                                    {{- 'AOM_Settings_AdWords_GetRefreshToken'|translate -}}
+                                </a>
+                            </td>
+                            {#<td class="text-center">#}
+                                {#<button class="editFacebookAdsAccount btn btn-flat" id="{{ id }}" title="{{ 'General_Edit'|translate }}">#}
+                                    {#<span class="icon-edit"></span>#}
+                                {#</button>#}
+                            {#</td>#}
+                            <td class="text-center">
+                                <button class="deleteAccount btn btn-flat" id="{{ id }}"
+                                        data-platform="AdWords" title="{{ 'General_Delete'|translate }}">
+                                    <span class="icon-delete"></span>
+                                </button>
+                            </td>
+                        </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p>
+                <button class="addAdWordsAccount btn btn-lg btn-flat">
+                    <span class="icon-add"></span>
+                    {{ 'AOM_Settings_AddAccount'|translate }}
+                </button>
+            </p>
+        </div>
+    {% endif %}
+
+
+
+    {# Bing #}
+    {% if bingIsActive %}
+        <h2>{{ 'AOM_Settings_Bing'|translate }}</h2>
+        <p>{{ 'AOM_Settings_Bing_Introduction'|translate|raw }}
+        
+        <div class="bingAccounts entityContainer" style="margin-bottom:50px;">
+            <table class="entityTable dataTable" id="bingAccounts">
+                <thead>
+                <tr>
+                    <th>{{ 'AOM_Settings_WebsiteId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Bing_ClientId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Bing_ClientSecret'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Bing_AccountId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Bing_DeveloperToken'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Bing_AccessToken'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Bing_RefreshToken'|translate }}</th>
+                    {#<th>{{ 'General_Edit'|translate }}</th>#}
+                    <th>{{ 'General_Delete'|translate }}</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for id, account in accounts.Bing.accounts %}
+                        <tr class="editable" id="{{ id }}">
+                            <td id="websiteId" class="editable">{{ account.websiteId }}</td>
+                            <td id="clientId" class="editable abbreviated" data-full="{{ account.clientId }}">{{ account.clientId[0:10] }}...</td>
+                            <td id="clientSecret" class="editable abbreviated" data-full="{{ account.clientSecret }}">{{ account.clientSecret[0:10] }}...</td>
+                            <td id="accountId" class="editable">{{ account.accountId }}</td>
+                            <td id="developerToken" class="editable">{{ account.developerToken }}</td>
+                            <td id="refreshToken abbreviated" data-full="{{ account.refreshToken }}">
+                                {% if account.refreshToken is not null %}
+                                    {{ account.refreshToken[0:15] }}...<br/>
+                                {% endif %}
+                            </td>
+                            <td id="accessToken abbreviated" data-full="{{ account.accessToken }}">
+                                {% if account.accessToken is not null %}
+                                    {{ account.accessToken[0:15] }}...<br/>
+                                {% endif %}
+                                <a href="?module=AOM&action=platformAction&platform=Bing&method=getAccessToken&id={{ id }}">
+                                    {{- 'AOM_Settings_Bing_GetAccessToken'|translate -}}
+                                </a>
+                            </td>
+                            {#<td class="text-center">#}
+                                {#<button class="editFacebookAdsAccount btn btn-flat" id="{{ id }}" title="{{ 'General_Edit'|translate }}">#}
+                                    {#<span class="icon-edit"></span>#}
+                                {#</button>#}
+                            {#</td>#}
+                            <td class="text-center">
+                                <button class="deleteAccount btn btn-flat" id="{{ id }}"
+                                        data-platform="Bing" title="{{ 'General_Delete'|translate }}">
+                                    <span class="icon-delete"></span>
+                                </button>
+                            </td>
+                        </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p>
+                <button class="addBingAccount btn btn-lg btn-flat">
+                    <span class="icon-add"></span>
+                    {{ 'AOM_Settings_AddAccount'|translate }}
+                </button>
+            </p>
+        </div>
+    {% endif %}
+
+
+
+    {# Criteo #}
+    {% if criteoIsActive %}
+        <h2>{{ 'AOM_Settings_Criteo'|translate }}</h2>
+        <p>{{ 'AOM_Settings_Criteo_Introduction'|translate }}
+
+        <div class="criteoAccounts entityContainer" style="margin-bottom:50px;">
+            <table class="entityTable dataTable" id="criteoAccounts">
+                <thead>
+                <tr>
+                    <th>{{ 'AOM_Settings_WebsiteId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Criteo_AppToken'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Criteo_Username'|translate }}</th>
+                    <th>{{ 'AOM_Settings_Criteo_Password'|translate }}</th>
+                    {#<th>{{ 'General_Edit'|translate }}</th>#}
+                    <th>{{ 'General_Delete'|translate }}</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for id, account in accounts.Criteo.accounts %}
+                        <tr class="editable" id="{{ id }}">
+                            <td id="websiteId" class="editable">{{ account.websiteId }}</td>
+                            <td id="appToken" class="editable">{{ account.appToken }}</td>
+                            <td id="username" class="editable">{{ account.username }}</td>
+                            <td id="password" class="editable">{{ account.password }}</td>
+                            {#<td class="text-center">#}
+                                {#<button class="editFacebookAdsAccount btn btn-flat" id="{{ id }}" title="{{ 'General_Edit'|translate }}">#}
+                                    {#<span class="icon-edit"></span>#}
+                                {#</button>#}
+                            {#</td>#}
+                            <td class="text-center">
+                                <button class="deleteAccount btn btn-flat" id="{{ id }}"
+                                        data-platform="Criteo" title="{{ 'General_Delete'|translate }}">
+                                    <span class="icon-delete"></span>
+                                </button>
+                            </td>
+                        </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p>
+                <button class="addCriteoAccount btn btn-lg btn-flat">
+                    <span class="icon-add"></span>
+                    {{ 'AOM_Settings_AddAccount'|translate }}
+                </button>
+            </p>
+        </div>
+    {% endif %}
+
+
+
+    {# Facebook Ads #}
+    {% if facebookAdsIsActive %}
+        <h2>{{ 'AOM_Settings_FacebookAds'|translate }}</h2>
+        <p>{{ 'AOM_Settings_FacebookAds_Introduction'|translate }}
+
+        <div class="facebookAdsAccounts entityContainer" style="margin-bottom:50px;">
+            <table class="entityTable dataTable" id="facebookAdsAccounts">
+                <thead>
+                <tr>
+                    <th>{{ 'AOM_Settings_WebsiteId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_FacebookAds_ClientId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_FacebookAds_ClientSecret'|translate }}</th>
+                    <th>{{ 'AOM_Settings_FacebookAds_AccountId'|translate }}</th>
+                    <th>{{ 'AOM_Settings_FacebookAds_AccessToken'|translate }}</th>
+                    {#<th>{{ 'General_Edit'|translate }}</th>#}
+                    <th>{{ 'General_Delete'|translate }}</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for id, account in accounts.FacebookAds.accounts %}
+                        <tr class="editable" id="{{ id }}">
+                            <td id="websiteId" class="editable">{{ account.websiteId }}</td>
+                            <td id="clientId" class="editable abbreviated" data-full="{{ account.clientId }}">{{ account.clientId[0:10] }}...</td>
+                            <td id="clientSecret" class="editable abbreviated" data-full="{{ account.clientSecret }}">{{ account.clientSecret[0:10] }}...</td>
+                            <td id="accountId" class="editable">{{ account.accountId }}</td>
+                            <td id="accessToken abbreviated" data-full="{{ account.accessToken }}">
+                                {% if account.accessToken is not null %}
+                                    {{ account.accessToken[0:15] }}...<br/>
+                                {% endif %}
+                                <a href="?module=AOM&action=platformAction&platform=FacebookAds&method=getAccessToken&id={{ id }}">
+                                    {{- 'AOM_Settings_FacebookAds_GetAccessToken'|translate -}}
+                                </a>
+                            </td>
+                            {#<td class="text-center">#}
+                                {#<button class="editFacebookAdsAccount btn btn-flat" id="{{ id }}" title="{{ 'General_Edit'|translate }}">#}
+                                    {#<span class="icon-edit"></span>#}
+                                {#</button>#}
+                            {#</td>#}
+                            <td class="text-center">
+                                <button class="deleteAccount btn btn-flat" id="{{ id }}"
+                                        data-platform="FacebookAds" title="{{ 'General_Delete'|translate }}">
+                                    <span class="icon-delete"></span>
+                                </button>
+                            </td>
+                        </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p>
+                <button class="addFacebookAdsAccount btn btn-lg btn-flat">
+                    <span class="icon-add"></span>
+                    {{ 'AOM_Settings_AddAccount'|translate }}
+                </button>
+            </p>
+        </div>
+    {% endif %}
+
+{% endblock %}

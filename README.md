@@ -2,76 +2,199 @@
 
 ## Description
 
-Integrates additional data (costs, ad impressions, etc.) from advertisers (Google AdWords, Bing, Criteo, Facebook Ads) 
-into Piwik and combine that data with individual visits - creating a whole bunch of new opportunities.
+Integrate additional data (costs, ad impressions, etc.) from advertising platforms (Google AdWords, Bing, Criteo, 
+Facebook Ads) into Piwik and combine that data with individual visits - create a whole bunch of new opportunities!
 
 
 ## Advertiser's platforms
 
-To obtain data (costs, ad impressions, etc.) from the advertiser's platforms, API access must be granted and configured
-within the settings of this plugin.
+To obtain data (campaign names, costs, ad impressions, etc.) from the advertising platforms, API access must be granted 
+and configured within the settings of this plugin. 
 
-To map the data from the advertising platform to individual visits (which is optional), all links from the advertiser's 
-platforms must have an additional param (with a configurable name, e.g. "ad_id") that supplies required data 
-(as url-encoded JSON) to this plugin. The param's content must be as follows:
+To map individual visits with the data from the advertising platforms, all links from the platforms must have additional 
+params that supply mapping-related data like campaign and ad IDs to this plugin. This data is stored in 
+`piwik_log_visit.aom_ad_params`. When a visitor returns with other tracking params, a new visit starts automatically. 
+
+Background jobs import and merge the data from the advertising platforms with individual visits. Importing and merging
+is done automatically When you have set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/). 
+You can (re)import data manually by executing 
+`./console aom:import --platform={platformName} --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD`. You can merge imported 
+data manually by executing `./console aom:merge --platform={platformName} --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD`.
+
+Imported data is stored in `piwik_aom_{platformName}`. Every advertising platform's data is aggregated on a daily basis 
+in the timezone of the advertising platform's account. Merging will only be correct, when your website's timezone 
+matches the timezones of each advertising platform account. Merged data is stored in `piwik_log_visit.aom_ad_data`. 
+
 
 
 ### Google AdWords
 
-We use [ValueTrack params](https://support.google.com/adwords/answer/2375447?hl=en) to obtain the required data:
+#### Tracking params
 
-ad_id=%257B%2522platform%2522%253A%2522AdWords%2522%252C%2522campaignId%2522%253A%2522{campaignid}%2522%252C%2522adGroupId%2522%253A%2522{adgroupid}%2522%252C%2522targetId%2522%253A%2522{targetid}%2522%252C%2522creative%2522%253A%2522{creative}%2522%252C%2522placement%2522%253A%2522{placement}%2522%252C%2522network%2522%253A%2522{network}%2522%252C%2522device%2522%253A%2522{device}%2522%252C%2522adposition%2522%253A%2522{adposition}%2522%252C%2522locPhysical%2522%253A%2522{loc_physical_ms}%2522%252C%2522locInterest%2522%253A%2522{loc_interest_ms}%2522%257D
+We use [ValueTrack params](https://support.google.com/adwords/answer/2375447?hl=en) to obtain the required data.
+The following params are supported:
 
-When a Google AdWords ad is clicked, data like the following can be found in piwik_log_visit.aom_ad_data:
+| Param                 | Mandatory | Contents          | Description                                                                                                                     |
+| --------------------- | --------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| {prefix}_platform     | true      | AdWords           |                                                                                                                                 |
+| {prefix}_campaign_id  | true      | {campaignid}      | The campaign ID.                                                                                                                |
+| {prefix}_ad_group_id  | true      | {adgroupid}       | The ad group ID.                                                                                                                |
+| {prefix}_feed_item_id | true      | {feeditemid}      | Most probably the ID of a specific [sitelink](https://developers.google.com/adwords/api/docs/guides/feed-services).             |
+| {prefix}_target_id    | true      | {targetid}        | The ID of the keyword, dynamic search ad, remarketing list target or product partition ID that triggered an ad.                 |
+| {prefix}_creative     | true      | {creative}        | A unique ID for your ad.                                                                                                        |
+| {prefix}_placement    | true      | {placement}       | The content site where your ad was clicked or the matching placement targeting criteria for the site where your ad was clicked. |
+| {prefix}_target       | true      | {target}          | A placement category (works with placement-targeted campaigns only).                                                            |
+| {prefix}_network      | true      | {network}         | Where the click came from: "g" for Google search, "s" for a search partner, or "d" for the display network.                     |
+| {prefix}_device       | true      | {device}          | What device the click came from: "m" for mobile (including WAP), "t" for tablet, and "c" for computer.                          |
+| {prefix}_ad_position  | false     | {adposition}      |                                                                                                                                 |
+| {prefix}_loc_physical | false     | {loc_physical_ms} | The ID of the geographical location of the click.                                                                               |
+| {prefix}_loc_interest | false     | {loc_interest_ms} | The ID of the location of interest that helped trigger the ad.                                                                  |
 
-{"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","targetId":"kwd-118607649","creative":"47609133356","placement":"","network":"g","device":"m","adposition":"1t2","locPhysical":"20228","locInterest":"1004074"}
-{"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","network":"d","device":"c","adposition":"none","locPhysical":"9041542","locInterest":""}
-{"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","targetId":"aud-55070239676","creative":"47609140676","placement":"carfansofamerica.com","network":"d","device":"c","adposition":"none","locPhysical":"9042649","locInterest":""}
+A typical link at Google AdWords (with the prefix "aom") should have the following params:
+
+    &aom_platform=AdWords&aom_campaign_id={campaignid}&aom_ad_group_id={adgroupid}&aom_feed_item_id={feeditemid}&aom_target_id={targetid}&aom_creative={creative}&aom_placement={placement}&aom_target={target}&aom_network={network}&aom_device={device}&aom_ad_position={adposition}&aom_loc_physical={loc_physical_ms}&aom_loc_Interest={loc_interest_ms}
+    
+When a Google AdWords ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
+
+    {"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","feedItemId":"","targetId":"kwd-118607649","creative":"47609133356","placement":"","target":"","network":"g","device":"m","adPosition":"1t2","locPhysical":"20228","locInterest":"1004074"}
+    {"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","feedItemId":"","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","target":"","network":"d","device":"c","adPosition":"none","locPhysical":"9041542","locInterest":""}
+    {"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","feedItemId":"","targetId":"aud-55070239676","creative":"47609140676","placement":"carfansofamerica.com","target":"","network":"d","device":"c","adPosition":"none","locPhysical":"9042649","locInterest":""}
+
+Placements are shortened when the length of the entire JSON is more than 1,024 characters.
+
+
+#### Importing & merging
+
+For importing and merging you must activate AdWords and provide API credentials within this plugin's settings. 
+This requires a [web application in the Google API console](https://code.google.com/apis/console#access) with Piwik's 
+full URI (e.g. http://local.piwik.de?module=AOM&action=platformAction&platform=AdWords&method=processOAuthRedirect) 
+being an authorized redirect URI.
+ 
+AdWords data can is being (re)imported for the last 3 days (as old data might change). 
 
 
 ### Microsoft Bing Ads
 
-We use [URL tracking](http://help.bingads.microsoft.com/apex/index/3/en-us/51091) to obtain the required data:
+#### Tracking params
 
-ad_id=%7B%22platform%22%3A%22Bing%22%2C%22campaignId%22%3A{CampaignId}%2C%22adGroupId%22%3A{AdGroupId}%2C%22orderItemId%22%3A{OrderItemId}%2C%22targetId%22%3A%22{TargetId}%22%2C%22adId%22%3A{AdId}%7D
+We use [URL tracking](http://help.bingads.microsoft.com/apex/index/3/en-us/51091) to obtain the required data. 
+The following params are supported:
 
-When a Bing ad is clicked, data like the following can be found in piwik_log_visit.aom_ad_data:
+| Param                   | Mandatory | Contents      |
+| ----------------------- | --------- | ------------- | 
+| {prefix}_platform       | true      | Bing          |  
+| {prefix}_campaign_id    | true      | {CampaignId}  |
+| {prefix}_ad_group_id    | true      | {AdGroupId}   |
+| {prefix}_order_item_id  | true      | {OrderItemId} |
+| {prefix}_target_id      | true      | {TargetId}    |
+| {prefix}_ad_id          | true      | {AdId}        |
 
-{"platform":"Bing","campaignId":190561279,"adGroupId":2029114499,"orderItemId":40414589411,"targetId":"40414589411","adId":5222037942}
+A typical link at Microsoft Bing Ads (with the prefix "aom") should have the following params:
+
+    &aom_platform=Bing&aom_campaign_id={CampaignId}&aom_ad_group_id={AdGroupId}&aom_order_item_id={OrderItemId}&aom_target_id={TargetId}&aom_ad_id={AdId}
+
+When a Bing ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
+
+    {"platform":"Bing","campaignId":190561279,"adGroupId":2029114499,"orderItemId":40414589411,"targetId":"40414589411","adId":5222037942}
+
+
+#### Importing & merging
+
+For importing and merging you must activate Bing and provide API credentials within this plugin's settings.
+This requires a [mobile or desktop client app](https://account.live.com/developers/applications) at Bing.
+Piwik's URI (e.g. http://local.piwik.de/) must be added at Bing to the app's valid redirect URLs under "API settings". 
+
+Bing's data is being imported once a day. 
 
 
 ### Criteo
 
-When using Criteo, all links must be created manually (replace {campaignId} manually with the correct ID):
+#### Tracking params
 
-ad_id=%7B%22platform%22%3A%22Criteo%22%2C%22campaignId%22%3A%22{campaignId}%22%7D
+When using Criteo, all links must be created manually. 
+The following params must be replaced manually with their corresponding IDs:
 
-When a Criteo ad is clicked, data like the following can be found in piwik_log_visit.aom_ad_data:
+| Param                   | Mandatory | Contents |
+| ----------------------- | --------- | -------- | 
+| {prefix}_platform       | true      | Criteo   |  
+| {prefix}_campaign_id    | true      | 14340    |
 
-{"platform":"Criteo","campaignId":"14340"}
+A typical link at Criteo (with the prefix "aom") should have the following params:
+
+    &aom_platform=Criteo&aom_campaign_id=14340
+
+When a Criteo ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
+
+    {"platform":"Criteo","campaignId":"14340"}  
+
+
+#### Importing & merging
+
+Criteo's data is being imported once a day. 
+  
+Merging is solely based on Criteo's campaign ID.  
 
 
 ### Facebook Ads
 
-When using Facebook Ads, all links must be created manually (replace {campaignGroupId}, {campaignId} and {adGroupId} manually with the correct IDs):
+#### Tracking params
 
-ad_id=%7B%22platform%22%3A%22FacebookAds%22%2C%22campaignGroupId%22%3A%22{campaignGroupId}%22%2C%22campaignId%22%3A%22{campaignId}%22%2C%22adGroupId%22%3A%22{adGroupId}%22%7D
+When using Facebook Ads, all links must be created manually.
+The following params must be replaced manually with their corresponding IDs:
 
-When a Facebook Ads ad is clicked, data like the following can be found in piwik_log_visit.aom_ad_data:
+| Param                | Mandatory | Contents      |
+| -------------------- | --------- | ------------- | 
+| {prefix}_platform    | true      | FacebookAds   |  
+| {prefix}_campaign_id | true      | 4160286035775 |
+| {prefix}_adset_id    | true      | 6028603577541 |
+| {prefix}_ad_id       | true      | 5760286037541 |
 
-{"platform":"FacebookAds","campaignGroupId":"6028603577541","campaignId":"6028603577541","adGroupId":"6028603577541"}
+A typical link at FacebookAds (with the prefix "aom") should have the following params:
 
+    &aom_platform=FacebookAds&aom_campaign_id=4160286035775&aom_adset_id=6028603577541&aom_ad_id=5760286037541
+    
+When a Facebook Ads ad is clicked, data like the following can be found in `piwik_log_visit.aom_ad_params`:
+
+    {"platform":"FacebookAds","campaignId":"4160286035775","adsetId":"6028603577541","adId":"5760286037541"}
+
+
+#### Importing & merging
+
+For importing and merging you must activate Facebook Ads and provide API credentials within this plugin's settings. 
+This requires a [Facebook App with Marketing API access](https://developers.facebook.com/docs/marketing-api/quickstart). 
+Piwik's URI (e.g. http://local.piwik.de/) must be added to the app's valid OAuth redirect URIs. 
+
+Facebook Ads' data is being imported once a day.
+
+
+## Other advertising platforms and Piwik's default tracking params
+
+You should not use any of the params listed above when the advertising platform you are using is not listed here.
+ 
+Piwik's [default tracking params](http://piwik.org/docs/tracking-campaigns/) (pk_kwd and the even more important 
+pk_campaign) should be used for both supported and unsupported advertising platforms.
+
+
+
+## Allocate costs to Piwik visits
+ 
+Executing `./console aom:replenish-visits --startDate=2015-12-20 --endDate=2015-12-20` allocates platform costs to 
+(merged) Piwik visits and stores the results in piwik_aom_visits for further processing (e.g. by a data warehouse). 
+There might be more visits in piwik_aom_visits then in piwik_log_visits when there a platform costs that could not be 
+assigned to visit from piwik_log_visits.
+ 
 
 
 ## API
 
-This plugin provides the following API endpoints (add `&token_auth=...` in production environment):
+This plugin provides the following API endpoints (add `&token_auth=...` in production environment).
+You can use [Piwik's standard API params](http://developer.piwik.org/api-reference/reporting-api). 
 
 ### AOM.getVisits
 
 Returns all visits with marketing information within the given period.
 
-Example: ?module=API&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01&format=json
+Example: ?module=API&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01
 
 
 ### AOM.getEcommerceOrderWithVisits
@@ -79,7 +202,7 @@ Example: ?module=API&method=AOM.getVisits&idSite=1&period=day&date=2015-05-01&fo
 Returns a specific ecommerce order by orderId with all visits with marketing information that happened before the 
 ecommerce order or false (when no order could be found for the given orderId).
 
-Example: ?module=API&method=AOM.getEcommerceOrderWithVisits&orderId=123&idSite=1&format=json
+Example: ?module=API&method=AOM.getEcommerceOrderWithVisits&orderId=123&idSite=1
 
 
 ### AOM.getEcommerceOrdersWithVisits
@@ -87,21 +210,64 @@ Example: ?module=API&method=AOM.getEcommerceOrderWithVisits&orderId=123&idSite=1
 Returns all ecommerce orders with all visits with marketing information that happened before the ecommerce order within 
 the given period.
 
-Example: ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&period=day&date=2015-05-01&format=json
+Example: ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&period=day&date=2015-05-01
+
+
+### AOM.getStatus
+
+Returns various status information (e.g. last imports, last visits with ad params) that can be used for monitoring.
+
+Example: ?module=API&method=AOM.getStatus
 
 
 
-## Installation / Update
+## Requirements, installation & updates
 
-See http://piwik.org/faq/plugins/#faq_21.
-Run ``composer install`` to install dependencies, such as the Google AdWords SDK.
+MySQL 5.0.3 or higher is required as we store more than 255 characters in VARCHAR.
+You must be able to run cron jobs to set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/).
 
-It is recommended to setup auto archiving (http://piwik.org/docs/setup-auto-archiving/) to improve performance.
+To install AOM, follow Piwik's "[How to install a plugin](http://piwik.org/faq/plugins/#faq_21)" guide.
+Run `composer install` in `plugins/AOM` to install dependencies, such as the Facebook Ads and Google AdWords SDKs.
+Configure this plugin (e.g. provide API credentials to advertiser's platforms).
+
+Set up [auto archiving](http://piwik.org/docs/setup-auto-archiving/) to automatically import and merge data from the 
+advertiser's platforms. The auto archiving cron job executes the `core:archive command` which triggers 
+[Piwik's TaskScheduler](https://developer.piwik.org/api-reference/Piwik/TaskScheduler) and thus this plugin's tasks. 
+You can import and merge data manually by running `./console core:run-scheduled-tasks --force`.
+
+Merging will only be correct, when your website's timezone matches the timezones of each advertising platform account.
+
 
 
 ## Tests
 
-Run integration tests with `./console tests:run --testsuite integration AOM`.
+You must enable Piwik's development mode with `./console development:enable` and provide some additional configuration 
+in `config.ini.php`, e.g.:
+
+    [database_tests]
+    host = "127.0.0.1"
+    username = "root"
+    password = "root"
+    dbname = "piwik_test"
+    tables_prefix = "piwik_"
+    
+    [tests]
+    http_host = "local.piwik.de"
+    request_uri = "/"
+
+Run all tests with `./console tests:run --group AOM`.
+
+Run unit tests with `./console tests:run --group AOM_Unit`.
+Run integration tests with `./console tests:run --group AOM_Integration`.
+
+
+
+## Logging
+
+Various console-commands and background tasks (importing, merging etc.) write their logs to `aom-tasks.log`. All other 
+logs (visitor requests, requests to this plugin's API endpoints, Piwik UI interactions etc.) are written to `aom.log`. 
+All log files are stored in Piwik's main directory. 
+
 
 
 ## Changelog
@@ -110,9 +276,11 @@ __0.1.0__
 * first release
 
 
+
 ## License
 
 GPL v3 / fair use
+
 
 
 ## Support
