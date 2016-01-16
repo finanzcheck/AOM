@@ -65,10 +65,13 @@ class ReplenishVisits extends ConsoleCommand
     }
 
     /**
+     * Replenishes the visits of a specific date.
+     * This method must be public so that it can be called from Tasks.php.
+     *
      * @param string $date YYYY-MM-DD
      * @throws \Exception
      */
-    private function processDate($date)
+    public function processDate($date)
     {
         // Clean up replenished data
         Db::deleteAllRows(Common::prefixTable('aom_visits'), 'WHERE date_website_timezone = ?', 'id', 100000, [$date,]);
@@ -158,7 +161,7 @@ class ReplenishVisits extends ConsoleCommand
                     '%d Piwik %s visits (based on aom_platform) resulted in %d %s visits.' . PHP_EOL
                         . '%s reported %d records (with at least 1 click or cost > 0) with %d clicks.' . PHP_EOL
                         . '%d Piwik visits matched (based on aom_platform_row_id), but %d visits had to be created for %d unmerged clicks.' . PHP_EOL
-                        . 'Total costs reported vs. total costs of all resulting visits are %f vs. %f.' . PHP_EOL,
+                        . 'Total costs reported vs. total costs of all resulting visits are %f vs. %f.',
                     count($platformVisits),
                     $platformName,
                     ($totalMatchingVisits + $totalCreatedVisits),

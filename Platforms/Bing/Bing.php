@@ -20,14 +20,6 @@ class Bing extends Platform implements PlatformInterface
     const AD_KEYWORD_ID = 3;
 
     /**
-     * Returns the platform's data table name.
-     */
-    public static function getDataTableNameStatic()
-    {
-        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_BING));
-    }
-
-    /**
      * Extracts advertisement platform specific data from the query params and validates it.
      *
      * @param string $paramPrefix
@@ -95,8 +87,8 @@ class Bing extends Platform implements PlatformInterface
         }
 
         $result = DB::fetchAll(
-            'SELECT * FROM ' . Bing::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND
-                campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
+                WHERE idsite = ? AND date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
             [
                 $idsite,
                 $date,
@@ -127,7 +119,8 @@ class Bing extends Platform implements PlatformInterface
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
         $result = DB::fetchAll(
-            'SELECT * FROM ' . Bing::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
+                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
             [
                 $idsite,
                 $campaignId,

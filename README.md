@@ -25,6 +25,15 @@ Imported data is stored in `piwik_aom_{platformName}`. Every advertising platfor
 in the timezone of the advertising platform's account. Merging will only be correct, when your website's timezone 
 matches the timezones of each advertising platform account. Merged data is stored in `piwik_log_visit.aom_ad_data`. 
 
+At the end of the auto archiving process, after platform data has been imported and merged, platform costs are allocated 
+to merged Piwik visits. The results of this allocation are stored in `piwik_aom_visits` for further processing (e.g. by 
+a data warehouse). There might be more visits in `piwik_aom_visits` then in `piwik_log_visits` when there a platform 
+costs that could not be assigned to visit from piwik_log_visits. This command can be executed manually by running 
+`./console aom:replenish-visits --startDate=2015-12-20 --endDate=2015-12-20`.
+
+All importing, merging and replenishing should have finished a few hours after a new day (in the website's timezone) has 
+begun. There might be times when data is incomplete, e.g. during (re)imports or when there are platform issues.
+
 
 
 ### Google AdWords
@@ -174,15 +183,6 @@ You should not use any of the params listed above when the advertising platform 
 Piwik's [default tracking params](http://piwik.org/docs/tracking-campaigns/) (pk_kwd and the even more important 
 pk_campaign) should be used for both supported and unsupported advertising platforms.
 
-
-
-## Allocate costs to Piwik visits
- 
-Executing `./console aom:replenish-visits --startDate=2015-12-20 --endDate=2015-12-20` allocates platform costs to 
-(merged) Piwik visits and stores the results in piwik_aom_visits for further processing (e.g. by a data warehouse). 
-There might be more visits in piwik_aom_visits then in piwik_log_visits when there a platform costs that could not be 
-assigned to visit from piwik_log_visits.
- 
 
 
 ## API

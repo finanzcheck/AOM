@@ -8,6 +8,7 @@ namespace Piwik\Plugins\AOM\tests\Integration;
 
 use Piwik;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Plugins\AOM\Platforms\Bing\Bing;
 use Piwik\Tests\Framework\Fixture;
@@ -37,7 +38,7 @@ class BingGetAdDataTest extends IntegrationTestCase
         $this->Bing = new Bing();
 
         Db::query(
-            'INSERT INTO ' . Bing::getDataTableNameStatic()
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
             . 'keyword_id, keyword, impressions, clicks, cost, '
             . 'conversions, ts_created) '
@@ -61,7 +62,7 @@ class BingGetAdDataTest extends IntegrationTestCase
         );
 
         Db::query(
-            'INSERT INTO ' . Bing::getDataTableNameStatic()
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
             . 'keyword_id, keyword, impressions, clicks, cost, '
             . 'conversions, ts_created) '

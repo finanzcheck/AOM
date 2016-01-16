@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\tests\Integration;
 use Piwik;
 use Piwik\Db;
 use Piwik\Common;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Plugins\AOM\Platforms\AdWords\AdWords;
 use Piwik\Tests\Framework\Fixture;
@@ -55,7 +56,7 @@ class AdWordsMergerTest extends IntegrationTestCase
         $merger = new Merger();
 
         Db::query(
-            'INSERT INTO ' . AdWords::getDataTableNameStatic()
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
             . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
             . 'conversions, ts_created) '
@@ -81,7 +82,7 @@ class AdWordsMergerTest extends IntegrationTestCase
         );
 
         Db::query(
-            'INSERT INTO ' . AdWords::getDataTableNameStatic()
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
             . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
             . 'conversions, ts_created) '
@@ -108,7 +109,7 @@ class AdWordsMergerTest extends IntegrationTestCase
 
 
         Db::query(
-            'INSERT INTO ' . AdWords::getDataTableNameStatic()
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
             . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
             . 'conversions, ts_created) '

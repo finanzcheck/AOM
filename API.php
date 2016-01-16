@@ -194,13 +194,12 @@ class API extends \Piwik\Plugin\API
             foreach (AOM::getPlatforms() as $platformName) {
 
                 $platform = AOM::getPlatformInstance($platformName);
+                $tableName = AOM::getPlatformDataTableNameByPlatformName($platformName);
 
                 $status['platforms'][$platformName] = [
                     'daysSinceLastImportWithResults' =>
-                        (Db::fetchOne('SELECT COUNT(*) FROM ' . $platform::getDataTableNameStatic()) > 0)
-                            ? intval(Db::fetchOne(
-                                    'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $platform::getDataTableNameStatic()
-                                ))
+                        (Db::fetchOne('SELECT COUNT(*) FROM ' . $tableName) > 0)
+                            ? intval(Db::fetchOne('SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $tableName))
                             : null,
                 ];
 

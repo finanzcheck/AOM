@@ -44,7 +44,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     private function importAccount($accountId, $account, $date)
     {
         $this->logger->info('Will import Criteo account ' . $accountId. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(Criteo::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
+        $this->deleteExistingData(AOM::PLATFORM_CRITEO, $accountId, $account['websiteId'], $date);
 
         $soapClient = new SoapClient('https://advertising.criteo.com/api/v201010/advertiserservice.asmx?WSDL', [
             'soap_version' => SOAP_1_2,
@@ -118,7 +118,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             // TODO: Use MySQL transaction to improve performance!
             foreach ($xml->table->rows->row as $row) {
                  Db::query(
-                    'INSERT INTO ' . Criteo::getDataTableNameStatic()
+                    'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)
                         . ' (id_account_internal, idsite, date, campaign_id, campaign, impressions, clicks, cost, '
                         . 'conversions, conversions_value, conversions_post_view, conversions_post_view_value, '
                         . 'ts_created) '

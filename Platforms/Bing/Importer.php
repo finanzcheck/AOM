@@ -61,7 +61,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     private function importAccount($accountId, $account, $date)
     {
         $this->logger->info('Will import Bing account ' . $accountId. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(Bing::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
+        $this->deleteExistingData(AOM::PLATFORM_BING, $accountId, $account['websiteId'], $date);
 
         $data = $this->getBingReport($accountId, $account, $date);
 
@@ -71,7 +71,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $date = $date->format('Y-m-d');
 
             Db::query(
-                'INSERT INTO ' . Bing::getDataTableNameStatic()
+                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING)
                     . ' (id_account_internal, idsite, date, account_id, account, campaign_id, campaign, ad_group_id, '
                     . 'ad_group, keyword_id, keyword, impressions, clicks, cost, conversions, ts_created) '
                     . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',

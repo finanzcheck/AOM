@@ -56,14 +56,6 @@ class AdWords extends Platform implements PlatformInterface
     ];
 
     /**
-     * Returns the platform's data table name.
-     */
-    public static function getDataTableNameStatic()
-    {
-        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_AD_WORDS));
-    }
-
-    /**
      * Extracts advertisement platform specific data from the query params and validates it.
      *
      * @param string $paramPrefix
@@ -174,8 +166,9 @@ class AdWords extends Platform implements PlatformInterface
     {
         if ($adParams['network'] == 'd') {
             $result = DB::fetchAll(
-                'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? and network = ? AND
-                campaign_id = ? AND ad_group_id = ? AND keyword_placement = ?',
+                'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+                    WHERE idsite = ? AND date = ? and network = ? AND campaign_id = ? AND ad_group_id = ?
+                    AND keyword_placement = ?',
                 [
                     $idsite,
                     $date,
@@ -192,8 +185,8 @@ class AdWords extends Platform implements PlatformInterface
             }
 
             $result = DB::fetchAll(
-                'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND
-                campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
+                'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+                    WHERE idsite = ? AND date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
                 [
                     $idsite,
                     $date,
@@ -226,7 +219,8 @@ class AdWords extends Platform implements PlatformInterface
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
             [
                 $idsite,
                 $campaignId,
