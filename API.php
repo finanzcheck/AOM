@@ -334,6 +334,10 @@ class API extends \Piwik\Plugin\API
         if (is_array($visits)) {
             foreach ($visits as &$visit) {
 
+                // TODO: This is for Piwik < 2.15.1 (remove after a while)
+                $visit['refererName'] = ('' === $visit['refererName'] ? null : $visit['refererName']);
+                $visit['refererKeyword'] = ('' === $visit['refererKeyword'] ? null : $visit['refererKeyword']);
+
                 // Make ad params JSON to associative array
                 $visit['adParams'] = [];
                 if (is_array($visit) && array_key_exists('rawAdParams', $visit) || 0 === strlen($visit['rawAdParams'])) {
