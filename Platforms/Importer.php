@@ -142,11 +142,11 @@ abstract class Importer
                     . '%fs for %d replenished data records).',
                 $platformName,
                 $timeToDeleteImportedData,
-                $deletedImportedDataRecords,
+                is_int($deletedImportedDataRecords) ? $deletedImportedDataRecords : 0,
                 $timeToUnsetMergedData,
-                $unsetMergedDataRecords,
+                is_int($unsetMergedDataRecords) ? $unsetMergedDataRecords : 0,
                 $timeToDeleteReplenishedVisits,
-                $deletedReplenishedVisitsRecords
+                is_int($deletedReplenishedVisitsRecords) ? $deletedReplenishedVisitsRecords : 0
             )
         );
     }
