@@ -123,7 +123,11 @@ abstract class Platform
         if ($mergeAfterwards) {
 
             // We must use the importer's period as $startDate and $endDate can be null or could have been modified
-            $this->merge($importer->getStartDate(), $importer->getStartDate());
+            $this->logger->debug(
+                'Will merge ' .  $this->getUnqualifiedClassName() . ' for period from ' . $importer->getStartDate()
+                . ' until ' . $importer->getEndDate() . ' now.'
+            );
+            $this->merge($importer->getStartDate(), $importer->getEndDate());
         }
     }
 
