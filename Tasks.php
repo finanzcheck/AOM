@@ -51,6 +51,7 @@ class Tasks extends \Piwik\Plugin\Tasks
         }
 
         // Replenish visits
+        // TODO: Is there any better way than doing this every single hour?!
         foreach (AOM::getPeriodAsArrayOfDates(
             date('Y-m-d', strtotime('-3 day', time())),
             date('Y-m-d', time())

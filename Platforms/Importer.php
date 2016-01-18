@@ -91,7 +91,7 @@ abstract class Importer
     {
         // Delete all imported data for the given combination of platform account, website and date
         $timeStart = microtime(true);
-        Db::deleteAllRows(
+        $deletedImportedDataRecords = Db::deleteAllRows(
             AOM::getPlatformDataTableNameByPlatformName($platformName),
             'WHERE id_account_internal = ? AND idsite = ? AND date = ?',
             'date',
@@ -106,7 +106,7 @@ abstract class Importer
 
         // Updates aom_ad_data and aom_platform_row_id to NULL of all visits who lost their related platform records
         $timeStart = microtime(true);
-        Db::query(
+        $unsetMergedDataRecords = Db::query(
             'UPDATE ' . Common::prefixTable('log_visit') . ' AS v
                 LEFT OUTER JOIN ' . AOM::getPlatformDataTableNameByPlatformName($platformName) . ' AS p
                 ON (p.id = v.aom_platform_row_id)
@@ -124,7 +124,7 @@ abstract class Importer
 
         // Removes all replenished visits for the combination of website and date!
         $timeStart = microtime(true);
-        Db::deleteAllRows(
+        $deletedReplenishedVisitsRecords = Db::deleteAllRows(
             Common::prefixTable('aom_visits'),
             'WHERE idsite = ? AND date_website_timezone = ?',
             'date_website_timezone',
@@ -138,11 +138,15 @@ abstract class Importer
 
         $this->logger->debug(
             sprintf(
-                'Deleted existing %s data (%fs for imported data, %fs for merged data, %fs for replenished data).',
+                'Deleted existing %s data (%fs for %d imported data records, %fs for %d merged data records, '
+                    . '%fs for %d replenished data records).',
                 $platformName,
                 $timeToDeleteImportedData,
+                $deletedImportedDataRecords,
                 $timeToUnsetMergedData,
-                $timeToDeleteReplenishedVisits
+                $unsetMergedDataRecords,
+                $timeToDeleteReplenishedVisits,
+                $deletedReplenishedVisitsRecords
             )
         );
     }
