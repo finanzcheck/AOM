@@ -158,4 +158,24 @@ abstract class Merger
             DB::exec($sql);
         }
     }
+
+    protected function buildKeyFromAdData(array $adData)
+    {
+        throw new \RuntimeException('buildKeyFromAdData must be implemented in Merger');
+    }
+
+    protected function getAdData()
+    {
+        $platformData = $this->getPlatformData();
+
+        $adDataMap = [];
+        foreach ($platformData as $row) {
+            $key = $this->buildKeyFromAdData($row);
+            if(isset($adDataMap[$key])) {
+                $this->logger->warning("Duplicate Ad Data found.", [$row, $adDataMap[$key]]);
+            }
+            $adDataMap[$key] = $row;
+        }
+        return $adDataMap;
+    }
 }

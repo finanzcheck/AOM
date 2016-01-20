@@ -104,13 +104,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     {
         $this->logger->info('Will merge AdWords now.');
 
-        $platformData = $this->getPlatformData();
-
-        $adDataMap = [];
-        foreach ($platformData as $row) {
-            //TODO: Duplicate filter
-            $adDataMap[$this->buildKeyFromAdData($row)] = $row;
-        }
+        $adDataMap = $this->getAdData();
 
         // Update visits
         $updateStatements = [];
@@ -119,8 +113,6 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
             $data = null;
             $key = $this->buildKeyFromVisit($visit);
             if (isset($adDataMap[$key])) {
-
-
                 // Set aom_ad_data
                 $updateMap = [
                     'aom_ad_data' => json_encode($adDataMap[$key]),
@@ -156,7 +148,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
         $this->updateVisits($updateStatements);
 
         $this->logger->info(
-            'Merged data (' . count($nonMatchedVisits) . ' without direct match out of ' . count($platformData) . ')'
+            'Merged data (' . count($nonMatchedVisits) . ' without direct match out of ' . count($this->getVisits()) . ')'
         );
     }
 }
