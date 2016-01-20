@@ -7,7 +7,6 @@
 namespace Piwik\Plugins\AOM;
 
 use Bramus\Monolog\Formatter\ColoredLineFormatter;
-use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Piwik\Common;
@@ -327,5 +326,14 @@ class AOM extends \Piwik\Plugin
         }
 
         return $dates;
+    }
+
+    /**
+     * @param string $platformName
+     * @return string
+     */
+    public static function getPlatformDataTableNameByPlatformName($platformName)
+    {
+        return Common::prefixTable('aom_' . strtolower($platformName));
     }
 }

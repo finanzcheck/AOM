@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\tests\Integration;
 use Piwik;
 use Piwik\Db;
 use Piwik\Common;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Plugins\AOM\Platforms\Criteo\Criteo;
 use Piwik\Tests\Framework\Fixture;
@@ -55,14 +56,14 @@ class CriteoMergerTest extends IntegrationTestCase
         $merger = new Merger();
 
         Db::query(
-            'INSERT INTO ' . Criteo::getDataTableNameStatic()
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)
             . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
             [1,'2015-12-28',14111,'Camp Name',7570,13,36.4]
         );
 
         Db::query(
-            'INSERT INTO ' . Criteo::getDataTableNameStatic()
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)
             . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
             [1,date('Y-m-d'),14112,'Camp Name2',7570,13,36.4]

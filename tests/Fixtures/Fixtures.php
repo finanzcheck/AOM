@@ -95,7 +95,7 @@ class Fixtures extends BasicFixtures
         $t->setUrl(
             'http://example.com/?aom_platform=AdWords&aom_campaign_id=184418636&aom_ad_group_id=9794351276'
             . '&aom_feed_item_id=&aom_target_id=kwd-118607649&aom_creative=47609133356&aom_placement=&aom_target='
-            . '&aom_network=g&aom_device=m&aom_ad_position=1t2&aom_loc_physical=20228&aom_loc_Interest=1004074'
+            . '&aom_network=g&aom_ad_position=1t2&aom_loc_physical=20228&aom_loc_Interest=1004074'
         );
         self::checkResponse($t->doTrackPageView('Visit from AdWords'));
 

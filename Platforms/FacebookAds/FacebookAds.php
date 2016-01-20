@@ -15,14 +15,6 @@ use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 class FacebookAds extends Platform implements PlatformInterface
 {
     /**
-     * Returns the platform's data table name.
-     */
-    public static function getDataTableNameStatic()
-    {
-        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_FACEBOOK_ADS));
-    }
-
-    /**
      * Extracts advertisement platform specific data from the query params and validates it.
      *
      * @param string $paramPrefix
@@ -76,7 +68,8 @@ class FacebookAds extends Platform implements PlatformInterface
     public static function getAdData($idsite, $date, $adParams)
     {
         $result = DB::fetchAll(
-            'SELECT * FROM ' . FacebookAds::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND campaign_id = ? AND adset_id = ? AND ad_id = ?',
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
+                WHERE idsite = ? AND date = ? AND campaign_id = ? AND adset_id = ? AND ad_id = ?',
             [
                 $idsite,
                 $date,
@@ -109,7 +102,8 @@ class FacebookAds extends Platform implements PlatformInterface
     public static function getHistoricalAdData($idsite, $campaignId, $adsetId)
     {
         $result = DB::fetchAll(
-            'SELECT * FROM ' . FacebookAds::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND adset_id = ?',
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
+                WHERE idsite = ? AND campaign_id = ? AND adset_id = ?',
             [
                 $idsite,
                 $campaignId,

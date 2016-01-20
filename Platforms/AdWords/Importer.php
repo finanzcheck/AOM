@@ -31,7 +31,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             // (Re)import the last 3 days unless they have been (re)imported today
             for ($i = -3; $i <= -1; $i++) {
-                if (Db::fetchOne('SELECT DATE(MAX(ts_created)) FROM ' . AdWords::getDataTableNameStatic()
+                if (Db::fetchOne('SELECT DATE(MAX(ts_created)) FROM '
+                        . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
                         . ' WHERE date = "' . date('Y-m-d', strtotime($i . ' day', time())) . '"') != date('Y-m-d')
                 ) {
                     $startDate = date('Y-m-d', strtotime($i . ' day', time()));
@@ -74,7 +75,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
     private function importAccount($accountId, $account, $date)
     {
         $this->logger->info('Will import AdWords account ' . $accountId. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(AdWords::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
+        $this->deleteExistingData(AOM::PLATFORM_AD_WORDS, $accountId, $account['websiteId'], $date);
 
         $user = AdWords::getAdWordsUser($account);
 
@@ -124,7 +125,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             }
 
             Db::query(
-                'INSERT INTO ' . AdWords::getDataTableNameStatic()
+                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
                     . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
                     . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
                     . 'conversions, ts_created) '

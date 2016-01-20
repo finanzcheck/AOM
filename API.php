@@ -194,13 +194,12 @@ class API extends \Piwik\Plugin\API
             foreach (AOM::getPlatforms() as $platformName) {
 
                 $platform = AOM::getPlatformInstance($platformName);
+                $tableName = AOM::getPlatformDataTableNameByPlatformName($platformName);
 
                 $status['platforms'][$platformName] = [
                     'daysSinceLastImportWithResults' =>
-                        (Db::fetchOne('SELECT COUNT(*) FROM ' . $platform::getDataTableNameStatic()) > 0)
-                            ? intval(Db::fetchOne(
-                                    'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $platform::getDataTableNameStatic()
-                                ))
+                        (Db::fetchOne('SELECT COUNT(*) FROM ' . $tableName) > 0)
+                            ? intval(Db::fetchOne('SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $tableName))
                             : null,
                 ];
 
@@ -334,6 +333,10 @@ class API extends \Piwik\Plugin\API
         // Enrich visits with advanced marketing information
         if (is_array($visits)) {
             foreach ($visits as &$visit) {
+
+                // TODO: This is for Piwik < 2.15.1 (remove after a while)
+                $visit['refererName'] = ('' === $visit['refererName'] ? null : $visit['refererName']);
+                $visit['refererKeyword'] = ('' === $visit['refererKeyword'] ? null : $visit['refererKeyword']);
 
                 // Make ad params JSON to associative array
                 $visit['adParams'] = [];
