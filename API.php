@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM;
 
-use Piwik\Date;
 use Exception;
 use Piwik\Period\Factory as PeriodFactory;
 use Piwik\Archive;
@@ -50,8 +49,14 @@ class API extends \Piwik\Plugin\API
 
         $visits = $this->queryVisits(
             $idSite,
-            $period->getDateStart()->toString('Y-m-d 00:00:00'),
-            $period->getDateEnd()->toString('Y-m-d 23:59:59')
+            AOM::convertLocalDateTimeToUTC(
+                $period->getDateStart()->toString('Y-m-d 00:00:00'),
+                Site::getTimezoneFor($idSite)
+            ),
+            AOM::convertLocalDateTimeToUTC(
+                $period->getDateEnd()->toString('Y-m-d 23:59:59'),
+                Site::getTimezoneFor($idSite)
+            )
         );
 
         return $visits;
@@ -73,17 +78,15 @@ class API extends \Piwik\Plugin\API
         $order = Db::fetchRow(
             'SELECT
                     idorder AS orderId,
-                    idvisitor,
 					conv(hex(idvisitor), 16, 10) as visitorId,
 					' . LogAggregator::getSqlRevenue('revenue') . ' AS amountOriginal,
                     log_conversion.server_time AS conversionTime
                 FROM ' . Common::prefixTable('log_conversion') . ' AS log_conversion
                 WHERE
                     log_conversion.idsite = ? AND
-                    log_conversion.idgoal = "' . Piwik::LABEL_ID_GOAL_IS_ECOMMERCE_ORDER . '" AND
+                    log_conversion.idgoal = 0 AND
                     log_conversion.idorder = ?
-                ORDER BY server_time ASC
-                LIMIT 1',
+                ORDER BY server_time ASC',
             [
                 $idSite,
                 $orderId
@@ -91,8 +94,8 @@ class API extends \Piwik\Plugin\API
         );
 
         if ($order && is_array($order)) {
-            $order['visits'] = $this->queryVisits($idSite, null, $order['conversionTime'], $order['idvisitor']);
-            unset($order['idvisitor']);
+            // $order['conversionTime'] is already in UTC (we want all visits before this date time)
+            $order['visits'] = $this->queryVisits($idSite, null, $order['conversionTime'], $orderId);
         }
 
         return $order;
@@ -123,14 +126,13 @@ class API extends \Piwik\Plugin\API
         $orders = Db::fetchAll(
             'SELECT
                     idorder AS orderId,
-                    idvisitor,
 					conv(hex(idvisitor), 16, 10) as visitorId,
 					' . LogAggregator::getSqlRevenue('revenue') . ' AS amountOriginal,
                     log_conversion.server_time AS conversionTime
                 FROM ' . Common::prefixTable('log_conversion') . ' AS log_conversion
                 WHERE
                     log_conversion.idsite = ? AND
-                    log_conversion.idgoal = "' . Piwik::LABEL_ID_GOAL_IS_ECOMMERCE_ORDER . '" AND
+                    log_conversion.idgoal = 0 AND
                     log_conversion.server_time >= ? AND
                     log_conversion.server_time <= ?
                 ORDER BY server_time ASC',
@@ -146,11 +148,129 @@ class API extends \Piwik\Plugin\API
         );
 
         foreach ($orders as &$order) {
-            $order['visits'] = $this->queryVisits($idSite, null, $order['conversionTime'], $order['idvisitor']);
-            unset($order['idvisitor']);
+            // $order['conversionTime'] is already in UTC (we want all visits before this date time)
+            $order['visits'] = $this->queryVisits($idSite, null, $order['conversionTime'], $order['orderId']);
         }
 
         return $orders;
+    }
+
+    /**
+     * Returns all visits that match the given criteria.
+     *
+     * @param int $idSite Id Site
+     * @param string $visitFirstActionTimeMinUTC
+     * @param string $visitFirstActionTimeMaxUTC
+     * @param string $orderId
+     * @return array
+     * @throws \Exception
+     */
+    private function queryVisits(
+        $idSite,
+        $visitFirstActionTimeMinUTC = null,
+        $visitFirstActionTimeMaxUTC = null,
+        $orderId = null
+    )
+    {
+        $sql = 'SELECT
+                    conv(hex(log_visit.idvisitor), 16, 10) AS visitorId,
+                    log_visit.idvisit AS visitId,
+                    log_visit.visit_first_action_time AS firstActionTime,
+                    CASE log_visit.config_device_type
+                        WHEN 0 THEN "desktop"
+                        WHEN 1 THEN "smartphone"
+                        WHEN 2 THEN "tablet"
+                        WHEN 3 THEN "feature-phone"
+                        WHEN 4 THEN "console"
+                        WHEN 5 THEN "tv"
+                        WHEN 6 THEN "car-browser"
+                        WHEN 7 THEN "smart-display"
+                        WHEN 8 THEN "camera"
+                        WHEN 9 THEN "portable-media-player"
+                        WHEN 10 THEN "phablet"
+                        ELSE ""
+                    END AS device,
+                    CASE log_visit.referer_type
+                        WHEN 1 THEN "direct"
+                        WHEN 2 THEN "search_engine"
+                        WHEN 3 THEN "website"
+                        WHEN 6 THEN "campaign"
+                        ELSE ""
+                    END AS source,
+                    log_visit.referer_name AS refererName,
+                    log_visit.referer_keyword AS refererKeyword,
+                    log_visit.referer_url AS refererUrl,
+                    ' . (in_array(
+                            'AdvancedCampaignReporting',
+                            Manager::getInstance()->getInstalledPluginsName())
+                        ? 'log_visit.campaign_name AS campaignName,
+                           log_visit.campaign_keyword AS campaignKeyword,
+                           log_visit.campaign_source AS campaignSource,
+                           log_visit.campaign_medium AS campaignMedium,
+                           log_visit.campaign_content AS campaignContent,
+                           log_visit.campaign_id AS campaignId,'
+                        : ''
+                    ) . '
+                    log_visit.aom_ad_params AS rawAdParams,
+                    log_visit.aom_ad_data AS rawAdData
+                FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
+                ' . (null != $orderId
+                    ? 'JOIN ' . Common::prefixTable('log_conversion') . ' AS log_conversion
+                        ON log_visit.idvisitor = log_conversion.idvisitor'
+                    : '') . '
+                WHERE
+                    ' . (null != $visitFirstActionTimeMinUTC ? 'log_visit.visit_first_action_time >= ? AND' : '') . '
+                    ' . (null != $visitFirstActionTimeMaxUTC ? 'log_visit.visit_first_action_time <= ? AND' : '') . '
+                    ' . (null != $orderId ? 'log_conversion.idorder = ? AND' : '') . '
+                    log_visit.idsite = ?
+                ORDER BY log_visit.visit_last_action_time ASC';
+
+        $parameters = [];
+        foreach ([$visitFirstActionTimeMinUTC, $visitFirstActionTimeMaxUTC, $orderId] as $param) {
+            if (null != $param) {
+                $parameters[] = $param;
+            }
+        }
+        $parameters[] = $idSite;
+
+        $visits = Db::fetchAll($sql, $parameters);
+
+        // Enrich visits with advanced marketing information
+        if (is_array($visits)) {
+            foreach ($visits as &$visit) {
+
+                // TODO: This is for Piwik < 2.15.1 (remove after a while)
+                $visit['refererName'] = ('' === $visit['refererName'] ? null : $visit['refererName']);
+                $visit['refererKeyword'] = ('' === $visit['refererKeyword'] ? null : $visit['refererKeyword']);
+
+                // Make ad params JSON to associative array
+                $visit['adParams'] = [];
+                if (is_array($visit) && array_key_exists('rawAdParams', $visit) || 0 === strlen($visit['rawAdParams'])) {
+
+                    $adParams = @json_decode($visit['rawAdParams'], true);
+
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($adParams)) {
+                        $visit['adParams'] = $adParams;
+                    }
+                }
+
+                // Make ad data JSON to associative array
+                $visit['adData'] = [];
+                if (is_array($visit) && array_key_exists('rawAdData', $visit) || 0 === strlen($visit['rawAdData'])) {
+
+                    $adParams = @json_decode($visit['rawAdData'], true);
+
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($adParams)) {
+                        $visit['adData'] = $adParams;
+                    }
+                }
+
+                unset($visit['rawAdParams']);
+                unset($visit['rawAdData']);
+            }
+        }
+
+        return $visits;
     }
 
     /**
@@ -158,7 +278,7 @@ class API extends \Piwik\Plugin\API
      * ?module=API&token_auth=...&method=AOM.getStatus&format=json
      *
      * TODO: Add scoping for websites?
-     * 
+     *
      * @return array
      * @throws Exception
      */
@@ -248,123 +368,5 @@ class API extends \Piwik\Plugin\API
         }
 
         return $status;
-    }
-
-    /**
-     * Returns all visits that match the given criteria.
-     *
-     * @param int $idSite Id Site
-     * @param string $visitFirstActionTimeMin
-     * @param string $visitFirstActionTimeMax
-     * @param string $idVisitor
-     * @return array
-     * @throws \Exception
-     */
-    private function queryVisits(
-        $idSite,
-        $visitFirstActionTimeMin = null,
-        $visitFirstActionTimeMax = null,
-        $idVisitor = null
-    )
-    {
-        $sql = 'SELECT
-                    ' . (null === $idVisitor ? 'conv(hex(idvisitor), 16, 10) AS visitorId, ' : '') . '
-                    idvisit AS visitId,
-                    visit_first_action_time AS firstActionTime,
-                    CASE config_device_type
-                        WHEN 0 THEN "desktop"
-                        WHEN 1 THEN "smartphone"
-                        WHEN 2 THEN "tablet"
-                        WHEN 3 THEN "feature-phone"
-                        WHEN 4 THEN "console"
-                        WHEN 5 THEN "tv"
-                        WHEN 6 THEN "car-browser"
-                        WHEN 7 THEN "smart-display"
-                        WHEN 8 THEN "camera"
-                        WHEN 9 THEN "portable-media-player"
-                        WHEN 10 THEN "phablet"
-                        ELSE ""
-                    END AS device,
-                    CASE referer_type
-                        WHEN 1 THEN "direct"
-                        WHEN 2 THEN "search_engine"
-                        WHEN 3 THEN "website"
-                        WHEN 6 THEN "campaign"
-                        ELSE ""
-                    END AS source,
-                    referer_name AS refererName,
-                    referer_keyword AS refererKeyword,
-                    referer_url AS refererUrl,
-                    ' . (in_array(
-                            'AdvancedCampaignReporting',
-                            Manager::getInstance()->getInstalledPluginsName())
-                        ? 'campaign_name AS campaignName,
-                           campaign_keyword AS campaignKeyword,
-                           campaign_source AS campaignSource,
-                           campaign_medium AS campaignMedium,
-                           campaign_content AS campaignContent,
-                           campaign_id AS campaignId,'
-                        : ''
-                    ) . '
-                    aom_ad_params AS rawAdParams,
-                    aom_ad_data AS rawAdData
-                FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
-                WHERE
-                    ' . (null != $visitFirstActionTimeMin ? 'visit_first_action_time >= ? AND' : '') . '
-                    ' . (null != $visitFirstActionTimeMax ? 'visit_first_action_time <= ? AND' : '') . '
-                    ' . (null != $idVisitor ? 'idvisitor = ? AND' : '') . '
-                    idsite = ?
-                ORDER BY visit_last_action_time ASC';
-
-        $parameters = [];
-        if (null != $visitFirstActionTimeMin) {
-            $parameters[] = AOM::convertLocalDateTimeToUTC($visitFirstActionTimeMin, Site::getTimezoneFor($idSite));
-        }
-        if (null != $visitFirstActionTimeMax) {
-            $parameters[] = AOM::convertLocalDateTimeToUTC($visitFirstActionTimeMax, Site::getTimezoneFor($idSite));
-        }
-        if (null != $idVisitor) {
-            $parameters[] = $idVisitor;
-        }
-        $parameters[] = $idSite;
-
-        $visits = Db::fetchAll($sql, $parameters);
-
-        // Enrich visits with advanced marketing information
-        if (is_array($visits)) {
-            foreach ($visits as &$visit) {
-
-                // TODO: This is for Piwik < 2.15.1 (remove after a while)
-                $visit['refererName'] = ('' === $visit['refererName'] ? null : $visit['refererName']);
-                $visit['refererKeyword'] = ('' === $visit['refererKeyword'] ? null : $visit['refererKeyword']);
-
-                // Make ad params JSON to associative array
-                $visit['adParams'] = [];
-                if (is_array($visit) && array_key_exists('rawAdParams', $visit) || 0 === strlen($visit['rawAdParams'])) {
-
-                    $adParams = @json_decode($visit['rawAdParams'], true);
-
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($adParams)) {
-                        $visit['adParams'] = $adParams;
-                    }
-                }
-
-                // Make ad data JSON to associative array
-                $visit['adData'] = [];
-                if (is_array($visit) && array_key_exists('rawAdData', $visit) || 0 === strlen($visit['rawAdData'])) {
-
-                    $adParams = @json_decode($visit['rawAdData'], true);
-
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($adParams)) {
-                        $visit['adData'] = $adParams;
-                    }
-                }
-
-                unset($visit['rawAdParams']);
-                unset($visit['rawAdData']);
-            }
-        }
-
-        return $visits;
     }
 }
