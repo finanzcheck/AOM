@@ -200,6 +200,7 @@ class API extends \Piwik\Plugin\API
                     log_visit.referer_name AS refererName,
                     log_visit.referer_keyword AS refererKeyword,
                     log_visit.referer_url AS refererUrl,
+                    log_visit.aom_platform AS platform,
                     ' . (in_array(
                             'AdvancedCampaignReporting',
                             Manager::getInstance()->getInstalledPluginsName())
