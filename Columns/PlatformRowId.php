@@ -50,6 +50,6 @@ class PlatformRowId extends VisitDimension
 
         list($rowId, $data) = AOM::getAdData($action);
 
-        return $rowId ? $rowId : 'null';
+        return $rowId ? $rowId : false;
     }
 }
