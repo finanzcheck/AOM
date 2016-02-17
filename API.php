@@ -370,4 +370,53 @@ class API extends \Piwik\Plugin\API
 
         return $status;
     }
+
+    /**
+     * Returns costs information for each platform for the given params, e.g.:
+     * ?module=API&token_auth=...&method=AOM.getPlatformData&idSite=1&period=day&date=2015-05-01&format=json
+     * ?module=API&token_auth=...&method=AOM.getPlatformData&idSite=1&period=range&date=2015-05-01,2015-05-10&format=json
+     *
+     * @param int $idSite Id Site
+     * @param bool|string $period Period to restrict to when looking at the logs
+     * @param bool|string $date Date to restrict to
+     * @return array
+     * @throws Exception
+     */
+    public function getPlatformData($idSite, $period = false, $date = false)
+    {
+        Piwik::checkUserHasViewAccess($idSite);
+
+        // disabled for multiple dates
+        if (Period::isMultiplePeriod($date, $period)) {
+            throw new Exception('AOM.getVisits does not support multiple dates.');
+        }
+
+        /** @var Range $period */
+        $period = PeriodFactory::makePeriodFromQueryParams(Site::getTimezoneFor($idSite), $period, $date);
+
+        $startTime = $period->getDateStart()->toString('Y-m-d 00:00:00');
+        $endTime = $period->getDateEnd()->toString('Y-m-d 23:59:59');
+
+        $result = [];
+
+        foreach (AOM::getPlatforms() as $platformName) {
+
+            $platform = AOM::getPlatformInstance($platformName);
+            $data = Db::fetchRow(
+                'SELECT ROUND(sum(cost), 2) as cost, sum(clicks) as clicks, sum(impressions) as impressions FROM ' . $platform->getDataTableName() . ' AS platform
+                  WHERE
+                  (? OR date >= ?) AND
+                  (? OR date >= ?) AND
+                  idsite = ?',
+                [
+                    $startTime == null, $startTime,
+                    $endTime == null, $endTime,
+                    $idSite
+                ]
+            );
+            $data['platform'] = $platformName;
+            $result[] = $data;
+        }
+        return $result;
+    }
 }
