@@ -213,8 +213,14 @@ class API extends \Piwik\Plugin\API
                         : ''
                     ) . '
                     log_visit.aom_ad_params AS rawAdParams,
-                    log_visit.aom_ad_data AS rawAdData
+                    log_visit.aom_ad_data AS rawAdData,
+                    log_action_entry_action_name.name AS entryTitle,
+                    log_action_entry_action_url.name AS entryUrl
                 FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
+                JOIN ' . Common::prefixTable('log_action') . ' AS log_action_entry_action_name
+                    ON log_visit.visit_entry_idaction_name = log_action_entry_action_name.idaction
+                JOIN ' . Common::prefixTable('log_action') . ' AS log_action_entry_action_url
+                    ON log_visit.visit_entry_idaction_url= log_action_entry_action_url.idaction
                 ' . (null != $orderId
                     ? 'JOIN ' . Common::prefixTable('log_conversion') . ' AS log_conversion
                         ON log_visit.idvisitor = log_conversion.idvisitor'

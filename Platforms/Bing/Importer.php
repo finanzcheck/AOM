@@ -96,12 +96,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         }
     }
 
+    /**
+     * @param $accountId
+     * @param $account
+     * @param $date
+     */
     public function getBingReport($accountId, $account, $date)
     {
         // Always refresh access token as it expires after 60m
         $this->refreshAccessToken($accountId, $account);
-
-        $settings = new Settings();
 
         try {
             $proxy = ClientProxy::ConstructWithAccountId(
@@ -146,7 +149,6 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 KeywordPerformanceReportColumn::AdGroupName,
                 KeywordPerformanceReportColumn::Keyword,
                 KeywordPerformanceReportColumn::KeywordId,
-//                KeywordPerformanceReportColumn::DeviceType,
                 KeywordPerformanceReportColumn::BidMatchType,
                 KeywordPerformanceReportColumn::Clicks,
                 KeywordPerformanceReportColumn::Impressions,
@@ -265,6 +267,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $settings->setConfiguration($configuration);
     }
 
+    /**
+     * @param $proxy
+     * @param $reportRequestId
+     * @return mixed
+     */
     private function pollGenerateReport($proxy, $reportRequestId)
     {
         // Set the request information.
@@ -275,6 +282,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         return $proxy->GetService()->PollGenerateReport($request)->ReportRequestStatus;
     }
 
+    /**
+     * @param string $reportDownloadUrl
+     * @return false|string
+     */
     private function downloadFile($reportDownloadUrl)
     {
         $data = $this->getSslPage($reportDownloadUrl);
@@ -282,18 +293,34 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         return gzinflate(substr($data, 30 + $head['namelen'] + $head['exlen'], $head['csize']));
     }
 
+    /**
+     * @param string $url
+     * @return mixed
+     * @throws Exception
+     */
     private function getSslPage($url)
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_SSLv3);
         curl_setopt($ch, CURLOPT_HEADER, false);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_REFERER, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+        $verbose = fopen('php://temp', 'w+');
+        curl_setopt($ch, CURLOPT_STDERR, $verbose);
+
         $result = curl_exec($ch);
+
+        if (false === $result) {
+            $this->logger->error('Curl error ' . curl_errno($ch) . ': ' . curl_error($ch));
+            throw new \Exception('Failed to retrieve report.');
+        }
+        rewind($verbose);
+
         curl_close($ch);
+
         return $result;
     }
 
