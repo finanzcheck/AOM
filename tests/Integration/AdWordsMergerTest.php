@@ -43,9 +43,17 @@ class AdWordsMergerTest extends IntegrationTestCase
         );
     }
 
-    private function getVisit($id)
+    /**
+     * Returns a visit's ad data by visit id.
+     *
+     * @param int $id
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getAdDataByVisitId($id)
     {
         $data =  DB::fetchRow('SELECT * FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?', [$id]);
+
         return json_decode($data['aom_ad_data'], true);
     }
 
@@ -137,6 +145,7 @@ class AdWordsMergerTest extends IntegrationTestCase
         $this->addVisit(1, '{"platform":"AdWords","campaignId":"1005","adGroupId":"123","feedItemId":"","targetId":"","creative":"48726465596","placement":"suchen.mobile.de","target":"suchen.mobile.de","network":"d","device":"t","adPosition":"none","locPhysical":"9043992","locInterest":""}');
         $this->addVisit(2, '{"platform":"AdWords","campaignId":"1005","adGroupId":"126","feedItemId":"","targetId":"","creative":"48726465596","placement":"www.test.de","target":"suchen.mobile.de","network":"d","device":"t","adPosition":"none","locPhysical":"9043992","locInterest":""}');
         $this->addVisit(3, '{"platform":"AdWords","campaignId":"1005","adGroupId":"123","feedItemId":"","targetId":"aud-1212;kwd-55555","creative":"48726465596","placement":"","target":"suchen.mobile.de","network":"g","device":"t","adPosition":"none","locPhysical":"9043992","locInterest":""}');
+        $this->addVisit(4, '{"platform":"AdWords","campaignId":"2000","adGroupId":"200","feedItemId":"","targetId":"","creative":"12345678","placement":"suchen.mobile.de","target":"suchen.mobile.de","network":"d","device":"t","adPosition":"none","locPhysical":"9043992","locInterest":""}');
 
         $merger->setPeriod(date('Y-m-d'), date("Ymd", strtotime("+1 day")));
         $merger->setPlatform(new AdWords());
@@ -152,21 +161,27 @@ class AdWordsMergerTest extends IntegrationTestCase
 
     public function testExactMatch()
     {
-        $data = $this->getVisit(3);
+        $data = $this->getAdDataByVisitId(3);
         $this->assertEquals(2.57, $data['cost']);
     }
 
     public function testExactMatchDisplay()
     {
-        $data = $this->getVisit(2);
+        $data = $this->getAdDataByVisitId(2);
         $this->assertEquals(8.9, $data['cost']);
     }
 
     public function testHistoricalMatch()
     {
-        $data = $this->getVisit(1);
+        $data = $this->getAdDataByVisitId(1);
         $this->assertEquals('Campaign 1', $data['campaign']);
         $this->assertArrayNotHasKey('cost', $data);
+    }
+
+    public function testNonHistoricalMatch()
+    {
+        $data = $this->getAdDataByVisitId(4);
+        $this->assertNull($data);
     }
 }
 

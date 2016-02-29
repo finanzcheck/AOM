@@ -295,11 +295,23 @@ class AOM extends \Piwik\Plugin
      * @param string $dateTime
      * @param int $idsite
      * @return string
+     * @throws \Exception
      */
     public static function convertUTCToLocalDateTime($dateTime, $idsite)
     {
+        // We cannot use Site::getTimezoneFor($idsite) as this requires view access of the current user which we might
+        // not have when matching incoming tracking data
+        $timezone = Db::fetchOne(
+            'SELECT timezone FROM ' . Common::prefixTable('site') . ' WHERE idsite = ?',
+            [$idsite]
+        );
+
+        if (!$timezone) {
+            throw new \Exception('No timezone found for website id ' . $idsite);
+        }
+
         $date = new \DateTime($dateTime);
-        $date->setTimezone(new \DateTimeZone(Site::getTimezoneFor($idsite)));
+        $date->setTimezone(new \DateTimeZone($timezone));
 
         return $date->format('Y-m-d H:i:s');
     }

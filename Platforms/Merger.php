@@ -159,10 +159,13 @@ abstract class Merger
         }
     }
 
-    protected function buildKeyFromAdData(array $adData)
-    {
-        throw new \RuntimeException('buildKeyFromAdData must be implemented in Merger');
-    }
+    /**
+     * This method must be implemented in child classes.
+     *
+     * @param array $adData
+     * @return mixed
+     */
+    protected abstract function buildKeyFromAdData(array $adData);
 
     protected function getAdData()
     {
@@ -172,7 +175,7 @@ abstract class Merger
         foreach ($platformData as $row) {
             $key = $this->buildKeyFromAdData($row);
             if(isset($adDataMap[$key])) {
-                $this->logger->warning("Duplicate Ad Data found.", [$row, $adDataMap[$key]]);
+                $this->logger->warning('Duplicate a data found.', [$row, $adDataMap[$key]]);
             }
             $adDataMap[$key] = $row;
         }
