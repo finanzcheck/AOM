@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->  
+<!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->  
+<!--[if !IE]><!--> <html lang="en"> <!--<![endif]-->  
+{% include head.html %}
+<body data-spy="scroll">
+{% include facebook.html %}
+    <header id="header" class="header">
+        <div class="container">
+            <h1 class="logo pull-left">
+                <a href="index.html">
+                    <span class="logo-title">Piwik AOM</span>
+                </a>
+            </h1><!--//logo-->
+            <nav id="main-nav" class="main-nav navbar-right" role="navigation">
+                <div class="navbar-header">
+                    <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                <div class="navbar-collapse collapse" id="navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="active nav-item sr-only"><a class="scrollto" href="#promo">Home</a></li>
+                        <li class="nav-item"><a class="scrollto" href="#about">About</a></li>
+                        <li class="nav-item"><a class="scrollto" href="#features">Features</a></li>
+                        <li class="nav-item"><a href="docs.html">Docs</a></li>
+                        <li class="nav-item"><a class="scrollto" href="#license">License</a></li>
+                        <li class="nav-item last"><a class="scrollto" href="#contact">Contact</a></li>
+                    </ul><!--//nav-->
+                </div><!--//navabr-collapse-->
+            </nav><!--//main-nav-->
+        </div>
+    </header>
+    <section id="promo" class="promo section offset-header">
+        <div class="container text-center">
+            <h2 class="title">Piwik <span class="highlight">AOM</span> Plugin</h2>
+            <p class="intro">Integrate data from advertising platforms into Piwik and combine it with individual visits - create new opportunities!</p>
+            <div class="btns">
+                <a class="btn btn-cta-secondary" href="/docs.html" target="_blank">Docs</a>
+                <a class="btn btn-cta-primary" href="https://github.com/advanced-online-marketing/AOM/archive/master.zip" target="_blank">Download</a>
+            </div>
+
+            <ul class="meta list-inline">
+                <li><a href="https://github.com/advanced-online-marketing/AOM" target="_blank">View on GitHub</a></li>
+                <li><a href="https://github.com/twbs/bootstrap" target="_blank">Full Documentation</a></li>
+            </ul>
+        </div>
+        <div class="social-media">
+            <div class="social-media-inner container text-center">
+                <ul class="list-inline">
+
+                    <li class="github-star">
+                        <iframe src="http://ghbtns.com/github-btn.html?user=advanced-online-marketing&repo=aom&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="80" height="20"></iframe>
+                    </li>
+                    <li class="github-fork">
+                        <iframe src="http://ghbtns.com/github-btn.html?user=advanced-online-marketing&repo=aom&type=fork" allowtransparency="true" frameborder="0" scrolling="0" width="53" height="20"></iframe>
+                    </li>
+                    <li class="github-follow">
+                        <iframe src="http://ghbtns.com/github-btn.html?user=advanced-online-marketing&type=follow&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="223" height="20"></iframe>
+                    </li>
+
+                    <!--<li class="twitter-follow"><a href="https://twitter.com/3rdwave_themes" class="twitter-follow-button" data-show-count="false">Follow @3rdwave_themes</a>-->
+                    <!--<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>-->
+                    <!--</li>-->
+
+                    <li class="twitter-tweet">
+                        <a href="https://twitter.com/share" class="twitter-share-button" data-via="3rdwave_themes" data-hashtags="bootstrap">Tweet</a>
+                        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+                    </li>
+
+                    <li class="facebook-like">
+                        <div class="fb-like" data-href="http://www.advanced-online-marketing.com" data-layout="button_count" data-action="like" data-show-faces="false" data-share="true"></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+{% include about.html %}
+{% include features.html %}
+
+    <section id="docs" class="docs section">
+        <div class="container">
+            <div class="docs-inner">
+                <h2 class="title text-center">Get started with Piwik AOM</h2>
+                <div class="block">
+                    <h3 class="sub-title text-center">...</h3>
+                    <p>...</p>
+                    <p class="text-center">
+                        <a class="btn btn-cta-primary" href="docs.html">Read the docs</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% include license.html %}
+{% include contact.html %}
+{% include footer.html %}
+</body>
+</html> 
+

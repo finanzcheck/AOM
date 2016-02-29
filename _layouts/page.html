@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->  
+<!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->  
+<!--[if !IE]><!--> <html lang="en"> <!--<![endif]-->  
+{% include head.html %}
+<body data-spy="scroll">
+    <header id="header" class="header">
+        <div class="container">
+            <h1 class="logo pull-left">
+                <a href="index.html">
+                    <span class="logo-title">Piwik AOM</span>
+                </a>
+            </h1>
+            <nav id="main-nav" class="main-nav navbar-right" role="navigation">
+                <div class="navbar-header">
+                    <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                <div class="navbar-collapse collapse" id="navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="active nav-item sr-only"><a href="index.html">Home</a></li>
+                        <li class="nav-item"><a href="docs.html">Docs</a></li>
+                        <li class="nav-item last"><a class="scrollto" href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    {{ content }}
+
+{% include contact.html %}
+{% include footer.html %}
+</body>
+</html> 
+
