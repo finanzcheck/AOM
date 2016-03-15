@@ -73,10 +73,47 @@ class API extends \Piwik\Plugin\API
      */
     public function getEcommerceOrderWithVisits($idSite, $orderId)
     {
+        $orders = $this->getEcommerceOrdersWithVisits($idSite, $orderId);
+
+        if ($orders && is_array($orders) && count($orders) > 0) {
+            return $orders[0];
+        }
+
+        return false;
+    }
+
+    /**
+     * This method can either return all ecommerce orders (with all visits with marketing information that happened
+     * before the respective ecommerce orders) or return only the ecommerce orders which orderIds have been provided.
+     *
+     * To return all ecommerce orders:
+     * ?module=API&token_auth=...&method=AOM.getEcommerceOrdersWithVisits&idSite=1&period=day&date=2015-05-01&format=json
+     *
+     * To return _one_ specific ecommerce order:
+     * ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&orderId=vz3LX010cxol&format=json
+     *
+     * To return specific ecommerce orders:
+     * ?module=API&method=AOM.getEcommerceOrdersWithVisits&idSite=1&orderId[0]=vz3LX010cxol&orderId[1]=NzxkKq3qcbVd&orderId[2]=WwL7E0A3F6o0&format=json
+     *
+     * @param int $idSite Id Site
+     * @param bool|string|array $orderId Zero or more IDs of ecommerce orders
+     * @param bool|string $period Period to restrict to when looking at the logs
+     * @param bool|string $date Date to restrict to
+     * @return array
+     * @throws Exception
+     */
+    public function getEcommerceOrdersWithVisits($idSite, $orderId = false, $period = false, $date = false)
+    {
         Piwik::checkUserHasViewAccess($idSite);
 
-        $order = Db::fetchRow(
-            'SELECT
+        // Return specific ecommerce orders
+        $orderIds = (is_array($orderId)
+            ? $orderId
+            : ((is_string($orderId) && strlen($orderId) > 0) ? [$orderId] : false));
+        if ($orderIds) {
+
+            $orders = Db::fetchAll(
+                'SELECT
                     idorder AS orderId,
 					conv(hex(idvisitor), 16, 10) as visitorId,
 					' . LogAggregator::getSqlRevenue('revenue') . ' AS amountOriginal,
@@ -85,46 +122,26 @@ class API extends \Piwik\Plugin\API
                 WHERE
                     log_conversion.idsite = ? AND
                     log_conversion.idgoal = 0 AND
-                    log_conversion.idorder = ?
+                    log_conversion.idorder IN ("' . implode('","', $orderIds) . '")
                 ORDER BY server_time ASC',
-            [
-                $idSite,
-                $orderId
-            ]
-        );
+                [
+                    $idSite,
+                ]
+            );
 
-        if ($order && is_array($order)) {
-            // $order['conversionTime'] is already in UTC (we want all visits before this date time)
-            $order['visits'] = $this->queryVisits($idSite, null, $order['conversionTime'], $orderId);
-        }
+        // Return all ecommerce orders within a given period
+        } else {
 
-        return $order;
-    }
+            // Disabled for multiple dates
+            if (Period::isMultiplePeriod($date, $period)) {
+                throw new Exception('AOM.getEcommerceOrdersWithVisits does not support multiple dates.');
+            }
 
-    /**
-     * Returns all ecommerce orders with all visits with marketing information that happened before the ecommerce order:
-     * ?module=API&token_auth=...&method=AOM.getOrdersWithVisits&idSite=1&period=day&date=2015-05-01&format=json
-     *
-     * @param int $idSite Id Site
-     * @param bool|string $period Period to restrict to when looking at the logs
-     * @param bool|string $date Date to restrict to
-     * @return array
-     * @throws Exception
-     */
-    public function getEcommerceOrdersWithVisits($idSite, $period = false, $date = false)
-    {
-        Piwik::checkUserHasViewAccess($idSite);
+            /** @var Range $period */
+            $period = PeriodFactory::makePeriodFromQueryParams(Site::getTimezoneFor($idSite), $period, $date);
 
-        // disabled for multiple dates
-        if (Period::isMultiplePeriod($date, $period)) {
-            throw new Exception('AOM.getEcommerceOrdersWithVisits does not support multiple dates.');
-        }
-
-        /** @var Range $period */
-        $period = PeriodFactory::makePeriodFromQueryParams(Site::getTimezoneFor($idSite), $period, $date);
-
-        $orders = Db::fetchAll(
-            'SELECT
+            $orders = Db::fetchAll(
+                'SELECT
                     idorder AS orderId,
 					conv(hex(idvisitor), 16, 10) as visitorId,
 					' . LogAggregator::getSqlRevenue('revenue') . ' AS amountOriginal,
@@ -136,16 +153,17 @@ class API extends \Piwik\Plugin\API
                     log_conversion.server_time >= ? AND
                     log_conversion.server_time <= ?
                 ORDER BY server_time ASC',
-            [
-                $idSite,
-                AOM::convertLocalDateTimeToUTC(
-                    $period->getDateStart()->toString('Y-m-d 00:00:00'), Site::getTimezoneFor($idSite)
-                ),
-                AOM::convertLocalDateTimeToUTC(
-                    $period->getDateEnd()->toString('Y-m-d 23:59:59'), Site::getTimezoneFor($idSite)
-                ),
-            ]
-        );
+                [
+                    $idSite,
+                    AOM::convertLocalDateTimeToUTC(
+                        $period->getDateStart()->toString('Y-m-d 00:00:00'), Site::getTimezoneFor($idSite)
+                    ),
+                    AOM::convertLocalDateTimeToUTC(
+                        $period->getDateEnd()->toString('Y-m-d 23:59:59'), Site::getTimezoneFor($idSite)
+                    ),
+                ]
+            );
+        }
 
         foreach ($orders as &$order) {
             // $order['conversionTime'] is already in UTC (we want all visits before this date time)
