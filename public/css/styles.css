@@ -88,7 +88,7 @@ a.btn-cta-secondary:hover,
   padding-top: 90px;
 }
 pre code {
-  font-size: 16px;
+  font-size: 13px;
 }
 /* ======= Header ======= */
 .header {
@@ -303,7 +303,6 @@ pre code {
   margin-bottom: 30px;
 }
 .docs .docs-inner {
-  max-width: 800px;
   background: #fff;
   padding: 30px;
   -webkit-border-radius: 4px;
@@ -332,6 +331,17 @@ pre code {
   -webkit-background-clip: padding-box;
   background-clip: padding-box;
 }
+
+.docs table {
+    margin-bottom: 15px;
+}
+
+.docs td, .docs th {
+    border: 1px solid grey !important;
+    padding: 2px 4px;
+    font-size: 14px;
+}
+
 /* ======= License Section ======= */
 .license {
   padding: 80px 0;
