@@ -85,8 +85,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // https://developers.google.com/adwords/api/docs/appendix/reports/criteria-performance-report?hl=de
         $xmlString = ReportUtils::DownloadReportWithAwql(
             'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZoneId, CampaignId, CampaignName, '
-            . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, Conversions, '
-            . 'QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
+            . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, '
+            . 'Conversions, QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
             . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
             . str_replace('-', '', $date) . ','
             . str_replace('-', '', $date),
@@ -102,7 +102,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         );
         $xml = simplexml_load_string($xmlString);
 
-        // TODO: Use MySQL transaction to improve performance!
+
+        // Matching placements based on the string in the value track param {placement} did not work successfully.
+        // This is why we aggregate up all placements of an ad group and merge on that level.
+        $consolidatedData = [];
         foreach ($xml->table->row as $row) {
 
             // TODO: Validate currency and timezone?!
@@ -124,29 +127,77 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 $network = AdWords::$networks[(string) $row['networkWithSearchPartners']];
             }
 
+            // Construct the key for aggregation (see AdWords/Merger->buildKeyFromAdData())
+            $key = ('d' === $network)
+                ? implode('-', [$network, $row['campaignID'], $row['adGroupID']])
+                : implode('-', [$network, $row['campaignID'], $row['adGroupID'], $row['keywordID']]);
+
+            if (!array_key_exists($key, $consolidatedData)) {
+                $consolidatedData[$key] = [
+                    'date' => $row['day'],
+                    'account' => $row['account'],
+                    'campaignId' => $row['campaignID'],
+                    'campaign' => $row['campaign'],
+                    'adGroupId' => $row['adGroupID'],
+                    'adGroup' => $row['adGroup'],
+                    'keywordId' => $row['keywordID'],
+                    'keywordPlacement' => $row['keywordPlacement'],
+                    'criteriaType' => $criteriaType,
+                    'network' => $network,
+                    'impressions' => $row['impressions'],
+                    'clicks' => $row['clicks'],
+                    'cost' => ($row['cost'] / 1000000),
+                    'conversions' => $row['conversions'],
+                ];
+            } else {
+
+                // We must aggregate up all placements of an ad group and merge on that level.
+
+                // These values might be no longer unique.
+                if ($consolidatedData[$key]['keywordId'] != $row['keywordID']) {
+                    $consolidatedData[$key]['keywordId'] = null;
+                }
+                if ($consolidatedData[$key]['keywordPlacement'] != $row['keywordPlacement']) {
+                    $consolidatedData[$key]['keywordPlacement'] = null;
+                }
+                if ($consolidatedData[$key]['criteriaType'] != $criteriaType) {
+                    $consolidatedData[$key]['criteriaType'] = null;
+                }
+
+                // Aggregate
+                $consolidatedData[$key]['impressions'] = $consolidatedData[$key]['impressions'] + $row['impressions'];
+                $consolidatedData[$key]['clicks'] = $consolidatedData[$key]['clicks'] + $row['clicks'];
+                $consolidatedData[$key]['cost'] =  $consolidatedData[$key]['cost'] + ($row['cost'] / 1000000);
+                $consolidatedData[$key]['conversions'] = $consolidatedData[$key]['conversions'] + $row['conversions'];
+            }
+        }
+
+        // Write consolidated data to Piwik's database
+        // TODO: Use MySQL transaction to improve performance!
+        foreach ($consolidatedData as $data) {
             Db::query(
                 'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
-                    . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-                    . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
-                    . 'conversions, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
+                . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, '
+                . 'ts_created) '
+                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $accountId,
                     $account['websiteId'],
-                    $row['day'],
-                    $row['account'],
-                    $row['campaignID'],
-                    $row['campaign'],
-                    $row['adGroupID'],
-                    $row['adGroup'],
-                    $row['keywordID'],
-                    $row['keywordPlacement'],
-                    $criteriaType,
-                    $network,
-                    $row['impressions'],
-                    $row['clicks'],
-                    ($row['cost'] / 1000000),
-                    $row['conversions'],
+                    $data['date'],
+                    $data['account'],
+                    $data['campaignId'],
+                    $data['campaign'],
+                    $data['adGroupId'],
+                    $data['adGroup'],
+                    $data['keywordId'],
+                    $data['keywordPlacement'],
+                    $data['criteriaType'],
+                    $data['network'],
+                    $data['impressions'],
+                    $data['clicks'],
+                    $data['cost'],
+                    $data['conversions'],
                 ]
             );
         }

@@ -19,6 +19,7 @@ class AdWords extends Platform implements PlatformInterface
     const CRITERIA_TYPE_GENDER = 'gender';
     const CRITERIA_TYPE_KEYWORD = 'keyword';
     const CRITERIA_TYPE_PLACEMENT = 'placement';
+    const CRITERIA_TYPE_USER_INTEREST = 'user interest';
     const CRITERIA_TYPE_USER_LIST = 'user list';
 
     /**
@@ -30,6 +31,7 @@ class AdWords extends Platform implements PlatformInterface
         self::CRITERIA_TYPE_KEYWORD,
         self::CRITERIA_TYPE_PLACEMENT,
         self::CRITERIA_TYPE_USER_LIST,
+        self::CRITERIA_TYPE_USER_INTEREST,
     ];
 
     /**

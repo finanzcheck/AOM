@@ -167,6 +167,9 @@ abstract class Merger
      */
     protected abstract function buildKeyFromAdData(array $adData);
 
+    /**
+     * @return array
+     */
     protected function getAdData()
     {
         $platformData = $this->getPlatformData();
@@ -174,8 +177,14 @@ abstract class Merger
         $adDataMap = [];
         foreach ($platformData as $row) {
             $key = $this->buildKeyFromAdData($row);
-            if(isset($adDataMap[$key])) {
-                $this->logger->warning('Duplicate a data found.', [$row, $adDataMap[$key]]);
+            if (isset($adDataMap[$key])) {
+                $this->logger->warning(
+                    'Key "' . $key. '" is not unique!',
+                    [
+                        'current' => $row,
+                        'existing' => $adDataMap[$key]
+                    ]
+                );
             }
             $adDataMap[$key] = $row;
         }
