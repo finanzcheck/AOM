@@ -1,0 +1,30 @@
+---
+layout: docs
+title: Piwik AOM Plugin Documentation - API
+---
+
+<h2 class="title text-center">API</h2>
+<p>This plugin provides the following API endpoints (add <code>&amp;token_auth=...</code> in production environment).
+    You can use <a href="http://developer.piwik.org/api-reference/reporting-api">Piwik's standard API params</a>.</p>
+
+
+<h2 class="sub-title text-center">AOM.getVisits</h2>
+<p>Returns all visits with marketing information within the given period.</p>
+<p>Example: ?module=API&amp;method=AOM.getVisits&amp;idSite=1&amp;period=day&amp;date=2015-05-01</p>
+
+
+<h2 class="sub-title text-center">AOM.getEcommerceOrderWithVisits</h2>
+<p>Returns a specific ecommerce order by orderId with all visits with marketing information that happened before the
+    ecommerce order or false (when no order could be found for the given orderId).</p>
+<p>Example: ?module=API&amp;method=AOM.getEcommerceOrderWithVisits&amp;orderId=123&amp;idSite=1</p>
+
+
+<h2 class="sub-title text-center">AOM.getEcommerceOrdersWithVisits</h2>
+<p>Returns all ecommerce orders with all visits with marketing information that happened before the ecommerce order within
+    the given period.</p>
+<p>Example: ?module=API&amp;method=AOM.getEcommerceOrdersWithVisits&amp;idSite=1&amp;period=day&amp;date=2015-05-01</p>
+
+
+<h2 class="sub-title text-center">AOM.getStatus</h2>
+<p>Returns various status information (e.g. last imports, last visits with ad params) that can be used for monitoring.</p>
+<p>Example: ?module=API&amp;method=AOM.getStatus</p>

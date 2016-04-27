@@ -1,0 +1,33 @@
+---
+layout: docs
+title: Piwik AOM Plugin Documentation - Plugin development
+---
+
+<h2 class="title text-center">Plugin development</h2>
+<p>All plugin development and issue management happens within the
+    <a href="https://github.com/advanced-online-marketing/AOM">AOM GitHub repository</a>.</p>
+
+
+<!-- Tests -->
+<h2 class="sub-title text-center">Tests</h2>
+
+<p>You must enable Piwik's development mode with <code>./console development:enable</code> and provide some
+    additional configuration in <code>config.ini.php</code>, e.g.:</p>
+
+<div class="code-block">
+    <pre><code class="language-php">[database_tests]
+    host = "127.0.0.1"
+    username = "root"
+    password = "root"
+    dbname = "piwik_test"
+    tables_prefix = "piwik_"
+
+    [tests]
+    http_host = "local.piwik.de"
+    request_uri = "/"</code></pre>
+</div>
+
+<p>Run all tests with <code>./console tests:run --group AOM</code>.</p>
+
+<p>Run unit tests with <code>./console tests:run --group AOM_Unit</code>. Run integration tests with <code>./console
+    tests:run --group AOM_Integration</code>.</p>

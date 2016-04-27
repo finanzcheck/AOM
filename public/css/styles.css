@@ -87,6 +87,9 @@ a.btn-cta-secondary:hover,
 .offset-header {
   padding-top: 90px;
 }
+code {
+    font-size: 13px;
+}
 pre code {
   font-size: 13px;
 }
@@ -294,16 +297,33 @@ pre code {
 }
 /* ======= Docs Section ======= */
 .docs {
-  padding: 80px 0;
-  background: #f5f5f5;
+  padding: 100px 0;
+}
+.docs-contents h3 {
+    margin-top: 5px;
+}
+.docs-contents h4 {
+    font-size: 16px;
+}
+.docs-contents ul {
+    list-style: none;
+    padding-left: 10px;
+    font-size: 14px;
+    line-height: 1.3;
+}
+.docs-contents li {
+    padding-bottom: 7px;
 }
 .docs .title {
   color: #074f66;
   margin-top: 0;
   margin-bottom: 30px;
 }
+.docs .sub-title {
+    margin-top: 35px;
+}
 .docs .docs-inner {
-  background: #fff;
+  background: #f5f5f5;
   padding: 30px;
   -webkit-border-radius: 4px;
   -moz-border-radius: 4px;

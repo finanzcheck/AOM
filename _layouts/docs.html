@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->  
+<!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->  
+<!--[if !IE]><!--> <html lang="en"> <!--<![endif]-->  
+{% include head.html %}
+<body data-spy="scroll">
+    <header id="header" class="header">
+        <div class="container">
+            <h1 class="logo pull-left">
+                <a href="index.html">
+                    <span class="logo-title">Piwik AOM</span>
+                </a>
+            </h1>
+            <nav id="main-nav" class="main-nav navbar-right" role="navigation">
+                <div class="navbar-header">
+                    <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                <div class="navbar-collapse collapse" id="navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="active nav-item sr-only"><a href="index.html">Home</a></li>
+                        <li class="nav-item"><a href="docs.html">Docs</a></li>
+                        <li class="nav-item last"><a class="scrollto" href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section id="docs" class="docs section">
+        <div class="container">
+            <div class="row">
+                <div class="item col-md-3 col-sm-4 col-xs-12" style="margin-bottom: 20px;">
+                    <div class="docs-inner docs-contents">
+                        <h3>Contents</h3>
+                        <h4><a href="docs.html">Introduction</a></h4>
+                        <ul>
+                            <li>Importing and merging advertiser's platforms' data</li>
+                            <li>Allocate costs to Piwik visits</li>
+                            <li>Requirements, installation & updates</li>
+                            <li>Limitations</li>
+                            <li>Changelog</li>
+                            <li>License</li>
+                            <li>Support</li>
+                        </ul>
+
+                        <h4><a href="advertisers-platforms.html">Tracking params, importing and merging</a></h4>
+                        <ul>
+                            <li>Google AdWords</li>
+                            <li>Microsoft Bing Ads</li>
+                            <li>Criteo</li>
+                            <li>Facebook Ads</li>
+                            <li>Other advertising platforms and Piwik's default tracking params</li>
+                        </ul>
+
+                        <h4><a href="api.html">API</a></h4>
+                        <ul>
+                            <li>getVisits</li>
+                            <li>getEcommerceOrderWithVisits</li>
+                            <li>getEcommerceOrdersWithVisits</li>
+                            <li>getStatus</li>
+                        </ul>
+
+                        <h4><a href="quality-assurance-monitoring.html">Quality assurance and monitoring</a></h4>
+                        <ul>
+                            <li>Logging</li>
+                        </ul>
+
+                        <h4><a href="plugin-development.html">Plugin development</a></h4>
+                        <ul>
+                            <li>Tests</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="item col-md-9 col-sm-8 col-xs-12">
+                    <div class="docs-inner">
+                        {{ content }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% include contact.html %}
+{% include footer.html %}
+</body>
+</html> 
+
