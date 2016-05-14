@@ -103,8 +103,8 @@ class AOM extends \Piwik\Plugin
                         piwik_visit_first_action_time_utc DATETIME NOT NULL,
                         date_website_timezone DATE NOT NULL,
                         channel VARCHAR(100),
-                        campaign_data VARCHAR(5000),
-                        platform_data VARCHAR(5000),
+                        campaign_data TEXT,
+                        platform_data TEXT,
                         cost FLOAT NOT NULL,
                         ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
