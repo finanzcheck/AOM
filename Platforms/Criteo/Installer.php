@@ -22,7 +22,7 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' . Criteo::getDataTableNameStatic() . ' (
+            $sql = 'CREATE TABLE ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (
                         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                         id_account_internal VARCHAR(50) NOT NULL,
                         idsite INTEGER NOT NULL,
@@ -47,7 +47,8 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_criteo ON ' . Criteo::getDataTableNameStatic() . ' (date, campaign_id)';  // TODO...
+            $sql = 'CREATE INDEX index_aom_criteo ON '
+                . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (date, campaign_id)';  // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
             // ignore error if index already exists (1061)
@@ -64,6 +65,6 @@ class Installer implements InstallerInterface
      */
     public function uninstallPlugin()
     {
-        Db::dropTables(Criteo::getDataTableNameStatic());
+        Db::dropTables(AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO));
     }
 }

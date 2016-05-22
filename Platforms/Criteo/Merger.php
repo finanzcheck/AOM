@@ -55,11 +55,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     {
         $this->logger->info('Will merge Criteo now.');
 
-        $adDataMap = [];
-
-        foreach ($this->getPlatformData() as $row) {
-            $adDataMap[$this->buildKeyFromAdData($row)] = $row;
-        }
+        $adDataMap = $this->getAdData();
 
         // Update visits
         $updateStatements = [];

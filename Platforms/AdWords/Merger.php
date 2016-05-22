@@ -6,40 +6,34 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
 
-/*
-Query for single keyword
-select count(*), date, campaign_id, ad_group_id, keyword_id from piwik_aom_adwords group by date, campaign_id, ad_group_id, keyword_id  order by count(*) desc
-
-Query for single display
-select count(*), date, campaign_id, ad_group_id, keyword_placement  from piwik_aom_adwords where network = 'd'  group by date, campaign_id, ad_group_id, keyword_placement order by count(*) DESC
-*
- */
-
-
 class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterface
 {
     /**
+     * Build a unique key from the platform's ad data.
+     *
      * @param array $adData
      * @return string
      */
     protected function buildKeyFromAdData(array $adData)
     {
+        // We must aggregate up all placements of an ad group and merge on that level.
         if ($adData['network'] == 'd') {
             return implode('-', [
                 $adData['network'],
                 $adData['idsite'],
                 $adData['date'],
                 $adData['campaign_id'],
-                $adData['ad_group_id'],
-                $adData['keyword_placement'],
+                $adData['ad_group_id']
             ]);
         }
 
         return implode('-', [
+            $adData['network'],
             $adData['idsite'],
             $adData['date'],
             $adData['campaign_id'],
@@ -55,13 +49,17 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     protected function getIdsFromVisit(array $visit)
     {
         $ids = [];
-        $ids['date'] = substr(AOM::convertUTCToLocalDateTime($visit['visit_first_action_time'], $visit['idsite']), 0, 10);
+        $ids['date'] = substr(
+            AOM::convertUTCToLocalDateTime($visit['visit_first_action_time'], $visit['idsite']),
+            0,
+            10
+        );
         $ids['idsite'] = $visit['idsite'];
+
         $adParams = @json_decode($visit['aom_ad_params']);
         $ids['campaign_id'] = isset($adParams->campaignId) ? $adParams->campaignId : null;
         $ids['ad_group_id'] = isset($adParams->adGroupId) ? $adParams->adGroupId : null;
         $ids['network'] = isset($adParams->network) ? $adParams->network : null;
-        $ids['placement'] = isset($adParams->placement) ? $adParams->placement : null;
         $ids['keyword_id'] = null;
         if (isset($adParams->targetId)) {
             if (strpos($adParams->targetId, 'kwd-') !== false) {
@@ -86,12 +84,12 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                 $ids['idsite'],
                 $ids['date'],
                 $ids['campaign_id'],
-                $ids['ad_group_id'],
-                $ids['placement'],
+                $ids['ad_group_id']
             ]);
         }
 
         return implode('-', [
+            $ids['network'],
             $ids['idsite'],
             $ids['date'],
             $ids['campaign_id'],
@@ -102,25 +100,19 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
     public function merge()
     {
-        $this->logger->info('Will merge AdWords now.');
+        $this->log(Logger::INFO, 'Will merge AdWords now.');
 
-        $platformData = $this->getPlatformData();
+        $adDataMap = $this->getAdData();
 
-        $adDataMap = [];
-        foreach ($platformData as $row) {
-            //TODO: Duplicate filter
-            $adDataMap[$this->buildKeyFromAdData($row)] = $row;
-        }
+        $visits = $this->getVisits();
 
         // Update visits
         $updateStatements = [];
         $nonMatchedVisits = [];
-        foreach ($this->getVisits() as $visit) {
+        foreach ($visits as $visit) {
             $data = null;
             $key = $this->buildKeyFromVisit($visit);
             if (isset($adDataMap[$key])) {
-
-
                 // Set aom_ad_data
                 $updateMap = [
                     'aom_ad_data' => json_encode($adDataMap[$key]),
@@ -155,8 +147,26 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
         $this->updateVisits($updateStatements);
 
-        $this->logger->info(
-            'Merged data (' . count($nonMatchedVisits) . ' without direct match out of ' . count($platformData) . ')'
+        $this->log(
+            Logger::INFO,
+            'Merged AdWords data (' . count($nonMatchedVisits) . ' visits without direct match out of '
+                . count($visits) . ')'
+        );
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_AD_WORDS, 'task' => 'merge'], $additionalContext)
         );
     }
 }

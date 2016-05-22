@@ -123,7 +123,11 @@ abstract class Platform
         if ($mergeAfterwards) {
 
             // We must use the importer's period as $startDate and $endDate can be null or could have been modified
-            $this->merge($importer->getStartDate(), $importer->getStartDate());
+            $this->logger->debug(
+                'Will merge ' .  $this->getUnqualifiedClassName() . ' for period from ' . $importer->getStartDate()
+                . ' until ' . $importer->getEndDate() . ' now.'
+            );
+            $this->merge($importer->getStartDate(), $importer->getEndDate());
         }
     }
 
@@ -177,5 +181,27 @@ abstract class Platform
     public function getDataTableName()
     {
         return Common::prefixTable('aom_' . strtolower($this->getName()));
+    }
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param int $idVisit
+     * @return false|string
+     * @throws Exception
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit)
+    {
+        $platform = Db::fetchOne('SELECT aom_platform FROM piwik_log_visit WHERE idvisit = ?', [$idVisit]);
+
+        if (in_array($platform, AOM::getPlatforms())) {
+
+            $platform = AOM::getPlatformInstance($platform);
+
+            return $platform->getHumanReadableDescriptionForVisit($idVisit);
+        }
+
+        return false;
     }
 }

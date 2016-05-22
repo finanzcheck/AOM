@@ -48,6 +48,9 @@ class PlatformMerge extends ConsoleCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        // We might need a little more RAM
+        ini_set('memory_limit','512M');
+
         if (!in_array($input->getOption('platform'), AOM::getPlatforms())) {
             $this->logger->warning('Platform "' . $input->getOption('platform') . '" is not supported.');
             $this->logger->warning('Platform must be one of: ' . implode(', ', AOM::getPlatforms()));
@@ -57,7 +60,10 @@ class PlatformMerge extends ConsoleCommand
         // Is platform active?
         $settings = new Settings();
         if (!$settings->{'platform' . $input->getOption('platform') . 'IsActive'}->getValue()) {
-            $this->logger->warning('Platform "' . $input->getOption('platform') . '" is not active.');
+            $this->logger->warning(
+                'Platform "' . $input->getOption('platform') . '" is not active.',
+                ['platform' => $input->getOption('platform'), 'task' => 'merge']
+            );
             return;
         }
 
@@ -66,6 +72,9 @@ class PlatformMerge extends ConsoleCommand
         $platform = AOM::getPlatformInstance($input->getOption('platform'));
         $platform->merge($input->getOption('startDate'), $input->getOption('endDate'));
 
-        $this->logger->info($input->getOption('platform') . '-merge successful.');
+        $this->logger->info(
+            $input->getOption('platform') . '-merge successful.',
+            ['platform' => $input->getOption('platform'), 'task' => 'merge']
+        );
     }
 }

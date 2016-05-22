@@ -9,7 +9,6 @@ namespace Piwik\Plugins\AOM\tests\System;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\tests\Fixtures\Fixtures;
-use Piwik\Plugins\AOM\tests\Fixtures\OldFixtures;
 use Piwik\Tests\Framework\TestCase\SystemTestCase;
 
 /**

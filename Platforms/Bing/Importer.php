@@ -20,6 +20,7 @@ use Bing\Reporting\ReportTime;
 use Bing\Reporting\SortOrder;
 use Bing\Reporting\SubmitGenerateReportRequest;
 use Exception;
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -47,7 +48,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $this->importAccount($accountId, $account, $date);
                 }
             } else {
-                $this->logger->info('Skipping inactive account.');
+                $this->log(Logger::INFO, 'Skipping inactive account.');
             }
         }
     }
@@ -60,8 +61,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import Bing account ' . $accountId. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(Bing::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
+        $this->log(Logger::INFO, 'Will import Bing account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->deleteExistingData(AOM::PLATFORM_BING, $accountId, $account['websiteId'], $date);
 
         $data = $this->getBingReport($accountId, $account, $date);
 
@@ -71,7 +72,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $date = $date->format('Y-m-d');
 
             Db::query(
-                'INSERT INTO ' . Bing::getDataTableNameStatic()
+                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING)
                     . ' (id_account_internal, idsite, date, account_id, account, campaign_id, campaign, ad_group_id, '
                     . 'ad_group, keyword_id, keyword, impressions, clicks, cost, conversions, ts_created) '
                     . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
@@ -96,12 +97,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         }
     }
 
+    /**
+     * @param $accountId
+     * @param $account
+     * @param $date
+     */
     public function getBingReport($accountId, $account, $date)
     {
         // Always refresh access token as it expires after 60m
         $this->refreshAccessToken($accountId, $account);
-
-        $settings = new Settings();
 
         try {
             $proxy = ClientProxy::ConstructWithAccountId(
@@ -146,7 +150,6 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 KeywordPerformanceReportColumn::AdGroupName,
                 KeywordPerformanceReportColumn::Keyword,
                 KeywordPerformanceReportColumn::KeywordId,
-//                KeywordPerformanceReportColumn::DeviceType,
                 KeywordPerformanceReportColumn::BidMatchType,
                 KeywordPerformanceReportColumn::Clicks,
                 KeywordPerformanceReportColumn::Impressions,
@@ -176,7 +179,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             $reportRequestId = $proxy->GetService()->SubmitGenerateReport($request)->ReportRequestId;
 
-            $this->logger->info('Report Request ID is ' . $reportRequestId . '.');
+            $this->log(Logger::INFO, 'Report Request ID is ' . $reportRequestId . '.');
 
 
             // This sample polls every 30 seconds up to 5 minutes.
@@ -210,10 +213,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     return $this->downloadFile($reportDownloadUrl);
                 } else {
                     if ($reportRequestStatus->Status == ReportRequestStatusType::Error) {
-                        $this->logger->warning('The request failed. Try requesting the report later.');
+                        $this->log(Logger::WARNING, 'The request failed. Try requesting the report later.');
                     } else // Pending
                     {
-                        $this->logger->warning('The request is taking longer than expected.');
+                        $this->log(Logger::WARNING, 'The request is taking longer than expected.');
                     }
                 }
             }
@@ -265,6 +268,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $settings->setConfiguration($configuration);
     }
 
+    /**
+     * @param $proxy
+     * @param $reportRequestId
+     * @return mixed
+     */
     private function pollGenerateReport($proxy, $reportRequestId)
     {
         // Set the request information.
@@ -275,6 +283,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         return $proxy->GetService()->PollGenerateReport($request)->ReportRequestStatus;
     }
 
+    /**
+     * @param string $reportDownloadUrl
+     * @return false|string
+     */
     private function downloadFile($reportDownloadUrl)
     {
         $data = $this->getSslPage($reportDownloadUrl);
@@ -282,18 +294,34 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         return gzinflate(substr($data, 30 + $head['namelen'] + $head['exlen'], $head['csize']));
     }
 
+    /**
+     * @param string $url
+     * @return mixed
+     * @throws Exception
+     */
     private function getSslPage($url)
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_SSLv3);
         curl_setopt($ch, CURLOPT_HEADER, false);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_REFERER, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+        $verbose = fopen('php://temp', 'w+');
+        curl_setopt($ch, CURLOPT_STDERR, $verbose);
+
         $result = curl_exec($ch);
+
+        if (false === $result) {
+            $this->log(Logger::ERROR, 'Curl error ' . curl_errno($ch) . ': ' . curl_error($ch));
+            throw new \Exception('Failed to retrieve report.');
+        }
+        rewind($verbose);
+
         curl_close($ch);
+
         return $result;
     }
 
@@ -322,5 +350,21 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         endwhile;
 
         return $result;
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_BING, 'task' => 'import'], $additionalContext)
+        );
     }
 }

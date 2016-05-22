@@ -10,6 +10,7 @@ use FacebookAds\Api;
 use FacebookAds\Object\AdAccount;
 use FacebookAds\Object\Fields\InsightsFields;
 use FacebookAds\Object\Values\InsightsLevels;
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -31,7 +32,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $this->importAccount($accountId, $account, $date);
                 }
             } else {
-                $this->logger->info('Skipping inactive account.');
+                $this->log(Logger::INFO, 'Skipping inactive account.');
             }
         }
     }
@@ -44,8 +45,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import FacebookAds account ' . $accountId. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(FacebookAds::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
+        $this->log(Logger::INFO, 'Will import FacebookAds account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->deleteExistingData(AOM::PLATFORM_FACEBOOK_ADS, $accountId, $account['websiteId'], $date);
 
         Api::init(
             $account['clientId'],
@@ -77,7 +78,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // TODO: Use MySQL transaction to improve performance!
         foreach ($insights as $insight) {
             Db::query(
-                'INSERT INTO ' . FacebookAds::getDataTableNameStatic()
+                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
                     . ' (id_account_internal, idsite, date, account_id, account_name, campaign_id, campaign_name, '
                     . 'adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost, ts_created) '
                     . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
@@ -99,5 +100,21 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 ]
             );
         }
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_FACEBOOK_ADS, 'task' => 'import'], $additionalContext)
+        );
     }
 }

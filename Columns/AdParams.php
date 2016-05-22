@@ -29,6 +29,11 @@ class AdParams extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
+        // There might be no action (e.g. when we track a conversion)
+        if (null === $action) {
+            return null;
+        }
+
         return json_encode(AOM::getAdParamsFromUrl($action->getActionUrl()));
     }
 

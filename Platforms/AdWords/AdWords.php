@@ -9,6 +9,8 @@ namespace Piwik\Plugins\AOM\Platforms\AdWords;
 use AdWordsUser;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Metrics\Formatter;
+use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
@@ -20,6 +22,7 @@ class AdWords extends Platform implements PlatformInterface
     const CRITERIA_TYPE_GENDER = 'gender';
     const CRITERIA_TYPE_KEYWORD = 'keyword';
     const CRITERIA_TYPE_PLACEMENT = 'placement';
+    const CRITERIA_TYPE_USER_INTEREST = 'user interest';
     const CRITERIA_TYPE_USER_LIST = 'user list';
 
     /**
@@ -31,6 +34,7 @@ class AdWords extends Platform implements PlatformInterface
         self::CRITERIA_TYPE_KEYWORD,
         self::CRITERIA_TYPE_PLACEMENT,
         self::CRITERIA_TYPE_USER_LIST,
+        self::CRITERIA_TYPE_USER_INTEREST,
     ];
 
     /**
@@ -54,14 +58,6 @@ class AdWords extends Platform implements PlatformInterface
         self::NETWORK_YOUTUBE_WATCH => null,
         self::NETWORK_UNKNOWN => null,
     ];
-
-    /**
-     * Returns the platform's data table name.
-     */
-    public static function getDataTableNameStatic()
-    {
-        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_AD_WORDS));
-    }
 
     /**
      * Extracts advertisement platform specific data from the query params and validates it.
@@ -88,7 +84,8 @@ class AdWords extends Platform implements PlatformInterface
         );
         if (count($missingParams)) {
             $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_AD_WORDS . ' without required param/s: '
+                'Visit with platform ' . AOM::PLATFORM_AD_WORDS
+                . ' without required param' . (count($missingParams) > 0 ? 's' : '') . ': '
                 . implode(', ', $missingParams)
             );
 
@@ -155,57 +152,54 @@ class AdWords extends Platform implements PlatformInterface
      */
     public function getAdDataFromAdParams($idsite, array $adParams)
     {
-        $data = $this->getAdData($idsite, date('Y-m-d'), $adParams);
-        if(!$data[0]) {
-            $data = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
+        $adData = $this->getAdData(
+            $idsite,
+            date('Y-m-d', strtotime(AOM::convertUTCToLocalDateTime(date('Y-m-d H:i:s'), $idsite))),
+            $adParams
+        );
+
+        if (!$adData[0]) {
+            $adData = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
         }
-        return $data;
+
+        return $adData;
     }
 
     /**
-     * Searches for matching ad data
-     * @param $idsite
-     * @param $date
-     * @param $adParams
+     * Tries to match ad params with imported platform data for a specific date.
+     *
+     * @param int $idsite
+     * @param string $date
+     * @param array $adParams
      * @return array|null
      * @throws \Exception
      */
     public static function getAdData($idsite, $date, $adParams)
     {
         if ($adParams['network'] == 'd') {
-            $result = DB::fetchAll(
-                'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? and network = ? AND
-                campaign_id = ? AND ad_group_id = ? AND keyword_placement = ?',
-                [
-                    $idsite,
-                    $date,
-                    'd',
-                    $adParams['campaignId'],
-                    $adParams['adGroupId'],
-                    $adParams['placement']
-                ]
-            );
+
+            $query = 'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+                WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "d"
+                AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
+                AND keyword_placement = "' . $adParams['placement'] . '"';
+
         } else {
+
             $targetId = $adParams['targetId'];
             if (strpos($adParams['targetId'], 'kwd-') !== false) {
                 $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
             }
 
-            $result = DB::fetchAll(
-                'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND
-                campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
-                [
-                    $idsite,
-                    $date,
-                    $adParams['campaignId'],
-                    $adParams['adGroupId'],
-                    $targetId
-                ]
-            );
+            $query = 'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+                WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "' . $adParams['network'] . '"
+                AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
+                AND keyword_id = "' . $targetId . '"';
         }
 
+        $result = DB::fetchAll($query);
+
         if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match.');
+            throw new \Exception('Found more than one match for exact match query: ' . $query);
         } elseif(count($result) == 0) {
             return null;
         }
@@ -215,18 +209,19 @@ class AdWords extends Platform implements PlatformInterface
 
 
     /**
-     * Searches for historical AdData
+     * Tries to identify campaign name, ad group name etc. from historical imported data by given ad param ids.
      *
-     * @param $idsite
-     * @param $campaignId
-     * @param $adGroupId
+     * @param int $idsite
+     * @param int $campaignId
+     * @param int $adGroupId
      * @return array|null
      * @throws \Exception
      */
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . AdWords::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
+        $result = Db::fetchRow(
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? ORDER BY date DESC LIMIT 1',
             [
                 $idsite,
                 $campaignId,
@@ -234,16 +229,59 @@ class AdWords extends Platform implements PlatformInterface
             ]
         );
 
-        if (count($result) > 0) {
+        if ($result) {
+
             // Keep generic date-independent information only
             return [
                 'campaign_id' => $campaignId,
-                'campaign' => $result[0]['campaign'],
+                'campaign' => $result['campaign'],
                 'ad_group_id' => $adGroupId,
-                'ad_group' => $result[0]['ad_group'],
+                'ad_group' => $result['ad_group'],
             ];
         }
 
         return null;
+    }
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param int $idVisit
+     * @return string|false
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit)
+    {
+        $visit = Db::fetchRow(
+            'SELECT
+                idsite,
+                platform_data,
+                cost
+             FROM ' . Common::prefixTable('aom_visits') . '
+             WHERE piwik_idvisit = ?',
+            [
+                $idVisit,
+            ]
+        );
+
+        if ($visit) {
+
+            $formatter = new Formatter();
+
+            $platformData = json_decode($visit['platform_data'], true);
+
+            return Piwik::translate(
+                'AOM_Platform_VisitDescription_AdWords',
+                [
+                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                    $platformData['account'],
+                    $platformData['campaign'],
+                    $platformData['ad_group'],
+                    $platformData['keyword_placement'],
+                ]
+            );
+        }
+
+        return false;
     }
 }

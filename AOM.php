@@ -13,7 +13,6 @@ use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Site;
 use Piwik\Tracker\Action;
 use Psr\Log\LoggerInterface;
 
@@ -59,25 +58,19 @@ class AOM extends \Piwik\Plugin
         // TODO: Use another file when we are running tests?!
         // TODO: Disable logging to console when running tests!
         // TODO: Allow to configure path and log-level (for every logger)?!
-        $formatter = new ColoredLineFormatter(
-            null,
-            '%level_name% [%datetime%]: %message% %context% %extra%',
-            null,
-            true,
-            true
-        );
+        $format = '%level_name% [%datetime%]: %message% %context% %extra%';
 
         self::$defaultLogger = new Logger('aom');
         $defaultLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG);
-        $defaultLoggerFileStreamHandler->setFormatter($formatter);
+        $defaultLoggerFileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
         self::$defaultLogger->pushHandler($defaultLoggerFileStreamHandler);
 
         self::$tasksLogger = new Logger('aom-tasks');
         $tasksLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom-tasks.log', Logger::DEBUG);
-        $tasksLoggerFileStreamHandler->setFormatter($formatter);
+        $tasksLoggerFileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
         self::$tasksLogger->pushHandler($tasksLoggerFileStreamHandler);
         $tasksLoggerConsoleStreamHandler = new StreamHandler('php://stdout', Logger::DEBUG);
-        $tasksLoggerConsoleStreamHandler->setFormatter($formatter);
+        $tasksLoggerConsoleStreamHandler->setFormatter(new ColoredLineFormatter(null, $format, null, true, true));
         self::$tasksLogger->pushHandler($tasksLoggerConsoleStreamHandler);
 
         parent::__construct($pluginName);
@@ -101,12 +94,15 @@ class AOM extends \Piwik\Plugin
                         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                         idsite INTEGER NOT NULL,
                         piwik_idvisit INTEGER,
+                        piwik_idvisitor VARCHAR(100),
                         piwik_visit_first_action_time_utc DATETIME NOT NULL,
                         date_website_timezone DATE NOT NULL,
                         channel VARCHAR(100),
-                        campaign_data VARCHAR(5000),
-                        platform_data VARCHAR(5000),
+                        campaign_data TEXT,
+                        platform_data TEXT,
                         cost FLOAT NOT NULL,
+                        conversions INTEGER NOT NULL,
+                        revenue FLOAT NOT NULL,
                         ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
             Db::exec($sql);
@@ -142,6 +138,7 @@ class AOM extends \Piwik\Plugin
     {
         return array(
             'AssetManager.getJavaScriptFiles' => 'getJsFiles',
+            'Controller.Live.getVisitorProfilePopup.end' => 'enrichVisitorProfilePopup',
         );
     }
 
@@ -153,6 +150,18 @@ class AOM extends \Piwik\Plugin
     public function getJsFiles(&$jsFiles)
     {
         $jsFiles[] = 'plugins/AOM/javascripts/AOM.js';
+    }
+
+    /**
+     * Modifies the visitor profile popup's HTML
+     *
+     * @param $result
+     * @param $parameters
+     * @return string
+     */
+    public function enrichVisitorProfilePopup(&$result, $parameters)
+    {
+        VisitorProfilePopup::enrich($result);
     }
 
     /**
@@ -176,7 +185,7 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Returns the required instance.
+     * Returns the required instance of a platform.
      *
      * @param string $platform
      * @param null|string $class
@@ -296,11 +305,23 @@ class AOM extends \Piwik\Plugin
      * @param string $dateTime
      * @param int $idsite
      * @return string
+     * @throws \Exception
      */
     public static function convertUTCToLocalDateTime($dateTime, $idsite)
     {
+        // We cannot use Site::getTimezoneFor($idsite) as this requires view access of the current user which we might
+        // not have when matching incoming tracking data
+        $timezone = Db::fetchOne(
+            'SELECT timezone FROM ' . Common::prefixTable('site') . ' WHERE idsite = ?',
+            [$idsite]
+        );
+
+        if (!$timezone) {
+            throw new \Exception('No timezone found for website id ' . $idsite);
+        }
+
         $date = new \DateTime($dateTime);
-        $date->setTimezone(new \DateTimeZone(Site::getTimezoneFor($idsite)));
+        $date->setTimezone(new \DateTimeZone($timezone));
 
         return $date->format('Y-m-d H:i:s');
     }
@@ -327,5 +348,14 @@ class AOM extends \Piwik\Plugin
         }
 
         return $dates;
+    }
+
+    /**
+     * @param string $platformName
+     * @return string
+     */
+    public static function getPlatformDataTableNameByPlatformName($platformName)
+    {
+        return Common::prefixTable('aom_' . strtolower($platformName));
     }
 }

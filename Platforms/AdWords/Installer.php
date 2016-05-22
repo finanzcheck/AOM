@@ -7,6 +7,7 @@
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
 use ReportUtils;
 
@@ -15,7 +16,7 @@ class Installer implements InstallerInterface
     public function installPlugin()
     {
         try {
-            $sql = 'CREATE TABLE ' .  AdWords::getDataTableNameStatic() . ' (
+            $sql = 'CREATE TABLE ' .  AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . ' (
                         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                         id_account_internal VARCHAR(50) NOT NULL,
                         idsite INTEGER NOT NULL,
@@ -25,9 +26,9 @@ class Installer implements InstallerInterface
                         campaign VARCHAR(255) NOT NULL,
                         ad_group_id BIGINT NOT NULL,
                         ad_group VARCHAR(255) NOT NULL,
-                        keyword_id BIGINT NOT NULL,
-                        keyword_placement VARCHAR(255) NOT NULL,
-                        criteria_type VARCHAR(255) NOT NULL,
+                        keyword_id BIGINT,
+                        keyword_placement VARCHAR(255),
+                        criteria_type VARCHAR(255),
                         network CHAR(1) NOT NULL,
                         impressions INTEGER NOT NULL,
                         clicks INTEGER NOT NULL,
@@ -44,7 +45,8 @@ class Installer implements InstallerInterface
         }
 
         try {
-            $sql = 'CREATE INDEX index_aom_adwords ON ' . AdWords::getDataTableNameStatic()
+            $sql = 'CREATE INDEX index_aom_adwords ON '
+                . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
                 . ' (date, campaign_id, ad_group_id, keyword_id)';  // TODO...
             Db::exec($sql);
         } catch (\Exception $e) {
@@ -57,6 +59,6 @@ class Installer implements InstallerInterface
 
     public function uninstallPlugin()
     {
-        Db::dropTables(AdWords::getDataTableNameStatic());
+        Db::dropTables(AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS));
     }
 }

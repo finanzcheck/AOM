@@ -72,13 +72,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     {
         $this->logger->info('Will merge FacebookAds now.');
 
-        $platformData = $this->getPlatformData();
-
-        $adDataMap = [];
-        foreach ($platformData as $row) {
-            //TODO: Duplicate filter
-            $adDataMap[$this->buildKeyFromAdData($row)] = $row;
-        }
+        $adDataMap = $this->getAdData();
 
         // Update visits
         $updateStatements = [];
@@ -116,7 +110,6 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                     'aom_platform_row_id' => 'null'
                 ];
                 $updateStatements[] = [$visit['idvisit'], $updateMap];
-
             }
         }
 

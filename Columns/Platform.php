@@ -41,6 +41,11 @@ class Platform extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
+        // There might be no action (e.g. when we track a conversion)
+        if (null === $action) {
+            return null;
+        }
+        
         return AOM::getPlatformFromUrl($action->getActionUrl());
     }
 }

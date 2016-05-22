@@ -6,6 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -31,7 +32,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             // (Re)import the last 3 days unless they have been (re)imported today
             for ($i = -3; $i <= -1; $i++) {
-                if (Db::fetchOne('SELECT DATE(MAX(ts_created)) FROM ' . AdWords::getDataTableNameStatic()
+                if (Db::fetchOne('SELECT DATE(MAX(ts_created)) FROM '
+                        . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
                         . ' WHERE date = "' . date('Y-m-d', strtotime($i . ' day', time())) . '"') != date('Y-m-d')
                 ) {
                     $startDate = date('Y-m-d', strtotime($i . ' day', time()));
@@ -40,7 +42,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             }
 
             $endDate = date('Y-m-d');
-            $this->logger->info('Identified period from ' . $startDate. ' until ' . $endDate . ' to import.');
+            $this->log(Logger::INFO, 'Identified period from ' . $startDate. ' until ' . $endDate . ' to import.');
         }
 
         parent::setPeriod($startDate, $endDate);
@@ -60,7 +62,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $this->importAccount($accountId, $account, $date);
                 }
             } else {
-                $this->logger->info('Skipping inactive account.');
+                $this->log(Logger::INFO, 'Skipping inactive account.');
             }
         }
     }
@@ -73,8 +75,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import AdWords account ' . $accountId. ' for date ' . $date . ' now.');
-        $this->deleteImportedData(AdWords::getDataTableNameStatic(), $accountId, $account['websiteId'], $date);
+        $this->log(Logger::INFO, 'Starting import of AdWords account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->deleteExistingData(AOM::PLATFORM_AD_WORDS, $accountId, $account['websiteId'], $date);
 
         $user = AdWords::getAdWordsUser($account);
 
@@ -84,8 +86,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // https://developers.google.com/adwords/api/docs/appendix/reports/criteria-performance-report?hl=de
         $xmlString = ReportUtils::DownloadReportWithAwql(
             'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZoneId, CampaignId, CampaignName, '
-            . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, Conversions, '
-            . 'QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
+            . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, '
+            . 'Conversions, QualityScore, CpcBid, Impressions, Clicks, GmailSecondaryClicks, Cost, Date '
             . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
             . str_replace('-', '', $date) . ','
             . str_replace('-', '', $date),
@@ -93,7 +95,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $user,
             'XML',
             [
-                'version' => 'v201509',
+                'version' => 'v201603',
                 'skipReportHeader' => true,
                 'skipColumnHeader' => true,
                 'skipReportSummary' => true,
@@ -101,8 +103,20 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         );
         $xml = simplexml_load_string($xmlString);
 
-        // TODO: Use MySQL transaction to improve performance!
+
+        // Matching placements based on the string in the value track param {placement} did not work successfully.
+        // This is why we aggregate up all placements of an ad group and merge on that level.
+        $consolidatedData = [];
         foreach ($xml->table->row as $row) {
+
+
+            // Clicks of Google Sponsored Promotions (GSP) are more like more engaged ad views than real visits,
+            // i.e. we have to reassign clicks (and therewith recalculate CpC)
+            // (see http://marketingland.com/gmail-sponsored-promotions-everything-need-know-succeed-direct-response-gsp-part-1-120938)
+            if ($row['gmailClicksToWebsite'] > 0) {
+                $this->log(Logger::DEBUG, 'Mapping GSP "' . $row['adGroup'] . '" "gmailClicksToWebsite" to clicks.');
+                $row['clicks'] = $row['gmailClicksToWebsite'];
+            }
 
             // TODO: Validate currency and timezone?!
             // TODO: qualityScore, maxCPC, avgPosition?!
@@ -123,31 +137,95 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 $network = AdWords::$networks[(string) $row['networkWithSearchPartners']];
             }
 
+            // Construct the key for aggregation (see AdWords/Merger->buildKeyFromAdData())
+            $key = ('d' === $network)
+                ? implode('-', [$network, $row['campaignID'], $row['adGroupID']])
+                : implode('-', [$network, $row['campaignID'], $row['adGroupID'], $row['keywordID']]);
+
+            if (!array_key_exists($key, $consolidatedData)) {
+                $consolidatedData[$key] = [
+                    'date' => $row['day'],
+                    'account' => $row['account'],
+                    'campaignId' => $row['campaignID'],
+                    'campaign' => $row['campaign'],
+                    'adGroupId' => $row['adGroupID'],
+                    'adGroup' => $row['adGroup'],
+                    'keywordId' => $row['keywordID'],
+                    'keywordPlacement' => $row['keywordPlacement'],
+                    'criteriaType' => $criteriaType,
+                    'network' => $network,
+                    'impressions' => $row['impressions'],
+                    'clicks' => $row['clicks'],
+                    'cost' => ($row['cost'] / 1000000),
+                    'conversions' => $row['conversions'],
+                ];
+            } else {
+
+                // We must aggregate up all placements of an ad group and merge on that level.
+
+                // These values might be no longer unique.
+                if ($consolidatedData[$key]['keywordId'] != $row['keywordID']) {
+                    $consolidatedData[$key]['keywordId'] = null;
+                }
+                if ($consolidatedData[$key]['keywordPlacement'] != $row['keywordPlacement']) {
+                    $consolidatedData[$key]['keywordPlacement'] = null;
+                }
+                if ($consolidatedData[$key]['criteriaType'] != $criteriaType) {
+                    $consolidatedData[$key]['criteriaType'] = null;
+                }
+
+                // Aggregate
+                $consolidatedData[$key]['impressions'] = $consolidatedData[$key]['impressions'] + $row['impressions'];
+                $consolidatedData[$key]['clicks'] = $consolidatedData[$key]['clicks'] + $row['clicks'];
+                $consolidatedData[$key]['cost'] =  $consolidatedData[$key]['cost'] + ($row['cost'] / 1000000);
+                $consolidatedData[$key]['conversions'] = $consolidatedData[$key]['conversions'] + $row['conversions'];
+            }
+        }
+
+        // Write consolidated data to Piwik's database
+        // TODO: Use MySQL transaction to improve performance!
+        foreach ($consolidatedData as $data) {
             Db::query(
-                'INSERT INTO ' . AdWords::getDataTableNameStatic()
-                    . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-                    . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
-                    . 'conversions, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
+                . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
+                . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, '
+                . 'ts_created) '
+                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $accountId,
                     $account['websiteId'],
-                    $row['day'],
-                    $row['account'],
-                    $row['campaignID'],
-                    $row['campaign'],
-                    $row['adGroupID'],
-                    $row['adGroup'],
-                    $row['keywordID'],
-                    $row['keywordPlacement'],
-                    $criteriaType,
-                    $network,
-                    $row['impressions'],
-                    $row['clicks'],
-                    ($row['cost'] / 1000000),
-                    $row['conversions'],
+                    $data['date'],
+                    $data['account'],
+                    $data['campaignId'],
+                    $data['campaign'],
+                    $data['adGroupId'],
+                    $data['adGroup'],
+                    $data['keywordId'],
+                    $data['keywordPlacement'],
+                    $data['criteriaType'],
+                    $data['network'],
+                    $data['impressions'],
+                    $data['clicks'],
+                    $data['cost'],
+                    $data['conversions'],
                 ]
             );
         }
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_AD_WORDS, 'task' => 'import'], $additionalContext)
+        );
     }
 }

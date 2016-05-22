@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2f977fdfa76baf7a7c9bc604a045a147",
-    "content-hash": "34e3b52442f0263c7cbbdf9606ab1465",
+    "hash": "4740cd08abdd547fcc07d69e70c69de2",
+    "content-hash": "44682ab7a2bc3eb7c3ecc8570b97915f",
     "packages": [
         {
             "name": "bramus/ansi-php",
@@ -91,16 +91,16 @@
         },
         {
             "name": "facebook/php-ads-sdk",
-            "version": "2.5.1",
+            "version": "2.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/facebook/facebook-php-ads-sdk.git",
-                "reference": "7244dde132061c12bf4b6e9040ba2dd347c1ca52"
+                "reference": "369cf3936e9df138a039169a66bc88aafa1fc596"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/facebook/facebook-php-ads-sdk/zipball/7244dde132061c12bf4b6e9040ba2dd347c1ca52",
-                "reference": "7244dde132061c12bf4b6e9040ba2dd347c1ca52",
+                "url": "https://api.github.com/repos/facebook/facebook-php-ads-sdk/zipball/369cf3936e9df138a039169a66bc88aafa1fc596",
+                "reference": "369cf3936e9df138a039169a66bc88aafa1fc596",
                 "shasum": ""
             },
             "require-dev": {
@@ -124,7 +124,7 @@
                 "facebook",
                 "sdk"
             ],
-            "time": "2015-11-06 14:54:44"
+            "time": "2016-04-12 21:36:20"
         },
         {
             "name": "facebook/php-sdk-v4",
@@ -183,16 +183,16 @@
         },
         {
             "name": "googleads/googleads-php-lib",
-            "version": "7.0.0",
+            "version": "8.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleads/googleads-php-lib.git",
-                "reference": "daf1a1bfa6bef01317da7860fc59bcfe7635e52e"
+                "reference": "681cec877e9672120a574bdbe8f6583faffdb814"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/daf1a1bfa6bef01317da7860fc59bcfe7635e52e",
-                "reference": "daf1a1bfa6bef01317da7860fc59bcfe7635e52e",
+                "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/681cec877e9672120a574bdbe8f6583faffdb814",
+                "reference": "681cec877e9672120a574bdbe8f6583faffdb814",
                 "shasum": ""
             },
             "require": {
@@ -214,13 +214,13 @@
             ],
             "authors": [
                 {
-                    "name": "Vincent Tsao",
-                    "role": "Developer"
+                    "name": "Google",
+                    "homepage": "https://github.com/googleads/googleads-php-lib/contributors"
                 }
             ],
-            "description": "Google Ads APIs Client Library for PHP (AdWords, Adx, and DFP)",
+            "description": "Google Ads APIs Client Library for PHP (AdWords and DFP)",
             "homepage": "https://github.com/googleads/googleads-php-lib",
-            "time": "2015-12-24 12:53:14"
+            "time": "2016-04-08 05:50:03"
         }
     ],
     "packages-dev": [],

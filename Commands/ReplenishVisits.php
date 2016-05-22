@@ -6,6 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Commands;
 
+use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugin\ConsoleCommand;
@@ -55,7 +56,7 @@ class ReplenishVisits extends ConsoleCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (!in_array('AdvancedCampaignReporting', Manager::getInstance()->getInstalledPluginsName())) {
-            $this->logger->error('Plugin "AdvancedCampaignReporting" must be installed and activated.');
+            $this->log(Logger::ERROR, 'Plugin "AdvancedCampaignReporting" must be installed and activated.');
             exit;
         }
 
@@ -65,10 +66,13 @@ class ReplenishVisits extends ConsoleCommand
     }
 
     /**
+     * Replenishes the visits of a specific date.
+     * This method must be public so that it can be called from Tasks.php.
+     *
      * @param string $date YYYY-MM-DD
      * @throws \Exception
      */
-    private function processDate($date)
+    public function processDate($date)
     {
         // Clean up replenished data
         Db::deleteAllRows(Common::prefixTable('aom_visits'), 'WHERE date_website_timezone = ?', 'id', 100000, [$date,]);
@@ -81,7 +85,7 @@ class ReplenishVisits extends ConsoleCommand
         // Process every platform
         foreach (AOM::getPlatforms() as $platformName) {
 
-            $this->logger->debug('Processing ' . $platformName . '...');
+            $this->log(Logger::DEBUG, 'Processing ' . $platformName . '...');
 
             $platform = AOM::getPlatformInstance($platformName);
 
@@ -113,12 +117,15 @@ class ReplenishVisits extends ConsoleCommand
                         $this->addVisit(
                             $cost['idsite'],
                             $matchingVisit['idvisit'],
+                            $matchingVisit['idvisitor'],
                             AOM::convertUTCToLocalDateTime($matchingVisit['visit_first_action_time'], $cost['idsite']),
                             $date,
                             $this->determineChannel($platformName, $matchingVisit['referer_type'], $matchingVisit['campaign_name']),
                             $matchingVisit['campaign_data'],
                             json_encode($cost),
-                            ($cost['cost'] / count($matchingVisits))    // Calculate CPC based on Piwik visits
+                            ($cost['cost'] / count($matchingVisits)),    // Calculate CPC based on Piwik visits
+                            $matchingVisit['conversions'],
+                            $matchingVisit['revenue']
                         );
 
                         $totalMatchingVisits++;
@@ -135,6 +142,7 @@ class ReplenishVisits extends ConsoleCommand
                     $this->addVisit(
                         $cost['idsite'],
                         null,
+                        uniqid(),
                         AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($cost['idsite'])),
                         $date,
                         $platformName,
@@ -153,26 +161,42 @@ class ReplenishVisits extends ConsoleCommand
 
 
             // Platform stats
-            $this->logger->debug(
+            $this->log(
+                Logger::DEBUG,
                 sprintf(
-                    '%d Piwik %s visits (based on aom_platform) resulted in %d %s visits.' . PHP_EOL
-                        . '%s reported %d records (with at least 1 click or cost > 0) with %d clicks.' . PHP_EOL
-                        . '%d Piwik visits matched (based on aom_platform_row_id), but %d visits had to be created for %d unmerged clicks.' . PHP_EOL
-                        . 'Total costs reported vs. total costs of all resulting visits are %f vs. %f.' . PHP_EOL,
+                    '%d Piwik %s visits (based on aom_platform) resulted in %d %s visits.',
                     count($platformVisits),
                     $platformName,
                     ($totalMatchingVisits + $totalCreatedVisits),
-                    $platformName,
+                    $platformName
+                )
+            );
+            $this->log(
+                Logger::DEBUG,
+                sprintf(
+                    '%s reported %d records (with at least 1 click or cost > 0) with %d clicks.',
                     $platformName,
                     count($costs),
-                    $clicksAccordingToPlatform,
+                    $clicksAccordingToPlatform
+                )
+            );
+            $this->log(
+                Logger::DEBUG,
+                sprintf(
+                    '%d Piwik visits matched (based on aom_platform_row_id), but %d visits had to be created for %d unmerged clicks.',
                     $totalMatchingVisits,
                     $totalCreatedVisits,
-                    $clicksAccordingToPlatformUnmerged,
+                    $clicksAccordingToPlatformUnmerged
+                )
+            );
+            $this->log(
+                Logger::DEBUG,
+                sprintf(
+                    'Total costs reported vs. total costs of all resulting visits are %f vs. %f.',
                     $totalCosts,
                     DB::fetchOne(
                         'SELECT SUM(cost) FROM ' . Common::prefixTable('aom_visits')
-                            . ' WHERE date_website_timezone = ? AND channel = ?',
+                        . ' WHERE date_website_timezone = ? AND channel = ?',
                         [
                             $date,
                             $platformName,
@@ -183,7 +207,8 @@ class ReplenishVisits extends ConsoleCommand
         }
 
         // Add remaining Piwik visits (visits without aom_platform_row_id) to piwik_aom_visits.
-        $this->logger->debug(
+        $this->log(
+            Logger::DEBUG,
             'Will add ' . count($visits) . ' remaining visits now (Piwik visits without aom_platform_row_id).'
         );
 
@@ -191,10 +216,15 @@ class ReplenishVisits extends ConsoleCommand
             $this->addVisit(
                 $visit['idsite'],
                 $visit['idvisit'],
+                $visit['idvisitor'],
                 $visit['visit_first_action_time'],
                 $date,
                 $this->determineChannel(null, $visit['referer_type'], $visit['campaign_name']),
-                $visit['campaign_data']
+                $visit['campaign_data'],
+                null,
+                null,
+                $visit['conversions'],
+                $visit['revenue']
             );
         }
 
@@ -203,7 +233,8 @@ class ReplenishVisits extends ConsoleCommand
             'SELECT COUNT(*) FROM ' . Common::prefixTable('aom_visits') . ' WHERE date_website_timezone = ?',
             [$date,]
         );
-        $this->logger->debug(
+        $this->log(
+            Logger::DEBUG,
             'Replenished ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . ' visits.'
         );
     }
@@ -224,31 +255,35 @@ class ReplenishVisits extends ConsoleCommand
         foreach (APISitesManager::getInstance()->getAllSites() as $site) {
             $visits = array_merge(
                 $visits,
-                DB::fetchAll(
+                Db::fetchAll(
                     'SELECT
-                            idvisit,
-                            idsite,
-                            visit_first_action_time,
-                            CASE referer_type
+                            v.idvisit AS idvisit,
+                            conv(hex(v.idvisitor), 16, 10) AS idvisitor,
+                            v.idsite AS idsite,
+                            v.visit_first_action_time,
+                            CASE v.referer_type
                                 WHEN 1 THEN "direct"
                                 WHEN 2 THEN "search_engine"
                                 WHEN 3 THEN "website"
                                 WHEN 6 THEN "campaign"
                                 ELSE ""
                             END AS referer_type,
-                            referer_name,
-                            referer_keyword,
-                            referer_url,
-                            campaign_name,
-                            campaign_keyword,
-                            campaign_source,
-                            campaign_medium,
-                            campaign_content,
-                            campaign_id,
-                            aom_platform,
-                            aom_platform_row_id
-                        FROM  ' . Common::prefixTable('log_visit') . '
-                        WHERE idsite = ? AND visit_first_action_time >= ? AND visit_first_action_time <= ?',
+                            v.referer_name,
+                            v.referer_keyword,
+                            v.referer_url,
+                            v.campaign_name,
+                            v.campaign_keyword,
+                            v.campaign_source,
+                            v.campaign_medium,
+                            v.campaign_content,
+                            v.campaign_id,
+                            v.aom_platform,
+                            v.aom_platform_row_id AS aom_platform_row_id,
+                            COUNT(c.idorder) AS conversions,
+                            SUM(c.revenue) AS revenue
+                        FROM piwik_log_visit AS v LEFT JOIN piwik_log_conversion AS c ON v.idvisit = c.idvisit
+                        WHERE v.idsite = ? AND v.visit_first_action_time >= ? AND v.visit_first_action_time <= ?
+                        GROUP BY v.idvisit',
                     [
                         $site['idsite'],
                         AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', $site['timezone']),
@@ -286,7 +321,11 @@ class ReplenishVisits extends ConsoleCommand
             }
         }
 
-        $this->logger->debug('Got ' . count($visits) . ' Piwik visits.');
+        $this->log(
+            Logger::DEBUG,
+            'Got ' . count($visits) . ' Piwik visits with '
+                . array_sum(array_map(function($visit) { return $visit['conversions']; }, $visits)) . ' conversions.'
+        );
 
         return $visits;
     }
@@ -300,7 +339,7 @@ class ReplenishVisits extends ConsoleCommand
      */
     private function getPlatformCosts(PlatformInterface $platform, $date)
     {
-        return DB::fetchAll(
+        return Db::fetchAll(
             'SELECT * FROM ' . $platform->getDataTableName()
                 . ' WHERE date = ? AND (clicks > 0 OR cost > 0)',   // Some platform's might create irrelevant rows!
             [
@@ -335,40 +374,64 @@ class ReplenishVisits extends ConsoleCommand
      *
      * @param int $siteId Website ID
      * @param int $visitId Piwik visit ID
+     * @param string $visitorId Piwik visitor ID
      * @param string $firstActionTimeUTC The UTC datetime of the visit's first action
      * @param string $dateWebsiteTimezone The date in the website's timezone
      * @param string|null $channel The platform (or source) this visit came from (can be null)
      * @param string|null $campaignData
      * @param string|null $platformData JSON platform data (can be null)
      * @param float|null $cost The price paid to the advertising platform for this specific visit
-     * @throws \Exception
+     * @param int|null $conversions Number of conversions the visit created
+     * @param float|null $revenue Total revenue of conversions the visit created
      */
     private function addVisit(
         $siteId,
         $visitId,
+        $visitorId,
         $firstActionTimeUTC,
         $dateWebsiteTimezone,
         $channel = null,
         $campaignData = null,
         $platformData = null,
-        $cost = null
+        $cost = null,
+        $conversions = null,
+        $revenue = null
     )
     {
         Db::query(
             'INSERT INTO ' . Common::prefixTable('aom_visits')
-                . ' (idsite, piwik_idvisit, first_action_time_utc, date_website_timezone, channel, campaign_data,
-                     platform_data, cost, ts_created) '
-                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                . ' (idsite, piwik_idvisit, piwik_idvisitor, first_action_time_utc, date_website_timezone, channel, 
+                     campaign_data, platform_data, cost, conversions, revenue, ts_created) '
+                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
             [
                 $siteId,
                 $visitId,
+                $visitorId,
                 $firstActionTimeUTC,
                 $dateWebsiteTimezone,
                 $channel,
                 json_encode($campaignData),
                 $platformData,
                 $cost,
+                $conversions,
+                $revenue,
             ]
+        );
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['task' => 'replenish-visits'], $additionalContext)
         );
     }
 }

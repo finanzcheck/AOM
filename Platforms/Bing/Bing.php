@@ -9,6 +9,8 @@ namespace Piwik\Plugins\AOM\Platforms\Bing;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Metrics\Formatter;
+use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
@@ -18,14 +20,6 @@ class Bing extends Platform implements PlatformInterface
     const AD_CAMPAIGN_ID = 1;
     const AD_AD_GROUP_ID = 2;
     const AD_KEYWORD_ID = 3;
-
-    /**
-     * Returns the platform's data table name.
-     */
-    public static function getDataTableNameStatic()
-    {
-        return Common::prefixTable('aom_' . strtolower(AOM::PLATFORM_BING));
-    }
 
     /**
      * Extracts advertisement platform specific data from the query params and validates it.
@@ -95,8 +89,8 @@ class Bing extends Platform implements PlatformInterface
         }
 
         $result = DB::fetchAll(
-            'SELECT * FROM ' . Bing::getDataTableNameStatic() . ' WHERE idsite = ? AND date = ? AND
-                campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
+                WHERE idsite = ? AND date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
             [
                 $idsite,
                 $date,
@@ -127,7 +121,8 @@ class Bing extends Platform implements PlatformInterface
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
         $result = DB::fetchAll(
-            'SELECT * FROM ' . Bing::getDataTableNameStatic() . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
+            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
+                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
             [
                 $idsite,
                 $campaignId,
@@ -171,5 +166,46 @@ class Bing extends Platform implements PlatformInterface
             $url_get_contents_data = false;
         }
         return $url_get_contents_data;
+    }
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param int $idVisit
+     * @return string|false
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit)
+    {
+        $visit = Db::fetchRow(
+            'SELECT
+                idsite,
+                platform_data,
+                cost
+             FROM ' . Common::prefixTable('aom_visits') . '
+             WHERE piwik_idvisit = ?',
+            [
+                $idVisit,
+            ]
+        );
+
+        if ($visit) {
+
+            $formatter = new Formatter();
+
+            $platformData = json_decode($visit['platform_data'], true);
+
+            return Piwik::translate(
+                'AOM_Platform_VisitDescription_Bing',
+                [
+                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                    $platformData['account'],
+                    $platformData['campaign'],
+                    $platformData['ad_group'],
+                ]
+            );
+        }
+
+        return false;
     }
 }
