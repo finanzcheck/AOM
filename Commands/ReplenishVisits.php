@@ -235,7 +235,7 @@ class ReplenishVisits extends ConsoleCommand
         );
         $this->log(
             Logger::DEBUG,
-            'Replenished ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . ' visits.'
+            'Replenished ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . " visits ({$date})."
         );
     }
 

@@ -95,14 +95,14 @@ class AOM extends \Piwik\Plugin
                         idsite INTEGER NOT NULL,
                         piwik_idvisit INTEGER,
                         piwik_idvisitor VARCHAR(100),
-                        piwik_visit_first_action_time_utc DATETIME NOT NULL,
+                        first_action_time_utc DATETIME NOT NULL,
                         date_website_timezone DATE NOT NULL,
                         channel VARCHAR(100),
                         campaign_data TEXT,
                         platform_data TEXT,
-                        cost FLOAT NOT NULL,
-                        conversions INTEGER NOT NULL,
-                        revenue FLOAT NOT NULL,
+                        cost FLOAT,
+                        conversions INTEGER,
+                        revenue FLOAT,
                         ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
             Db::exec($sql);
