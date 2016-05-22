@@ -91,4 +91,13 @@ interface PlatformInterface
      * @return mixed
      */
     public function getAdDataFromAdParams($idSite, array $adParams);
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param $idVisit
+     * @return string|false
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit);
 }

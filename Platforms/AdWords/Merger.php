@@ -6,6 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
@@ -99,14 +100,16 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
     public function merge()
     {
-        $this->logger->info('Will merge AdWords now.');
+        $this->log(Logger::INFO, 'Will merge AdWords now.');
 
         $adDataMap = $this->getAdData();
+
+        $visits = $this->getVisits();
 
         // Update visits
         $updateStatements = [];
         $nonMatchedVisits = [];
-        foreach ($this->getVisits() as $visit) {
+        foreach ($visits as $visit) {
             $data = null;
             $key = $this->buildKeyFromVisit($visit);
             if (isset($adDataMap[$key])) {
@@ -144,9 +147,26 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
 
         $this->updateVisits($updateStatements);
 
-        $this->logger->info(
+        $this->log(
+            Logger::INFO,
             'Merged AdWords data (' . count($nonMatchedVisits) . ' visits without direct match out of '
-            . count($this->getVisits()) . ')'
+                . count($visits) . ')'
+        );
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_AD_WORDS, 'task' => 'merge'], $additionalContext)
         );
     }
 }

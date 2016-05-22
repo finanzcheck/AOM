@@ -6,6 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -41,7 +42,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             }
 
             $endDate = date('Y-m-d');
-            $this->logger->info('Identified period from ' . $startDate. ' until ' . $endDate . ' to import.');
+            $this->log(Logger::INFO, 'Identified period from ' . $startDate. ' until ' . $endDate . ' to import.');
         }
 
         parent::setPeriod($startDate, $endDate);
@@ -61,7 +62,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $this->importAccount($accountId, $account, $date);
                 }
             } else {
-                $this->logger->info('Skipping inactive account.');
+                $this->log(Logger::INFO, 'Skipping inactive account.');
             }
         }
     }
@@ -74,7 +75,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import AdWords account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->log(Logger::INFO, 'Starting import of AdWords account ' . $accountId. ' for date ' . $date . ' now.');
         $this->deleteExistingData(AOM::PLATFORM_AD_WORDS, $accountId, $account['websiteId'], $date);
 
         $user = AdWords::getAdWordsUser($account);
@@ -86,7 +87,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $xmlString = ReportUtils::DownloadReportWithAwql(
             'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZoneId, CampaignId, CampaignName, '
             . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, '
-            . 'Conversions, QualityScore, CpcBid, Impressions, Clicks, Cost, Date '
+            . 'Conversions, QualityScore, CpcBid, Impressions, Clicks, GmailSecondaryClicks, Cost, Date '
             . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
             . str_replace('-', '', $date) . ','
             . str_replace('-', '', $date),
@@ -94,7 +95,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $user,
             'XML',
             [
-                'version' => 'v201509',
+                'version' => 'v201603',
                 'skipReportHeader' => true,
                 'skipColumnHeader' => true,
                 'skipReportSummary' => true,
@@ -107,6 +108,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // This is why we aggregate up all placements of an ad group and merge on that level.
         $consolidatedData = [];
         foreach ($xml->table->row as $row) {
+
+
+            // Clicks of Google Sponsored Promotions (GSP) are more like more engaged ad views than real visits,
+            // i.e. we have to reassign clicks (and therewith recalculate CpC)
+            // (see http://marketingland.com/gmail-sponsored-promotions-everything-need-know-succeed-direct-response-gsp-part-1-120938)
+            if ($row['gmailClicksToWebsite'] > 0) {
+                $this->log(Logger::DEBUG, 'Mapping GSP "' . $row['adGroup'] . '" "gmailClicksToWebsite" to clicks.');
+                $row['clicks'] = $row['gmailClicksToWebsite'];
+            }
 
             // TODO: Validate currency and timezone?!
             // TODO: qualityScore, maxCPC, avgPosition?!
@@ -201,5 +211,21 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 ]
             );
         }
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_AD_WORDS, 'task' => 'import'], $additionalContext)
+        );
     }
 }

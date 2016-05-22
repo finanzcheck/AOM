@@ -20,6 +20,7 @@ use Bing\Reporting\ReportTime;
 use Bing\Reporting\SortOrder;
 use Bing\Reporting\SubmitGenerateReportRequest;
 use Exception;
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -47,7 +48,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $this->importAccount($accountId, $account, $date);
                 }
             } else {
-                $this->logger->info('Skipping inactive account.');
+                $this->log(Logger::INFO, 'Skipping inactive account.');
             }
         }
     }
@@ -60,7 +61,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import Bing account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->log(Logger::INFO, 'Will import Bing account ' . $accountId. ' for date ' . $date . ' now.');
         $this->deleteExistingData(AOM::PLATFORM_BING, $accountId, $account['websiteId'], $date);
 
         $data = $this->getBingReport($accountId, $account, $date);
@@ -178,7 +179,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
             $reportRequestId = $proxy->GetService()->SubmitGenerateReport($request)->ReportRequestId;
 
-            $this->logger->info('Report Request ID is ' . $reportRequestId . '.');
+            $this->log(Logger::INFO, 'Report Request ID is ' . $reportRequestId . '.');
 
 
             // This sample polls every 30 seconds up to 5 minutes.
@@ -212,10 +213,10 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     return $this->downloadFile($reportDownloadUrl);
                 } else {
                     if ($reportRequestStatus->Status == ReportRequestStatusType::Error) {
-                        $this->logger->warning('The request failed. Try requesting the report later.');
+                        $this->log(Logger::WARNING, 'The request failed. Try requesting the report later.');
                     } else // Pending
                     {
-                        $this->logger->warning('The request is taking longer than expected.');
+                        $this->log(Logger::WARNING, 'The request is taking longer than expected.');
                     }
                 }
             }
@@ -314,7 +315,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $result = curl_exec($ch);
 
         if (false === $result) {
-            $this->logger->error('Curl error ' . curl_errno($ch) . ': ' . curl_error($ch));
+            $this->log(Logger::ERROR, 'Curl error ' . curl_errno($ch) . ': ' . curl_error($ch));
             throw new \Exception('Failed to retrieve report.');
         }
         rewind($verbose);
@@ -349,5 +350,21 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         endwhile;
 
         return $result;
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_BING, 'task' => 'import'], $additionalContext)
+        );
     }
 }

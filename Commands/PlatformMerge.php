@@ -60,7 +60,10 @@ class PlatformMerge extends ConsoleCommand
         // Is platform active?
         $settings = new Settings();
         if (!$settings->{'platform' . $input->getOption('platform') . 'IsActive'}->getValue()) {
-            $this->logger->warning('Platform "' . $input->getOption('platform') . '" is not active.');
+            $this->logger->warning(
+                'Platform "' . $input->getOption('platform') . '" is not active.',
+                ['platform' => $input->getOption('platform'), 'task' => 'merge']
+            );
             return;
         }
 
@@ -69,6 +72,9 @@ class PlatformMerge extends ConsoleCommand
         $platform = AOM::getPlatformInstance($input->getOption('platform'));
         $platform->merge($input->getOption('startDate'), $input->getOption('endDate'));
 
-        $this->logger->info($input->getOption('platform') . '-merge successful.');
+        $this->logger->info(
+            $input->getOption('platform') . '-merge successful.',
+            ['platform' => $input->getOption('platform'), 'task' => 'merge']
+        );
     }
 }

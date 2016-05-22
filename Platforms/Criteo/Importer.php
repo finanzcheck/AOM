@@ -7,6 +7,7 @@
 namespace Piwik\Plugins\AOM\Platforms\Criteo;
 
 use Exception;
+use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
@@ -31,7 +32,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $this->importAccount($accountId, $account, $date);
                 }
             } else {
-                $this->logger->info('Skipping inactive account.');
+                $this->log(Logger::INFO, 'Skipping inactive account.');
             }
         }
     }
@@ -43,7 +44,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function importAccount($accountId, $account, $date)
     {
-        $this->logger->info('Will import Criteo account ' . $accountId. ' for date ' . $date . ' now.');
+        $this->log(Logger::INFO, 'Will import Criteo account ' . $accountId. ' for date ' . $date . ' now.');
         $this->deleteExistingData(AOM::PLATFORM_CRITEO, $accountId, $account['websiteId'], $date);
 
         $soapClient = new SoapClient('https://advertising.criteo.com/api/v201010/advertiserservice.asmx?WSDL', [
@@ -147,5 +148,21 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             echo $e->getMessage();
             echo $soapClient->__getLastResponse();
         }
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => AOM::PLATFORM_CRITEO, 'task' => 'import'], $additionalContext)
+        );
     }
 }

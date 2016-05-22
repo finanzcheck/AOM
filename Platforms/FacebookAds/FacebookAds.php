@@ -8,6 +8,8 @@ namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Metrics\Formatter;
+use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
@@ -101,7 +103,7 @@ class FacebookAds extends Platform implements PlatformInterface
      */
     public static function getHistoricalAdData($idsite, $campaignId, $adsetId)
     {
-        $result = DB::fetchAll(
+        $result = Db::fetchAll(
             'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
                 WHERE idsite = ? AND campaign_id = ? AND adset_id = ?',
             [
@@ -122,5 +124,45 @@ class FacebookAds extends Platform implements PlatformInterface
         }
 
         return null;
+    }
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param int $idVisit
+     * @return string|false
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit)
+    {
+        $visit = Db::fetchRow(
+            'SELECT
+                idsite,
+                platform_data,
+                cost
+             FROM ' . Common::prefixTable('aom_visits') . '
+             WHERE piwik_idvisit = ?',
+            [
+                $idVisit,
+            ]
+        );
+
+        if ($visit) {
+
+            $formatter = new Formatter();
+
+            $platformData = json_decode($visit['platform_data'], true);
+
+            return Piwik::translate(
+                'AOM_Platform_VisitDescription_FacebookAds',
+                [
+                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                    $platformData['campaign_name'],
+                    $platformData['adset_name'],
+                ]
+            );
+        }
+
+        return false;
     }
 }

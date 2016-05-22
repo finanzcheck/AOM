@@ -6,6 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms;
 
+use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
@@ -98,9 +99,10 @@ abstract class Merger
             );
         }
 
-        $this->logger->debug(
+        $this->log(
+            Logger::DEBUG,
             'Got ' . count($visits) . ' visits for all websites in period from ' . $this->startDate
-            . ' 00:00:00 until ' . $this->endDate . ' 23:59:59 (in the website\'s individual timezones).'
+                . ' 00:00:00 until ' . $this->endDate . ' 23:59:59 (in the website\'s individual timezones).'
         );
 
         return $visits;
@@ -123,9 +125,10 @@ abstract class Merger
             ]
         );
 
-        $this->logger->debug(
+        $this->log(
+            Logger::DEBUG,
             'Got ' . count($platformData) . ' platform cost records in period from ' . $this->startDate
-            . ' 00:00:00 until ' . $this->endDate . ' 23:59:59 UTC.'
+                . ' 00:00:00 until ' . $this->endDate . ' 23:59:59 UTC.'
         );
 
         return $platformData;
@@ -178,7 +181,8 @@ abstract class Merger
         foreach ($platformData as $row) {
             $key = $this->buildKeyFromAdData($row);
             if (isset($adDataMap[$key])) {
-                $this->logger->warning(
+                $this->log(
+                    Logger::WARNING,
                     'Key "' . $key. '" is not unique!',
                     [
                         'current' => $row,
@@ -189,5 +193,21 @@ abstract class Merger
             $adDataMap[$key] = $row;
         }
         return $adDataMap;
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    private function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['platform' => $this->platform->getName(), 'task' => 'merge'], $additionalContext)
+        );
     }
 }

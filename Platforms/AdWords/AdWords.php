@@ -7,7 +7,10 @@
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use AdWordsUser;
+use Piwik\Common;
 use Piwik\Db;
+use Piwik\Metrics\Formatter;
+use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
@@ -216,7 +219,7 @@ class AdWords extends Platform implements PlatformInterface
      */
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
-        $result = DB::fetchRow(
+        $result = Db::fetchRow(
             'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
                 WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? ORDER BY date DESC LIMIT 1',
             [
@@ -238,5 +241,47 @@ class AdWords extends Platform implements PlatformInterface
         }
 
         return null;
+    }
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param int $idVisit
+     * @return string|false
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit)
+    {
+        $visit = Db::fetchRow(
+            'SELECT
+                idsite,
+                platform_data,
+                cost
+             FROM ' . Common::prefixTable('aom_visits') . '
+             WHERE piwik_idvisit = ?',
+            [
+                $idVisit,
+            ]
+        );
+
+        if ($visit) {
+
+            $formatter = new Formatter();
+
+            $platformData = json_decode($visit['platform_data'], true);
+
+            return Piwik::translate(
+                'AOM_Platform_VisitDescription_AdWords',
+                [
+                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                    $platformData['account'],
+                    $platformData['campaign'],
+                    $platformData['ad_group'],
+                    $platformData['keyword_placement'],
+                ]
+            );
+        }
+
+        return false;
     }
 }

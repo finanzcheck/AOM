@@ -182,4 +182,26 @@ abstract class Platform
     {
         return Common::prefixTable('aom_' . strtolower($this->getName()));
     }
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param int $idVisit
+     * @return false|string
+     * @throws Exception
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit)
+    {
+        $platform = Db::fetchOne('SELECT aom_platform FROM piwik_log_visit WHERE idvisit = ?', [$idVisit]);
+
+        if (in_array($platform, AOM::getPlatforms())) {
+
+            $platform = AOM::getPlatformInstance($platform);
+
+            return $platform->getHumanReadableDescriptionForVisit($idVisit);
+        }
+
+        return false;
+    }
 }

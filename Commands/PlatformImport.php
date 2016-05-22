@@ -61,13 +61,19 @@ class PlatformImport extends ConsoleCommand
         // Is platform active?
         $settings = new Settings();
         if (!$settings->{'platform' . $input->getOption('platform') . 'IsActive'}->getValue()) {
-            $this->logger->warning('Platform "' . $input->getOption('platform') . '" is not active.');
+            $this->logger->warning(
+                'Platform "' . $input->getOption('platform') . '" is not active.',
+                ['platform' => $input->getOption('platform'), 'task' => 'import']
+            );
             return;
         }
 
         $platform = AOM::getPlatformInstance($input->getOption('platform'));
         $platform->import($input->getOption('merge'), $input->getOption('startDate'), $input->getOption('endDate'));
 
-        $this->logger->info($input->getOption('platform') . '-import successful.');
+        $this->logger->info(
+            $input->getOption('platform') . '-import successful.',
+            ['platform' => $input->getOption('platform'), 'task' => 'import']
+        );
     }
 }

@@ -9,6 +9,8 @@ namespace Piwik\Plugins\AOM\Platforms\Criteo;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Metrics\Formatter;
+use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
@@ -95,5 +97,44 @@ class Criteo extends Platform implements PlatformInterface
         }
 
         return [null, null];
+    }
+
+    /**
+     * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
+     * platform-specific description is available.
+     *
+     * @param int $idVisit
+     * @return string|false
+     */
+    public static function getHumanReadableDescriptionForVisit($idVisit)
+    {
+        $visit = Db::fetchRow(
+            'SELECT
+                idsite,
+                platform_data,
+                cost
+             FROM ' . Common::prefixTable('aom_visits') . '
+             WHERE piwik_idvisit = ?',
+            [
+                $idVisit,
+            ]
+        );
+
+        if ($visit && $visit['platform_data'] && $visit['cost']) {
+
+            $formatter = new Formatter();
+
+            $platformData = json_decode($visit['platform_data'], true);
+            
+            return Piwik::translate(
+                'AOM_Platform_VisitDescription_Criteo',
+                [
+                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                    $platformData['campaign'],
+                ]
+            );
+        }
+
+        return false;
     }
 }

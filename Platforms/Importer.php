@@ -147,7 +147,8 @@ abstract class Importer
                 is_int($unsetMergedDataRecords) ? $unsetMergedDataRecords : 0,
                 $timeToDeleteReplenishedVisits,
                 is_int($deletedReplenishedVisitsRecords) ? $deletedReplenishedVisitsRecords : 0
-            )
+            ),
+            ['platform' => $platformName, 'task' => 'import']
         );
     }
 }
