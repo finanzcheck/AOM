@@ -14,6 +14,7 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Tracker\Action;
+use Piwik\Tracker\Request;
 use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
@@ -235,22 +236,47 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
+     * Normally the url contains all important params information. In some cases this information is stored in urlRef.
+     *
+     * @param Request $request
+     * @return string|null url when available
+     */
+    public static function getParamsUrl(Request $request)
+    {
+        if(isset($request->getParams()['url']) && AOM::getPlatformFromUrl($request->getParams()['url'])){
+            return $request->getParams()['url'];
+        }
+
+        if(isset($request->getParams()['urlref'])) {
+            return $request->getParams()['urlref'];
+        }
+
+        return null;
+    }
+
+    /**
      * Tries to find some ad data for this visit.
      *
-     * @param Action $action
+     * @param Request $request
      * @return mixed
      * @throws \Piwik\Exception\UnexpectedWebsiteFoundException
      */
-    public static function getAdData(Action $action)
+    public static function getAdData(Request $request)
     {
-        $params = self::getAdParamsFromUrl($action->getActionUrl());
+        $params = self::getAdParamsFromRequest($request);
         if (!$params) {
             return [null, null];
         }
 
         $platform = self::getPlatformInstance($params['platform']);
-        return $platform->getAdDataFromAdParams($action->request->getIdSite(), $params);
+        return $platform->getAdDataFromAdParams($request->getIdSite(), $params);
     }
+
+    public static function getAdParamsFromRequest(Request $request)
+    {
+        return self::getAdParamsFromUrl(AOM::getParamsUrl($request));
+    }
+
 
     /**
      * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.
@@ -264,6 +290,7 @@ class AOM extends \Piwik\Plugin
         $paramPrefix = $settings->paramPrefix->getValue();
 
         $queryString = parse_url($url, PHP_URL_QUERY);
+
         parse_str($queryString, $queryParams);
 
         if (is_array($queryParams)
