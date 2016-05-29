@@ -4,27 +4,213 @@ title: Piwik AOM Plugin Documentation - API
 ---
 
 <h2 class="title text-center">API</h2>
-<p>This plugin provides the following API endpoints (add <code>&amp;token_auth=...</code> in production environment).
-    You can use <a href="http://developer.piwik.org/api-reference/reporting-api">Piwik's standard API params</a>.</p>
+<p>The Piwik AOM plugin provides the following API endpoints (add <code>&amp;token_auth=...</code> in production
+    environment). You can use <a href="http://developer.piwik.org/api-reference/reporting-api">Piwik's standard API
+    params</a>.</p>
 
 
 <h2 class="sub-title text-center">AOM.getVisits</h2>
 <p>Returns all visits with marketing information within the given period.</p>
-<p>Example: ?module=API&amp;method=AOM.getVisits&amp;idSite=1&amp;period=day&amp;date=2015-05-01</p>
+
+<p><strong>Example request:</strong><br/>
+    <code>?module=API&amp;method=AOM.getVisits&amp;idSite=1&amp;period=day&amp;date=2015-05-01</code></p>
+
+<p><strong>Example response:</strong><br/>
+    <div class="code-block">
+    <pre><code class="language-php">[
+    {
+        visitorId: "857447861290599826",
+        visitId: "2818861",
+        firstActionTime: "2016-04-29 00:00:07",
+        device: "desktop",
+        source: "campaign",
+        refererName: "adwords",
+        refererKeyword: "(adwords) realworldhistory.ru",
+        refererUrl: "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-8316614499352768&format=705x90&output=html&h=90&slotname=1598514539&adk=3479379926&w=705&lmt=1461887974&flash=21.0.0&url=http://realworldhistory.ru/?p=29&wgl=1&dt=1461887972448&bpp=68&bdt=1695&fdt=859&idt=1673&shv=r20160426&cbv=r20151006&saldr=aa&prev_fmts=240x480&correlator=136978059265&frm=20&ga_vid=1703838237.1461887973&ga_sid=1461887973&ga_hid=679525313&ga_fc=0&pv=1&iag=3&icsg=2&nhd=1&dssz=2&mdo=0&mso=0&u_tz=180&u_his=1&u_java=0&u_h=768&u_w=1366&u_ah=728&u_aw=1366&u_cd=24&u_nplug=5&u_nmime=7&dff=open sans&dfs=18&adx=31&ady=1819&biw=650&bih=636&eid=575144605&oid=3&ref=https://www.google.com/&rx=0&eae=0&fc=80&pc=1&brdim=679,0,679,0,1366,0,683,749,667,636&vis=1&rsz=|||&abl=CS&ppjl=f&pfx=0&fu=16&bc=1&ifi=2&xpc=2B2wCqdf3G&p=http://realworldhistory.ru&dtd=1822",
+        platform: "AdWords",
+        campaignName: "adwords",
+        campaignKeyword: null,
+        campaignSource: null,
+        campaignMedium: null,
+        campaignContent: null,
+        campaignId: null,
+        entryTitle: "Toolbox starting at EUR 9,95 | fantastic-tools.com",
+        entryUrl: "fantastic-tools.com/toolbox/?aom_platform=AdWords&aom_campaign_id=119510876&aom_ad_group_id=5122242476&aom_feed_item_id=&aom_target_id=aud-44922712076&aom_creative=48921604556&aom_placement=realworldhistory.ru&aom_target=boomuserlist::818516&aom_network=d&aom_device=c&aom_ad_position=none&aom_loc_physical=2642&aom_loc_Interest=2276",
+        adParams: {
+            platform: "AdWords",
+            campaignId: "119510876",
+            adGroupId: "5122242476",
+            feedItemId: "",
+            targetId: "aud-44922712076",
+            creative: "48921604556",
+            placement: "realworldhistory.ru",
+            target: "boomuserlist::818516",
+            network: "d",
+            adPosition: "none",
+            locPhysical: "2642",
+            locInterest: "2276"
+        },
+        adData: {
+            id: "238992",
+            id_account_internal: "5687b42794c490.70106120",
+            idsite: "1",
+            date: "2016-04-29",
+            account: "fantastic-tools.com",
+            campaign_id: "119510876",
+            campaign: "Remarketing - Toolbox",
+            ad_group_id: "5122242476",
+            ad_group: "Toolbox visitors (last 3 days)",
+            keyword_id: null,
+            keyword_placement: null,
+            criteria_type: null,
+            network: "d",
+            impressions: "22666",
+            clicks: "70",
+            cost: "70.58",
+            conversions: "1",
+            ts_created: "2016-04-30 09:20:24"
+        }
+    }, ...
+]</code></pre></div>
 
 
 <h2 class="sub-title text-center">AOM.getEcommerceOrderWithVisits</h2>
 <p>Returns a specific ecommerce order by orderId with all visits with marketing information that happened before the
     ecommerce order or false (when no order could be found for the given orderId).</p>
-<p>Example: ?module=API&amp;method=AOM.getEcommerceOrderWithVisits&amp;orderId=123&amp;idSite=1</p>
+
+<p>This API method can be used to enrich the orders in your data warehouse with online advertising information.</p>
+
+<p><strong>Example request:</strong><br/>
+    <code>?module=API&amp;method=AOM.getEcommerceOrderWithVisits&amp;orderId=mo42eabpcZVj&amp;idSite=1</code></p>
+
+<p><strong>Example response:</strong><br/>
+<div class="code-block">
+    <pre><code class="language-php">{
+    orderId: "mo42eabpcZVj",
+    visitorId: "3494898882994549104",
+    amountOriginal: "195.00",
+    conversionTime: "2016-04-29 00:09:13",
+    visits: [
+        {
+            visitorId: "3494898882994549104",
+            visitId: "2818868",
+            firstActionTime: "2016-04-29 00:04:58",
+            device: "smartphone",
+            source: "campaign",
+            refererName: "silv6kuecheapr16",
+            refererKeyword: null,
+            refererUrl: "",
+            platform: null,
+            campaignName: "silv6kuecheapr16",
+            campaignKeyword: null,
+            campaignSource: "email",
+            campaignMedium: "silvamed6",
+            campaignContent: null,
+            campaignId: null,
+            entryTitle: "Toolbox starting at EUR 9,95 | fantastic-tools.com",
+            entryUrl: "fantastic-tools.com/toolbox/",
+            adParams: [ ],
+            adData: [ ]
+        }, ...
+    ]
+}</code></pre></div>
 
 
 <h2 class="sub-title text-center">AOM.getEcommerceOrdersWithVisits</h2>
-<p>Returns all ecommerce orders with all visits with marketing information that happened before the ecommerce order within
-    the given period.</p>
-<p>Example: ?module=API&amp;method=AOM.getEcommerceOrdersWithVisits&amp;idSite=1&amp;period=day&amp;date=2015-05-01</p>
+<p>Returns all ecommerce orders with all visits with marketing information that happened before the ecommerce order
+    within the given period.</p>
+
+<p>This API method can be used to enrich the orders in your data warehouse with online advertising information.</p>
+
+<p><strong>Example request:</strong><br/>
+    <code>?module=API&amp;method=AOM.getEcommerceOrdersWithVisits&amp;idSite=1&amp;period=day&amp;date=2015-05-01</code></p>
+
+<p><strong>Example response:</strong><br/>
+<div class="code-block">
+    <pre><code class="language-php">[
+    {
+        orderId: "8VlPn4NBt5Vr",
+        visitorId: "9219010935624651186",
+        amountOriginal: "175.00",
+        conversionTime: "2016-04-29 09:55:08",
+        visits: [
+            {
+                visitorId: "9219010935624651186",
+                visitId: "2820916",
+                firstActionTime: "2016-04-29 09:51:50",
+                device: "desktop",
+                source: "campaign",
+                refererName: "criteo",
+                refererKeyword: "more_than_3_actions",
+                refererUrl: "https://www.facebook.com",
+                platform: "Criteo",
+                campaignName: "criteo",
+                campaignKeyword: "more_than_3_actions",
+                campaignSource: "criteo",
+                campaignMedium: "criteo",
+                campaignContent: null,
+                campaignId: null,
+                entryTitle: "Toolbox starting at EUR 9,95 | fantastic-tools.com",
+                entryUrl: "fantastic-tools.com/toolbox/?aom_platform=Criteo&aom_campaign_id=51521&refId=WxLJf6j3yngW&purpose=other&bid=2bdae229114d281c28bddd130f534f52&baseline=1461923506112",
+                adParams: {
+                    platform: "Criteo",
+                    campaignId: "51521"
+                },
+                adData: {
+                    id: "1300",
+                    id_account_internal: "5687b7263d3470.14360447",
+                    idsite: "1",
+                    date: "2016-04-29",
+                    campaign_id: "51521",
+                    campaign: "> 3 actions on website",
+                    impressions: "458",
+                    clicks: "4",
+                    cost: "6",
+                    conversions: "2",
+                    conversions_value: "310",
+                    conversions_post_view: "0",
+                    conversions_post_view_value: "0",
+                    ts_created: "2016-05-05 08:31:37"
+                }
+            }, ...
+        ]
+    }, ...
+]</code></pre></div>
+
+
+<h2 class="sub-title text-center">AOM.getMarketingPerformance</h2>
+<p>Returns statistics (impressions, clicks, cost, conversions, revenue etc.) on a platform basis.
+    By appending the <code>idSubtable</code> param, it is possible to drill down into campaign, ad group etc.
+    statistics.<p>
+<p>This method is used by the Piwik AOM's marketing performance report in the Piwik UI.</p>
+
+<p><strong>Example request:</strong><br/>
+    <code>?module=API&amp;method=AOM.getMarketingPerformance&idSite=1&period=day&date=2016-04-29</code></p>
+
+<p><strong>Example response:</strong><br/>
+<div class="code-block">
+    <pre><code class="language-php">[
+    {
+        label: "AdWords",
+        platform_impressions: "65407",
+        platform_clicks: "1766",
+        platform_cost: "2507.72 €",
+        platform_cpc: "1.42 €",
+        nb_visits: "1671",
+        nb_uniq_visitors: "1611",
+        conversion_rate: "4.69988674%",
+        nb_conversions: "83",
+        cost_per_conversion: "30.21 €",
+        revenue: "41000 €",
+        return_on_ad_spend: "1634.95127047%",
+        idsubdatatable: "AdWords_Campaigns"
+    }, ...
+]</code></pre></div>
 
 
 <h2 class="sub-title text-center">AOM.getStatus</h2>
-<p>Returns various status information (e.g. last imports, last visits with ad params) that can be used for monitoring.</p>
-<p>Example: ?module=API&amp;method=AOM.getStatus</p>
+<p>Returns various status information (e.g. last imports, last visits with ad params) that can be used for
+    monitoring.</p>
+
+<p><strong>Example request:</strong><br/>
+    <code>?module=API&amp;method=AOM.getStatus</code></p>

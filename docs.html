@@ -53,9 +53,11 @@ title: Piwik AOM Plugin Documentation
 <p>MySQL 5.0.3 or higher is required as we store more than 255 characters in VARCHAR. You must be able to run cron jobs
     to set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a>.</p>
 
-<p>To install AOM, follow Piwik's "<a href="http://piwik.org/faq/plugins/#faq_21">How to install a plugin</a>" guide.
-    Run <code>composer install</code> in <code>plugins/AOM</code> to install dependencies, such as the Facebook Ads and
-    Google AdWords SDKs. Configure this plugin (e.g. provide API credentials to advertiser's platforms).</p>
+<p>To install AOM, <a href="https://github.com/advanced-online-marketing/AOM/releases">grab the latest release from
+    github</a> and upload it to <code>/path/to/piwik/plugins</code>. Make sure
+    <a href="https://getcomposer.org/">Composer</a> is installed and run <code>composer install</code> in
+    <code>plugins/AOM</code> to install dependencies, such as the Facebook Ads and Google AdWords SDKs. Activate and
+    configure the plugin (e.g. provide API credentials to advertiser's platforms).</p>
 
 <p>Set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> to automatically import and merge
     data from the advertiser's platforms. The auto archiving cron job executes the <code>core:archive command</code>
@@ -74,7 +76,11 @@ title: Piwik AOM Plugin Documentation
 <h2 class="sub-title text-center">Limitations</h2>
 
 <h3>Advertising platforms</h3>
-<p>...</p>
+<p>All data is being processed on a daily basis, i.e. fluctuation of click costs during the day are not being
+    considered.</p>
+
+<h4>Google AdWords</h4>
+<p>Visits of Google display network are assigned on AdGroup level.</p>
 
 <h3>Performance</h3>
 <p>This plugin has successfully been tested with up to 20k visitors a day for a period of more than a year, running on a
@@ -85,9 +91,10 @@ title: Piwik AOM Plugin Documentation
 
 <!-- Changelog -->
 <h2 class="sub-title text-center">Changelog</h2>
-<p><strong>0.1.0</strong></p>
+<p><strong>0.2.0</strong> on 22 May 2016</p>
 <ul>
-    <li>...</li>
+    <li>Integrates Piwik AOM data into Piwik UI</li>
+    <li>Fixes various bugs</li>
 </ul>
 
 
@@ -98,4 +105,7 @@ title: Piwik AOM Plugin Documentation
 
 <!-- Support -->
 <h2 class="sub-title text-center">Support</h2>
-<p>...</p>
+<p>Please report bugs and suggest features at
+    <a href="https://github.com/advanced-online-marketing/AOM/issues">github</a>.</p>
+<p>Leave comments or questions regarding this documentation below.</p>
+<p>If you require intense consulting or like to sponsor the development of a specific features, get in touch!</p>

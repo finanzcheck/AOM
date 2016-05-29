@@ -4,7 +4,9 @@ title: Piwik AOM Plugin Documentation - Quality assurance and monitoring
 ---
 
 <h2 class="title text-center">Quality assurance and monitoring</h2>
-<p>....</p>
+<p>It is essential to ensure that all your data is a correct as possible. Significant errors, such as undetected
+    deviations between imported platform data and data within the platforms itself, might seriously harm your marketing
+    efforts. You should therefore establish sound monitoring processes.</p>
 
 
 <!-- Logging -->
@@ -13,8 +15,31 @@ title: Piwik AOM Plugin Documentation - Quality assurance and monitoring
     <code>aom-tasks.log</code>. All other logs (visitor requests, requests to this plugin's API endpoints, Piwik UI
     interactions etc.) are written to <code>aom.log</code>. All log files are stored in Piwik's main directory.</p>
 
+<p>You can filter <code>aom-tasks.log</code> for specific console-commands and background tasks by searching for strings
+    like <code>{"platform":"AdWords","task":"import"}</code> or <code>WARNING</code>.</p>
+
+<p>It might be a good idea to rotate these log files on a daily basis.</p>
+
+
+<!-- Logging -->
+<h2 class="sub-title text-center">Monitoring</h2>
+<p>...</p>
+
+<h3 class="sub-title text-center">Monitoring database contents</h3>
+<p>...</p>
+
+<h3 class="sub-title text-center">Monitoring log files</h3>
+<p>You should monitor <code>aom-tasks.log</code> automatically. Some checks that might be useful:</p>
+<ul>
+    <li>Search for errors during AdWords' import:
+        <code>grep "ERROR" aom-tasks.log | grep "AdWords" | grep "import"</code></li>
+    <li>...</li>
+</ul>
+
+<h3 class="sub-title text-center">Manual monitoring efforts</h3>
+<p>...</p>
+
 
 <!-- Support -->
 <h2 class="sub-title text-center">Support</h2>
-<p>If you need need assistance in ensuring data quality, please feel free to <a href="#contact">get in touch</a>a> with
-    us.</p>
+<p>If you need need assistance in ensuring data quality, please feel free to <a href="#contact">get in touch</a>.</p>

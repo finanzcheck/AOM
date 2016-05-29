@@ -245,30 +245,9 @@ pre code {
   margin-bottom: 60px;
 }
 .about .intro {
-  max-width: 800px;
+  max-width: 950px;
   margin: 0 auto;
   margin-bottom: 60px;
-}
-.about .item {
-  position: relative;
-  margin-bottom: 30px;
-}
-.about .item .icon-holder {
-  position: absolute;
-  left: 30px;
-  top: 0;
-}
-.about .item .icon-holder .fa {
-  font-size: 24px;
-  color: #074f66;
-}
-.about .item .content {
-  padding-left: 60px;
-}
-.about .item .content .sub-title {
-  margin-top: 0;
-  color: #074f66;
-  font-size: 18px;
 }
 /* ======= Features Section ======= */
 .features {
@@ -281,19 +260,32 @@ pre code {
   margin-top: 0;
   margin-bottom: 30px;
 }
+.features .item {
+    position: relative;
+    margin-bottom: 30px;
+}
+.features .item .icon-holder {
+    position: absolute;
+    left: 30px;
+    top: 0;
+}
+.features .item .icon-holder .fa {
+    font-size: 24px;
+    color: #074f66;
+}
+.features .item .content {
+    padding-left: 60px;
+}
+.features .item .content .sub-title {
+    margin-top: 0;
+    color: #074f66;
+    font-size: 18px;
+}
 .features a {
   color: #074f66;
 }
 .features a:hover {
   color: #042a36;
-}
-.features .feature-list li {
-  margin-bottom: 10px;
-  color: #074f66;
-}
-.features .feature-list li .fa {
-  margin-right: 5px;
-  color: #fff;
 }
 /* ======= Docs Section ======= */
 .docs {
@@ -522,7 +514,7 @@ pre code {
   border-right: 10px solid #10b2e7;
 }
 .contact .author-message .speech-bubble .source {
-  margin-top: 30px;
+  margin-top: 10px;
 }
 .contact .author-message .speech-bubble .source a {
   color: #074f66;
@@ -537,12 +529,13 @@ pre code {
 }
 .contact .social-icons {
   list-style: none;
-  padding: 10px 0;
+  padding: 20px 0;
   margin-bottom: 0;
   display: inline-block;
   margin: 0 auto;
 }
 .contact .social-icons li {
+  padding-left: 0;
   float: left;
 }
 .contact .social-icons li.last {
@@ -551,10 +544,10 @@ pre code {
 .contact .social-icons a {
   display: inline-block;
   background: #0c86ae;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   text-align: center;
-  padding-top: 12px;
+  padding-top: 8px;
   -webkit-border-radius: 50%;
   -moz-border-radius: 50%;
   -ms-border-radius: 50%;
@@ -563,7 +556,7 @@ pre code {
   -moz-background-clip: padding;
   -webkit-background-clip: padding-box;
   background-clip: padding-box;
-  margin-right: 8px;
+  margin-right: 4px;
   float: left;
 }
 .contact .social-icons a:hover {
@@ -573,7 +566,7 @@ pre code {
   color: #fff;
 }
 .contact .social-icons a .fa:before {
-  font-size: 26px;
+  font-size: 20px;
   text-align: center;
   padding: 0;
 }

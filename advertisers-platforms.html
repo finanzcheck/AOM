@@ -6,6 +6,7 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <h2 class="title text-center">Tracking params, importing and merging</h2>
 <p>Here you'll find all the information about how to set up the tracking params that enable the plugin to assign
     imported platform data to individual visits.</p>
+
 <p>Make sure that you have understood and followed the <a href="docs.html">introduction</a> before adding params.</p>
 
 <h2 class="sub-title text-center">Google AdWords</h2>
@@ -43,13 +44,15 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
     <td>{prefix}_feed_item_id</td>
     <td>true</td>
     <td>{feeditemid}</td>
-    <td>Most probably the ID of a specific <a href="https://developers.google.com/adwords/api/docs/guides/feed-services">sitelink</a>.</td>
+    <td>Most probably the ID of a specific
+        <a href="https://developers.google.com/adwords/api/docs/guides/feed-services">sitelink</a>.</td>
 </tr>
 <tr>
     <td>{prefix}_target_id</td>
     <td>true</td>
     <td>{targetid}</td>
-    <td>The ID of the keyword, dynamic search ad, remarketing list target or product partition ID that triggered an ad.</td>
+    <td>The ID of the keyword, dynamic search ad, remarketing list target or product partition ID that triggered an
+        ad.</td>
 </tr>
 <tr>
     <td>{prefix}_creative</td>
@@ -61,7 +64,8 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
     <td>{prefix}_placement</td>
     <td>true</td>
     <td>{placement}</td>
-    <td>The content site where your ad was clicked or the matching placement targeting criteria for the site where your ad was clicked.</td>
+    <td>The content site where your ad was clicked or the matching placement targeting criteria for the site where your
+        ad was clicked.</td>
 </tr>
 <tr>
     <td>{prefix}_target</td>
@@ -105,9 +109,52 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <pre><code>&amp;aom_platform=AdWords&amp;aom_campaign_id={campaignid}&amp;aom_ad_group_id={adgroupid}&amp;aom_feed_item_id={feeditemid}&amp;aom_target_id={targetid}&amp;aom_creative={creative}&amp;aom_placement={placement}&amp;aom_target={target}&amp;aom_network={network}&amp;aom_device={device}&amp;aom_ad_position={adposition}&amp;aom_loc_physical={loc_physical_ms}&amp;aom_loc_Interest={loc_interest_ms}</code></pre>
 
 <p>When a Google AdWords ad is clicked, data like the following can be found in <code>piwik_log_visit.aom_ad_params</code>:</p>
-<pre><code>{"platform":"AdWords","campaignId":"184418636","adGroupId":"9794351276","feedItemId":"","targetId":"kwd-118607649","creative":"47609133356","placement":"","target":"","network":"g","device":"m","adPosition":"1t2","locPhysical":"20228","locInterest":"1004074"}
-{"platform":"AdWords","campaignId":"171096476","adGroupId":"8837340236","feedItemId":"","targetId":"","creative":"47609140796","placement":"suchen.mobile.de/auto-inserat","target":"","network":"d","device":"c","adPosition":"none","locPhysical":"9041542","locInterest":""}
-{"platform":"AdWords","campaignId":"147730196","adGroupId":"7300245836","feedItemId":"","targetId":"aud-55070239676","creative":"47609140676","placement":"carfansofamerica.com","target":"","network":"d","device":"c","adPosition":"none","locPhysical":"9042649","locInterest":""}</code></pre>
+<div class="code-block">
+    <pre><code class="language-php">{
+    "platform":"AdWords",
+    "campaignId":"184418636",
+    "adGroupId":"9794351276",
+    "feedItemId":"",
+    "targetId":"kwd-118607649",
+    "creative":"47609133356",
+    "placement":"",
+    "target":"",
+    "network":"g",
+    "device":"m",
+    "adPosition":"1t2",
+    "locPhysical":"20228",
+    "locInterest":"1004074"
+}
+{
+    "platform":"AdWords",
+    "campaignId":"171096476",
+    "adGroupId":"8837340236",
+    "feedItemId":"",
+    "targetId":"",
+    "creative":"47609140796",
+    "placement":"suchen.mobile.de/auto-inserat",
+    "target":"",
+    "network":"d",
+    "device":"c",
+    "adPosition":"none",
+    "locPhysical":"9041542",
+    "locInterest":""
+}
+{
+    "platform":"AdWords",
+    "campaignId":"147730196",
+    "adGroupId":"7300245836",
+    "feedItemId":"",
+    "targetId":"aud-55070239676",
+    "creative":"47609140676",
+    "placement":"carfansofamerica.com",
+    "target":"",
+    "network":"d",
+    "device":"c",
+    "adPosition":"none",
+    "locPhysical":"9042649",
+    "locInterest":""
+}</code></pre></div>
 
 <p>Placements are shortened when the length of the entire JSON is more than 1,024 characters.</p>
 
@@ -174,7 +221,15 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <pre><code>&amp;aom_platform=Bing&amp;aom_campaign_id={CampaignId}&amp;aom_ad_group_id={AdGroupId}&amp;aom_order_item_id={OrderItemId}&amp;aom_target_id={TargetId}&amp;aom_ad_id={AdId}</code></pre>
 
 <p>When a Bing ad is clicked, data like the following can be found in <code>piwik_log_visit.aom_ad_params</code>:</p>
-<pre><code>{"platform":"Bing","campaignId":190561279,"adGroupId":2029114499,"orderItemId":40414589411,"targetId":"40414589411","adId":5222037942}</code></pre>
+<div class="code-block">
+    <pre><code class="language-php">{
+    "platform":"Bing",
+    "campaignId":190561279,
+    "adGroupId":2029114499,
+    "orderItemId":40414589411,
+    "targetId":"40414589411",
+    "adId":5222037942
+}</code></pre></div>
 
 
 <!-- Bing Ads: Importing & merging -->
@@ -221,7 +276,11 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 
 <p>When a Criteo ad is clicked, data like the following can be found in
     <code>piwik_log_visit.aom_ad_params</code>:</p>
-<pre><code>{"platform":"Criteo","campaignId":"14340"}</code></pre>
+<div class="code-block">
+    <pre><code class="language-php">{
+    "platform":"Criteo",
+    "campaignId":"14340"
+}</code></pre></div>
 
 <!-- Criteo: Importing & merging -->
 <h4>Importing &amp; merging</h4>
@@ -273,7 +332,13 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 
 <p>When a Facebook Ads ad is clicked, data like the following can be found in
     <code>piwik_log_visit.aom_ad_params</code>:</p>
-<pre><code>{"platform":"FacebookAds","campaignId":"4160286035775","adsetId":"6028603577541","adId":"5760286037541"}</code></pre>
+<div class="code-block">
+    <pre><code class="language-php">{
+    "platform":"FacebookAds",
+    "campaignId":"4160286035775",
+    "adsetId":"6028603577541",
+    "adId":"5760286037541"
+}</code></pre></div>
 
 
 <!-- Facebook Ads: Importing & merging -->

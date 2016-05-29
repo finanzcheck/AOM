@@ -29,9 +29,9 @@
                         <li class="nav-item"><a href="docs.html">Docs</a></li>
                         <li class="nav-item"><a class="scrollto" href="#license">License</a></li>
                         <li class="nav-item last"><a class="scrollto" href="#contact">Contact</a></li>
-                    </ul><!--//nav-->
-                </div><!--//navabr-collapse-->
-            </nav><!--//main-nav-->
+                    </ul>
+                </div>
+            </nav>
         </div>
     </header>
     <section id="promo" class="promo section offset-header">
@@ -45,7 +45,7 @@
 
             <ul class="meta list-inline">
                 <li><a href="https://github.com/advanced-online-marketing/AOM" target="_blank">View on GitHub</a></li>
-                <li><a href="https://github.com/twbs/bootstrap" target="_blank">Full Documentation</a></li>
+                <li><a href="/docs.html" target="_blank">Full Documentation</a></li>
             </ul>
         </div>
         <div class="social-media">
@@ -78,27 +78,33 @@
             </div>
         </div>
     </section>
-{% include about.html %}
-{% include features.html %}
+
+    {% include about.html %}
+    {% include features.html %}
 
     <section id="docs" class="docs section">
         <div class="container">
             <div class="docs-inner">
-                <h2 class="title text-center">Get started with Piwik AOM</h2>
+                <h2 class="title text-center">Getting started with Piwik AOM</h2>
                 <div class="block">
-                    <h3 class="sub-title text-center">...</h3>
-                    <p>...</p>
                     <p class="text-center">
-                        <a class="btn btn-cta-primary" href="docs.html">Read the docs</a>
+                       1. Upload Piwik AOM plugin to your Piwik installation and install its dependencies.<br/>
+                       2. Configure API access to your advertising accounts (Google AdWords, Facebook Ads etc.) and activate the plugin.<br/>
+                       3. Parametrize all your links at the advertising platforms you use.<br/>
+                       4. Lay back and let Piwik AOM gather the data you need for advanced online marketing.<br/>
+                    </p>
+                    <p class="text-center" style="margin-top: 25px;">
+                        <a class="btn btn-cta-primary" href="docs.html">Read more about requirements, installation and
+                            parametrization</a>
                     </p>
                 </div>
             </div>
         </div>
     </section>
 
-{% include license.html %}
-{% include contact.html %}
-{% include footer.html %}
+    {% include license.html %}
+    {% include contact.html %}
+    {% include footer.html %}
 </body>
 </html> 
 
