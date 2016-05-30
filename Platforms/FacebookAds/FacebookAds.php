@@ -50,9 +50,12 @@ class FacebookAds extends Platform implements PlatformInterface
     /**
      * @inheritdoc
      */
-    public function getAdDataFromAdParams($idsite, array $adParams)
+    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
     {
-        $data = $this->getAdData($idsite, date('Y-m-d'), $adParams);
+        if(!$date) {
+            $date = date('Y-m-d');
+        }
+        $data = $this->getAdData($idsite, $date, $adParams);
         if(!$data[0]) {
             $data = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adsetId'])];
         }

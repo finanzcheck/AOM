@@ -150,11 +150,15 @@ class AdWords extends Platform implements PlatformInterface
     /**
      * @inheritdoc
      */
-    public function getAdDataFromAdParams($idsite, array $adParams)
+    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
     {
+        if(!$date) {
+            $date = date('Y-m-d', strtotime(AOM::convertUTCToLocalDateTime(date('Y-m-d H:i:s'), $idsite)));
+        }
+
         $adData = $this->getAdData(
             $idsite,
-            date('Y-m-d', strtotime(AOM::convertUTCToLocalDateTime(date('Y-m-d H:i:s'), $idsite))),
+            $date,
             $adParams
         );
 

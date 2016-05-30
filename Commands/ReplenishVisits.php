@@ -20,12 +20,56 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Piwik\Plugins\SitesManager\API as APISitesManager;
 
+
 /**
  * Example:
  * ./console aom:replenish-visits --startDate=2016-01-06 --endDate=2016-01-06
  */
-class ReplenishVisits extends AbstactImportCommand
+class ReplenishVisits extends ConsoleCommand
 {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @param string|null $name
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct($name = null, LoggerInterface $logger = null)
+    {
+        $this->logger = AOM::getTasksLogger();
+
+        parent::__construct($name);
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    protected function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['task' => 'replenish-visits'], $additionalContext)
+        );
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        if (!in_array('AdvancedCampaignReporting', Manager::getInstance()->getInstalledPluginsName())) {
+            $this->log(Logger::ERROR, 'Plugin "AdvancedCampaignReporting" must be installed and activated.');
+            exit;
+        }
+
+        foreach (AOM::getPeriodAsArrayOfDates($input->getOption('startDate'), $input->getOption('endDate')) as $date) {
+            $this->processDate($date);
+        }
+    }
 
     protected function configure()
     {

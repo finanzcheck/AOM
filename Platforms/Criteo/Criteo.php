@@ -46,9 +46,12 @@ class Criteo extends Platform implements PlatformInterface
     /**
      * @inheritdoc
      */
-    public function getAdDataFromAdParams($idsite, array $adParams)
+    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
     {
-        return $this::getAdData($idsite, date('Y-m-d'), $adParams['campaignId']);
+        if(!$date) {
+            $date = date('Y-m-d');
+        }
+        return $this::getAdData($idsite, $date, $adParams['campaignId']);
     }
 
     /**

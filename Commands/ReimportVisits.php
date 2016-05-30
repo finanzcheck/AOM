@@ -10,21 +10,59 @@ use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugin\ConsoleCommand;
-use Piwik\Plugin\Manager;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Site;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Piwik\Plugins\SitesManager\API as APISitesManager;
+use Piwik\Plugin\Manager;
 
 /**
  * Example:
- * ./console aom:reimport-visits --startDate=2016-01-06 --endDate=2016-01-06
+ * ./console aom:reimport-visits --startDate=2016-05-06 --endDate=2016-05-06
  */
-class ReimportVisits extends AbstactImportCommand
+class ReimportVisits extends ConsoleCommand
 {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @param string|null $name
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct($name = null, LoggerInterface $logger = null)
+    {
+        $this->logger = AOM::getTasksLogger();
+
+        parent::__construct($name);
+    }
+
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    protected function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['task' => 'reimport-visits'], $additionalContext)
+        );
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        foreach (AOM::getPeriodAsArrayOfDates($input->getOption('startDate'), $input->getOption('endDate')) as $date) {
+            $this->processDate($date);
+        }
+    }
+
     protected function configure()
     {
         $this
@@ -59,19 +97,18 @@ class ReimportVisits extends AbstactImportCommand
             }
 
             $sql .= ' WHERE idvisit = ' . $idvisit;
-
             DB::exec($sql);
         }
     }
 
     private function getParamsUrl($visit)
     {
-        if (AOM::getPlatformFromUrl($visit['referer_url'])) {
-            return $visit['referer_url'];
+        if (AOM::getPlatformFromUrl($visit['action_url'])) {
+            return $visit['action_url'];
         }
 
-        if (AOM::getPlatformFromUrl($visit['visit_entry_idaction_url'])) {
-            return $visit['visit_entry_idaction_url'];
+        if (AOM::getPlatformFromUrl($visit['referer_url'])) {
+            return $visit['referer_url'];
         }
 
         return null;
@@ -93,6 +130,7 @@ class ReimportVisits extends AbstactImportCommand
         $updateStatements = [];
 
         foreach ($visits as $visit) {
+
             //Determine matching URL
             $url = $this->getParamsUrl($visit);
             if (!$url) {
@@ -113,18 +151,6 @@ class ReimportVisits extends AbstactImportCommand
                 $updateMap['aom_ad_params'] = $aomAdParams;
             }
 
-            $platform = AOM::getPlatformInstance($adParams['platform']);
-            list($rowId, $adData) = $platform->getAdDataFromAdParams($visit['idsite'], $adParams);
-
-            $aomAdData = json_encode($adData);
-            if ($aomAdData != $visit['aom_ad_data']) {
-                $updateMap['aom_ad_data'] = $aomAdData;
-            }
-
-            if ($rowId != $visit['aom_platform_row_id']) {
-                $updateMap['aom_platform_row_id'] = $rowId;
-            }
-
             if (count($updateMap)) {
                 $updateStatements[] = [$visit['idvisit'], $updateMap];
             }
@@ -135,7 +161,7 @@ class ReimportVisits extends AbstactImportCommand
 
         $this->log(
             Logger::INFO,
-            "{$date}: Found {$countUpdateStatements} out of  {$totalPiwikVisits} to reimport."
+            "{$date}: Found {$countUpdateStatements} out of {$totalPiwikVisits} to reimport."
         );
     }
 
@@ -161,12 +187,12 @@ class ReimportVisits extends AbstactImportCommand
                             v.idvisit AS idvisit,
                             v.idsite AS idsite,
                             v.referer_url as referer_url,
-                            v.visit_entry_idaction_url as visit_entry_idaction_url,
+                            c.name as action_url,
                             v.aom_platform,
                             v.aom_ad_params,
                             v.aom_ad_data,
-                            v.aom_platform_row_id,
-                        FROM piwik_log_visit AS v LEFT JOIN piwik_log_conversion AS c ON v.idvisit = c.idvisit
+                            v.aom_platform_row_id
+                        FROM piwik_log_visit AS v LEFT JOIN piwik_log_action AS c ON v.visit_entry_idaction_url = c.idaction
                         WHERE v.idsite = ? AND v.visit_first_action_time >= ? AND v.visit_first_action_time <= ?',
                     [
                         $site['idsite'],

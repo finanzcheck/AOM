@@ -88,9 +88,10 @@ interface PlatformInterface
      *
      * @param string $idSite
      * @param array $adParams
+     * @param string $date
      * @return mixed
      */
-    public function getAdDataFromAdParams($idSite, array $adParams);
+    public function getAdDataFromAdParams($idSite, array $adParams, $date = null);
 
     /**
      * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
