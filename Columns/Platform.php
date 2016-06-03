@@ -46,6 +46,6 @@ class Platform extends VisitDimension
             return null;
         }
         
-        return AOM::getPlatformFromUrl($action->getActionUrl());
+        return AOM::getPlatformFromUrl(AOM::getParamsUrl($request));
     }
 }

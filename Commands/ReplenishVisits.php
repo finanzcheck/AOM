@@ -20,6 +20,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Piwik\Plugins\SitesManager\API as APISitesManager;
 
+
 /**
  * Example:
  * ./console aom:replenish-visits --startDate=2016-01-06 --endDate=2016-01-06
@@ -42,15 +43,20 @@ class ReplenishVisits extends ConsoleCommand
         parent::__construct($name);
     }
 
-    protected function configure()
+    /**
+     * Convenience function for shorter logging statements
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    protected function log($logLevel, $message, $additionalContext = [])
     {
-        $this
-            ->setName('aom:replenish-visits')
-            ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
-            ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
-            ->setDescription(
-                'Allocates platform costs to Piwik visits and stores them in piwik_aom_visits for further processing.'
-            );
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['task' => 'replenish-visits'], $additionalContext)
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -63,6 +69,17 @@ class ReplenishVisits extends ConsoleCommand
         foreach (AOM::getPeriodAsArrayOfDates($input->getOption('startDate'), $input->getOption('endDate')) as $date) {
             $this->processDate($date);
         }
+    }
+
+    protected function configure()
+    {
+        $this
+            ->setName('aom:replenish-visits')
+            ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
+            ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
+            ->setDescription(
+                'Allocates platform costs to Piwik visits and stores them in piwik_aom_visits for further processing.'
+            );
     }
 
     /**
@@ -235,100 +252,10 @@ class ReplenishVisits extends ConsoleCommand
         );
         $this->log(
             Logger::DEBUG,
-            'Replenished ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . ' visits.'
+            'Replenished ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . " visits ({$date})."
         );
     }
 
-    /**
-     * Returns the visits of all websites that occurred at the given date based on the website's timezone.
-     *
-     * @param string $date YYYY-MM-DD
-     * @return array
-     * @throws \Exception
-     */
-    private function getVisits($date)
-    {
-        // We assume that the website's timezone matches the timezone of all advertising platforms.
-        $visits = [];
-
-        // We get visits per website to consider the website's individual timezones.
-        foreach (APISitesManager::getInstance()->getAllSites() as $site) {
-            $visits = array_merge(
-                $visits,
-                Db::fetchAll(
-                    'SELECT
-                            v.idvisit AS idvisit,
-                            conv(hex(v.idvisitor), 16, 10) AS idvisitor,
-                            v.idsite AS idsite,
-                            v.visit_first_action_time,
-                            CASE v.referer_type
-                                WHEN 1 THEN "direct"
-                                WHEN 2 THEN "search_engine"
-                                WHEN 3 THEN "website"
-                                WHEN 6 THEN "campaign"
-                                ELSE ""
-                            END AS referer_type,
-                            v.referer_name,
-                            v.referer_keyword,
-                            v.referer_url,
-                            v.campaign_name,
-                            v.campaign_keyword,
-                            v.campaign_source,
-                            v.campaign_medium,
-                            v.campaign_content,
-                            v.campaign_id,
-                            v.aom_platform,
-                            v.aom_platform_row_id AS aom_platform_row_id,
-                            COUNT(c.idorder) AS conversions,
-                            SUM(c.revenue) AS revenue
-                        FROM piwik_log_visit AS v LEFT JOIN piwik_log_conversion AS c ON v.idvisit = c.idvisit
-                        WHERE v.idsite = ? AND v.visit_first_action_time >= ? AND v.visit_first_action_time <= ?
-                        GROUP BY v.idvisit',
-                    [
-                        $site['idsite'],
-                        AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', $site['timezone']),
-                        AOM::convertLocalDateTimeToUTC($date . ' 23:59:59', $site['timezone']),
-                    ]
-                )
-            );
-        }
-
-        foreach ($visits as &$visit) {
-            $visit['campaign_data'] = [];
-            if (null !== $visit['campaign_name']) {
-                $visit['campaign_data']['campaignName'] = $visit['campaign_name'];
-            }
-            if (null !== $visit['campaign_keyword']) {
-                $visit['campaign_data']['campaignKeyword'] = $visit['campaign_keyword'];
-            }
-            if (null !== $visit['campaign_source']) {
-                $visit['campaign_data']['campaignSource'] = $visit['campaign_source'];
-            }
-            if (null !== $visit['campaign_medium']) {
-                $visit['campaign_data']['campaignMedium'] = $visit['campaign_medium'];
-            }
-            if (null !== $visit['campaign_content']) {
-                $visit['campaign_data']['campaignContent'] = $visit['campaign_content'];
-            }
-            if (null !== $visit['campaign_id']) {
-                $visit['campaign_data']['campaignId'] = $visit['campaign_id'];
-            }
-            if (null !== $visit['referer_name']) {
-                $visit['campaign_data']['refererName'] = $visit['referer_name'];
-            }
-            if (null !== $visit['referer_url']) {
-                $visit['campaign_data']['refererUrl'] = $visit['referer_url'];
-            }
-        }
-
-        $this->log(
-            Logger::DEBUG,
-            'Got ' . count($visits) . ' Piwik visits with '
-                . array_sum(array_map(function($visit) { return $visit['conversions']; }, $visits)) . ' conversions.'
-        );
-
-        return $visits;
-    }
 
     /**
      * Returns the platform's costs for the given date.
@@ -420,18 +347,95 @@ class ReplenishVisits extends ConsoleCommand
     }
 
     /**
-     * Convenience function for shorter logging statements
+     * Returns the visits of all websites that occurred at the given date based on the website's timezone.
      *
-     * @param string $logLevel
-     * @param string $message
-     * @param array $additionalContext
+     * @param string $date YYYY-MM-DD
+     * @return array
+     * @throws \Exception
      */
-    private function log($logLevel, $message, $additionalContext = [])
+    private function getVisits($date)
     {
-        $this->logger->log(
-            $logLevel,
-            $message,
-            array_merge(['task' => 'replenish-visits'], $additionalContext)
+        // We assume that the website's timezone matches the timezone of all advertising platforms.
+        $visits = [];
+
+        // We get visits per website to consider the website's individual timezones.
+        foreach (APISitesManager::getInstance()->getAllSites() as $site) {
+            $visits = array_merge(
+                $visits,
+                Db::fetchAll(
+                    'SELECT
+                            v.idvisit AS idvisit,
+                            conv(hex(v.idvisitor), 16, 10) AS idvisitor,
+                            v.idsite AS idsite,
+                            v.visit_first_action_time,
+                            CASE v.referer_type
+                                WHEN 1 THEN "direct"
+                                WHEN 2 THEN "search_engine"
+                                WHEN 3 THEN "website"
+                                WHEN 6 THEN "campaign"
+                                ELSE ""
+                            END AS referer_type,
+                            v.referer_name,
+                            v.referer_keyword,
+                            v.referer_url,
+                            v.campaign_name,
+                            v.campaign_keyword,
+                            v.campaign_source,
+                            v.campaign_medium,
+                            v.campaign_content,
+                            v.campaign_id,
+                            v.aom_platform,
+                            v.aom_platform_row_id AS aom_platform_row_id,
+                            COUNT(c.idorder) AS conversions,
+                            SUM(c.revenue) AS revenue
+                        FROM piwik_log_visit AS v LEFT JOIN piwik_log_conversion AS c ON v.idvisit = c.idvisit
+                        WHERE v.idsite = ? AND v.visit_first_action_time >= ? AND v.visit_first_action_time <= ?
+                        GROUP BY v.idvisit',
+                    [
+                        $site['idsite'],
+                        AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', $site['timezone']),
+                        AOM::convertLocalDateTimeToUTC($date . ' 23:59:59', $site['timezone']),
+                    ]
+                )
+            );
+        }
+
+        foreach ($visits as &$visit) {
+            $visit['campaign_data'] = [];
+            if (null !== $visit['campaign_name']) {
+                $visit['campaign_data']['campaignName'] = $visit['campaign_name'];
+            }
+            if (null !== $visit['campaign_keyword']) {
+                $visit['campaign_data']['campaignKeyword'] = $visit['campaign_keyword'];
+            }
+            if (null !== $visit['campaign_source']) {
+                $visit['campaign_data']['campaignSource'] = $visit['campaign_source'];
+            }
+            if (null !== $visit['campaign_medium']) {
+                $visit['campaign_data']['campaignMedium'] = $visit['campaign_medium'];
+            }
+            if (null !== $visit['campaign_content']) {
+                $visit['campaign_data']['campaignContent'] = $visit['campaign_content'];
+            }
+            if (null !== $visit['campaign_id']) {
+                $visit['campaign_data']['campaignId'] = $visit['campaign_id'];
+            }
+            if (null !== $visit['referer_name']) {
+                $visit['campaign_data']['refererName'] = $visit['referer_name'];
+            }
+            if (null !== $visit['referer_url']) {
+                $visit['campaign_data']['refererUrl'] = $visit['referer_url'];
+            }
+        }
+
+        $this->log(
+            Logger::DEBUG,
+            'Got ' . count($visits) . ' Piwik visits with '
+            . array_sum(array_map(function($visit) { return $visit['conversions']; }, $visits)) . ' conversions.'
         );
+
+        return $visits;
     }
+
+
 }

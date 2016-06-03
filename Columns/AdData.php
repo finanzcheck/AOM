@@ -33,7 +33,7 @@ class AdData extends VisitDimension
             return false;
         }
 
-        list($rowId, $data) = AOM::getAdData($action);
+        list($rowId, $data) = AOM::getAdData($request);
 
         return json_encode($data);
     }

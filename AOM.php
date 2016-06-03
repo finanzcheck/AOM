@@ -14,6 +14,7 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Tracker\Action;
+use Piwik\Tracker\Request;
 use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
@@ -95,14 +96,14 @@ class AOM extends \Piwik\Plugin
                         idsite INTEGER NOT NULL,
                         piwik_idvisit INTEGER,
                         piwik_idvisitor VARCHAR(100),
-                        piwik_visit_first_action_time_utc DATETIME NOT NULL,
+                        first_action_time_utc DATETIME NOT NULL,
                         date_website_timezone DATE NOT NULL,
                         channel VARCHAR(100),
                         campaign_data TEXT,
                         platform_data TEXT,
-                        cost FLOAT NOT NULL,
-                        conversions INTEGER NOT NULL,
-                        revenue FLOAT NOT NULL,
+                        cost FLOAT,
+                        conversions INTEGER,
+                        revenue FLOAT,
                         ts_created TIMESTAMP
                     )  DEFAULT CHARSET=utf8';
             Db::exec($sql);
@@ -235,22 +236,47 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
+     * Normally the url contains all important params information. In some cases this information is stored in urlRef.
+     *
+     * @param Request $request
+     * @return string|null url when available
+     */
+    public static function getParamsUrl(Request $request)
+    {
+        if(isset($request->getParams()['url']) && AOM::getPlatformFromUrl($request->getParams()['url'])){
+            return $request->getParams()['url'];
+        }
+
+        if(isset($request->getParams()['urlref'])) {
+            return $request->getParams()['urlref'];
+        }
+
+        return null;
+    }
+
+    /**
      * Tries to find some ad data for this visit.
      *
-     * @param Action $action
+     * @param Request $request
      * @return mixed
      * @throws \Piwik\Exception\UnexpectedWebsiteFoundException
      */
-    public static function getAdData(Action $action)
+    public static function getAdData(Request $request)
     {
-        $params = self::getAdParamsFromUrl($action->getActionUrl());
+        $params = self::getAdParamsFromRequest($request);
         if (!$params) {
             return [null, null];
         }
 
         $platform = self::getPlatformInstance($params['platform']);
-        return $platform->getAdDataFromAdParams($action->request->getIdSite(), $params);
+        return $platform->getAdDataFromAdParams($request->getIdSite(), $params);
     }
+
+    public static function getAdParamsFromRequest(Request $request)
+    {
+        return self::getAdParamsFromUrl(AOM::getParamsUrl($request));
+    }
+
 
     /**
      * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.
@@ -264,6 +290,7 @@ class AOM extends \Piwik\Plugin
         $paramPrefix = $settings->paramPrefix->getValue();
 
         $queryString = parse_url($url, PHP_URL_QUERY);
+
         parse_str($queryString, $queryParams);
 
         if (is_array($queryParams)
