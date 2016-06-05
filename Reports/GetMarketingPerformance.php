@@ -27,7 +27,8 @@ class GetMarketingPerformance extends Base
         // Place below "campaigns"
         $this->order = 999;
 
-        // TODO: visits, visitors, costs, conversions, conversion value
+        // TODO: Current width of columns is a little too big
+        // TODO: Add actions, time on site and bounce rate?!
         $this->metrics = [
             'platform_impressions',
             'platform_clicks',
@@ -37,10 +38,10 @@ class GetMarketingPerformance extends Base
             'nb_uniq_visitors',
             'conversion_rate',
             'nb_conversions',
+            'cost_per_conversion',
             'revenue',
+            'return_on_ad_spend',
         ];
-
-        // TODO: Add channel individual subtables
     }
 
     /**
@@ -63,7 +64,14 @@ class GetMarketingPerformance extends Base
         $metrics['platform_clicks'] = Piwik::translate('AOM_Report_MarketingPerformance_PlatformClicks');
         $metrics['platform_cost'] = Piwik::translate('AOM_Report_MarketingPerformance_PlatformCost');
         $metrics['platform_cpc'] = Piwik::translate('AOM_Report_MarketingPerformance_PlatformCpC');
+        $metrics['cost_per_conversion'] = Piwik::translate('AOM_Report_MarketingPerformance_CostPerConversion');
+        $metrics['return_on_ad_spend'] = Piwik::translate('AOM_Report_MarketingPerformance_ReturnOnAdSpend');
 
         return $metrics;
+    }
+    
+    public function loadSubtable()
+    {
+        
     }
 }

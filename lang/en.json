@@ -1,7 +1,7 @@
 {
     "AOM": {
         "Menu_Settings": "AOM Settings",
-        "Platform_VisitDescription_AdWords": "<span style=\"font-weight: bold;\">Visit coming from AdWords for %1$s<\/span><br\/><nobr>Account: %2$s<\/nobr>, <nobr>Campaign: %3$s<\/nobr>, <nobr>AdGroup: %4$s<\/nobr>, <nobr>Keyword/Placement: %5$s<\/nobr>",
+        "Platform_VisitDescription_AdWords": "<span style=\"font-weight: bold;\">Visit coming from AdWords for %1$s<\/span><br\/><nobr>Account: %2$s<\/nobr>, <nobr>Campaign: %3$s<\/nobr>, <nobr>AdGroup: %4$s<\/nobr>, <nobr>Keyword\/Placement: %5$s<\/nobr>",
         "Platform_VisitDescription_Bing": "<span style=\"font-weight: bold;\">Visit coming from Bing for %1$s<\/span><br\/><nobr>Account: %2$s<\/nobr>, <nobr>Campaign: %3$s<\/nobr>, <nobr>AdGroup: %4$s<\/nobr>",
         "Platform_VisitDescription_Criteo": "<span style=\"font-weight: bold;\">Visit coming from Criteo for %1$s<\/span><br\/><nobr>Campaign: %2$s<\/nobr>",
         "Platform_VisitDescription_FacebookAds": "<span style=\"font-weight: bold;\">Visit coming from Facebook Ads for %1$s<\/span><br\/><nobr>Campaign: %2$s<\/nobr>, <nobr>AdGroup: %3$s<\/nobr>",
@@ -13,11 +13,13 @@
         "PluginSettings_Setting_EnableCriteo_Title": "Enable Criteo",
         "PluginSettings_Setting_EnableFacebookAds_Title": "Enable Facebook Ads",
         "Report_MarketingPerformance": "Marketing Performance",
-        "Report_MarketingPerformance_Description": "Get insight into the performance of your online marketing activities.",
+        "Report_MarketingPerformance_Description": "Online marketing performance KPI are based on \"last cookie wins\".<br\/>We recommend to import Piwik's data into your data warehouse and evaluate alternative approaches to conversion attribution.",
         "Report_MarketingPerformance_PlatformImpressions": "Platform Impressions",
         "Report_MarketingPerformance_PlatformClicks": "Platform Clicks",
         "Report_MarketingPerformance_PlatformCost": "Platform Cost",
         "Report_MarketingPerformance_PlatformCpC": "Platform CpC",
+        "Report_MarketingPerformance_CostPerConversion": "Cost per Conversion",
+        "Report_MarketingPerformance_ReturnOnAdSpend": "Return on ad spend",
         "Report_MarketingPerformance_Total": "Total",
         "Settings_Title": "Settings",
         "Settings_Introduction": "You must activate and deactivate advertising platforms in the <a href=\"index.php?module=CoreAdminHome&action=adminPluginSettings&activated=#AOM\">plugin's settings<\/a> first. After that, you can manage the accounts of activated advertising platforms here.<br\/><br\/><strong>Make sure, that the timezone of each advertising platform account matches the timezone of the website that you import your data for.<\/strong>",
@@ -53,6 +55,7 @@
         "Settings_FacebookAds_ClientSecret": "Client-Secret",
         "Settings_FacebookAds_AccountId": "Account-ID",
         "Settings_FacebookAds_AccessToken": "Access Token",
-        "Settings_FacebookAds_GetAccessToken": "Get new token"
+        "Settings_FacebookAds_GetAccessToken": "Get new token",
+        "BrowserFamilies": "BrowserFamilies"
     }
 }

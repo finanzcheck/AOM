@@ -11,6 +11,7 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Settings;
+use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
 abstract class Platform
@@ -122,12 +123,15 @@ abstract class Platform
 
         if ($mergeAfterwards) {
 
-            // We must use the importer's period as $startDate and $endDate can be null or could have been modified
+            // We must use the importer's period, as $startDate and $endDate can be null or could have been modified
             $this->logger->debug(
                 'Will merge ' .  $this->getUnqualifiedClassName() . ' for period from ' . $importer->getStartDate()
-                . ' until ' . $importer->getEndDate() . ' now.'
+                . ' until ' . $importer->getEndDate() . ' on a daily basis now.'
             );
-            $this->merge($importer->getStartDate(), $importer->getEndDate());
+            // We merge on a daily basis, primarily due to performance issues
+            foreach (AOM::getPeriodAsArrayOfDates($importer->getStartDate(), $importer->getEndDate()) as $date) {
+                $this->merge($date, $date);
+            }
         }
     }
 
@@ -151,6 +155,90 @@ abstract class Platform
         $merger->setPeriod($startDate, $endDate);
         $merger->setPlatform($this);
         $merger->merge();
+    }
+
+    /**
+     * Deletes all imported data for the given combination of platform account, website and date.
+     *
+     * @param string $platformName
+     * @param string $accountId
+     * @param int $websiteId
+     * @param string $date
+     * @return array
+     */
+    public static function deleteImportedData($platformName, $accountId, $websiteId, $date)
+    {
+        $timeStart = microtime(true);
+        $deletedImportedDataRecords = Db::deleteAllRows(
+            AOM::getPlatformDataTableNameByPlatformName($platformName),
+            'WHERE id_account_internal = ? AND idsite = ? AND date = ?',
+            'date',
+            100000,
+            [
+                $accountId,
+                $websiteId,
+                $date,
+            ]
+        );
+        $timeToDeleteImportedData = microtime(true) - $timeStart;
+
+        return [$deletedImportedDataRecords, $timeToDeleteImportedData];
+    }
+
+    /**
+     * Updates aom_ad_data and aom_platform_row_id to NULL of all visits that match the given combination of platform,
+     * website and date.
+     *
+     * @param string $platformName
+     * @param int $websiteId
+     * @param string $date
+     * @return array
+     */
+    public static function deleteMergedData($platformName, $websiteId, $date)
+    {
+        $timeStart = microtime(true);
+        $unsetMergedDataRecords = Db::query(
+            'UPDATE ' . Common::prefixTable('log_visit') . ' AS v
+                LEFT OUTER JOIN ' . AOM::getPlatformDataTableNameByPlatformName($platformName) . ' AS p
+                ON (p.id = v.aom_platform_row_id)
+                SET v.aom_ad_data = NULL, v.aom_platform_row_id = NULL
+                WHERE v.idsite = ? AND v.aom_platform = ? AND p.id IS NULL
+                    AND visit_first_action_time >= ? AND visit_first_action_time <= ?',
+            [
+                $websiteId,
+                $platformName,
+                AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($websiteId)),
+                AOM::convertLocalDateTimeToUTC($date . ' 23:59:59', Site::getTimezoneFor($websiteId)),
+            ]
+        );
+        $timeToUnsetMergedData = microtime(true) - $timeStart;
+
+        return [$unsetMergedDataRecords, $timeToUnsetMergedData];
+    }
+
+    /**
+     * Removes all replenished visits for the combination of website and date.
+     *
+     * @param int $websiteId
+     * @param string $date
+     * @return array
+     */
+    public static function deleteReplenishedData($websiteId, $date)
+    {
+        $timeStart = microtime(true);
+        $deletedReplenishedVisitsRecords = Db::deleteAllRows(
+            Common::prefixTable('aom_visits'),
+            'WHERE idsite = ? AND date_website_timezone = ?',
+            'date_website_timezone',
+            100000,
+            [
+                $websiteId,
+                $date,
+            ]
+        );
+        $timeToDeleteReplenishedVisits = microtime(true) - $timeStart;
+
+        return [$deletedReplenishedVisitsRecords, $timeToDeleteReplenishedVisits];
     }
 
     /**
@@ -181,6 +269,17 @@ abstract class Platform
     public function getDataTableName()
     {
         return Common::prefixTable('aom_' . strtolower($this->getName()));
+    }
+
+    /**
+     * Returns an instance of MarketingPerformanceSubTables when drill down through Piwik UI is supported.
+     * Returns false, if not.
+     *
+     * @return MarketingPerformanceSubTablesInterface|false
+     */
+    public function getMarketingPerformanceSubTables()
+    {
+        return false;
     }
 
     /**
