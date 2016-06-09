@@ -4,7 +4,7 @@ title: Piwik AOM Plugin Documentation
 ---
 
 <h2 class="title text-center">Piwik AOM Plugin Documentation</h2>
-<p>Integrate additional data like campaign names, ad impressions costs etc. from advertising platforms such as
+<p>Integrate additional data like campaign names, ad impressions, costs etc. from advertising platforms such as
     Google AdWords, Microsoft Bing, Criteo and Facebook Ads into Piwik and combine that data with individual visits -
     <strong>create a whole bunch of new opportunities!</strong></p>
 
@@ -16,35 +16,49 @@ title: Piwik AOM Plugin Documentation
 
 <p>To map individual visits with the data from the advertising platforms, all links from the platforms must have
     <a href="advertisers-platforms.html">additional params</a> that supply mapping-related data like campaign and ad IDs
-    to this plugin. This data is stored in <code>piwik_log_visit.aom_ad_params</code>. When a visitor returns with other
-    tracking params, a new visit is started automatically.</p>
+    to the Piwik AOM plugin. This data is stored in the database columns <code>piwik_log_visit.aom_platform</code> and
+    <code>piwik_log_visit.aom_ad_params</code>. When a visitor returns with other tracking params, a new visit is
+    started automatically.</p>
 
-<p>Background jobs import and merge the data from the advertising platforms with individual visits. Importing and
-    merging is done automatically when you have set up
-    <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a>.<p>
+<p>After you have set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> background jobs will
+    work on the following three tasks:</p>
 
+<h4 class="sub-title">1. Import data from advertising platforms</h4>
+<p>Imported data is stored in the database table <code>piwik_aom_{platformName}</code>. Every advertising platform's
+    data is aggregated on a daily basis in the timezone of the advertising platform's account. Merged data will only be
+    correct, when your website's timezone matches the timezones of each advertising platform account.</p>
+
+<h4 class="sub-title">2. Merge imported data with individual visits</h4>
+<p>The background job tries to reference individual visits based on <code>piwik_log_visit.aom_platform</code> and
+    <code>piwik_log_visit.aom_ad_params</code> to advertising platform's data in <code>piwik_aom_{platformName}</code>.
+    When a match is found, it is stored in <code>piwik_log_visit.aom_ad_data</code> (containing the merged data as JSON)
+    and in <code>piwik_log_visit.aom_platform_row_id</code> (containing a reference to a record in
+    <code>piwik_aom_{platformName}</code>).</p>
+
+<h4 class="sub-title">3. Replenish visits / allocate costs</h4>
+<p>Platform costs are being allocated to (merged) Piwik visits and the results are stored in
+    <code>piwik_aom_visits</code>. There might be more visits in <code>piwik_aom_visits</code> then in
+    <code>piwik_log_visits</code> when there a platform costs that could not be assigned to visits from
+    <code>piwik_log_visits</code>.</p>
+
+<p>The data in <code>piwik_aom_visits</code> contains both all Piwik visits and all costs. It is used in the marketing
+    performance report in the Piwik UI and it can be used via the <a href="api.html">API endpoints provided by the Piwik
+    AOM plugin</a> (e.g. for further processing in a data warehouse).</p>
+
+
+<h3 class="sub-title text-center">Manual importing, merging & replenishing</h3>
 <p>You can (re)import data manually by executing <code>./console aom:import --platform={platformName}
-    --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD</code>.</p>
+    --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD</code>. Reimporting data deletes all previously imported, merged and
+    replenished data for the given platform and period. Adding <code>--merge=true</code> merges the newly imported data
+    immediately after the import has finished.</p>
 
 <p>You can merge imported data manually by executing <code>./console aom:merge --platform={platformName}
-    --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD</code>.</p>
+    --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD</code>. Merging imported data deletes all previous merged and
+    replenished data for the given platform and period.</p>
 
-<p>Imported data is stored in <code>piwik_aom_{platformName}</code>. Every advertising platform's data is aggregated on
-    a daily basis in the timezone of the advertising platform's account. Merging will only be correct, when your
-    website's timezone matches the timezones of each advertising platform account. Merged data is stored in
-    <code>piwik_log_visit.aom_ad_data</code>.</p>
-
-
-<!-- Allocate costs to Piwik visits -->
-<h2 class="sub-title text-center">Allocate costs to Piwik visits</h2>
-<p>Executing <code>./console aom:replenish-visits --startDate=YYYY-MM-DD --endDate=YYYY-MM-DD</code> allocates platform
-    costs to (merged) Piwik visits and stores the results in <code>piwik_aom_visits</code>. There might be more visits
-    in <code>piwik_aom_visits</code> then in <code>piwik_log_visits</code> when there a platform costs that could not be
-    assigned to visits from <code>piwik_log_visits</code>.</p>
-
-<p>The data in <code>piwik_aom_visits</code> contains both all Piwik visits and all costs. It can be used via the
-    <a href="api.html">API endpoints provided by the Piwik AOM plugin</a> (e.g. for further processing in a data
-    warehouse).</p>
+<p>You can replenish visits manually by executing <code>./console aom:replenish-visits --startDate=YYYY-MM-DD
+    --endDate=YYYY-MM-DD</code>. Replenishing visits deletes all previous replenished data for the given period. As you
+    can see, replenishing visits reaches across all platforms while importing and merging are platform-specific.</p>
 
 
 <!-- Requirements, installation & updates -->
@@ -54,16 +68,16 @@ title: Piwik AOM Plugin Documentation
     to set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a>.</p>
 
 <p>To install AOM, <a href="https://github.com/advanced-online-marketing/AOM/releases">grab the latest release from
-    github</a> and upload it to <code>/path/to/piwik/plugins</code>. Make sure
-    <a href="https://getcomposer.org/">Composer</a> is installed and run <code>composer install</code> in
+    github</a>, rename the folder to AOM (without version number) and upload it to <code>/path/to/piwik/plugins</code>.
+    Make sure <a href="https://getcomposer.org/">Composer</a> is installed and run <code>composer install</code> in
     <code>plugins/AOM</code> to install dependencies, such as the Facebook Ads and Google AdWords SDKs. Activate and
     configure the plugin (e.g. provide API credentials to advertiser's platforms).</p>
 
 <p>Set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> to automatically import and merge
     data from the advertiser's platforms. The auto archiving cron job executes the <code>core:archive command</code>
     which triggers <a href="https://developer.piwik.org/api-reference/Piwik/TaskScheduler">Piwik's TaskScheduler</a> and
-    thus this plugin's tasks. You can import and merge data manually by running <code>./console core:run-scheduled-tasks
-    --force</code>.</p>
+    thus this plugin's tasks (see <code>Tasks.php</code>). You can trigger all of this plugin's background jobs manually
+    by executing <code>./console core:run-scheduled-tasks --force</code>.</p>
 
 <p>Merging will only be correct, when your website's timezone matches the timezones of each advertising platform
     account.</p>
@@ -76,21 +90,31 @@ title: Piwik AOM Plugin Documentation
 <h2 class="sub-title text-center">Limitations</h2>
 
 <h3>Advertising platforms</h3>
-<p>All data is being processed on a daily basis, i.e. fluctuation of click costs during the day are not being
+<p>All data is being processed on a daily basis, i.e. variations of click costs during the day are not being
     considered.</p>
 
 <h4>Google AdWords</h4>
 <p>Visits of Google display network are assigned on AdGroup level.</p>
 
 <h3>Performance</h3>
-<p>This plugin has successfully been tested with up to 20k visitors a day for a period of more than a year, running on a
-    AWS server ... with separate AWS RDS MySQL database .... You might encounter performance issues during importing,
-    merging or using the plugin's API when you have more traffic or a an infrastructure with less performance.
+<p>This plugin has successfully been tested with up to 20k visitors a day for a period of more than a year, running on
+    an AWS server with 4 GB RAM and a separate AWS RDS MySQL database. Single PHP processes might use up to 1 GB RAM and
+    run for minutes. You might encounter performance issues during importing, merging, accessing the plugin's marketing
+    performance report in the UI or using the plugin's API when you have more traffic or a an infrastructure with less
+    performance.
 </p>
 
 
 <!-- Changelog -->
 <h2 class="sub-title text-center">Changelog</h2>
+<p><strong>0.3.1</strong> on 9 June 2016</p>
+<ul>
+    <li>Adds drill-downs into marketing performance reports (campaigns, ad groups)</li>
+</ul>
+<p><strong>0.2.1</strong> on 3 June 2016</p>
+<ul>
+    <li>Identifies AOM tracking params from referrer URL in addition to action URL</li>
+</ul>
 <p><strong>0.2.0</strong> on 22 May 2016</p>
 <ul>
     <li>Integrates Piwik AOM data into Piwik UI</li>
