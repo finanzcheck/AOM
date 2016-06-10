@@ -153,25 +153,37 @@ class Bing extends Platform implements PlatformInterface
      * @param $url
      * @return bool|mixed|string
      */
-    public static function urlGetContents ($url) {
-        if (function_exists('curl_exec')){
+    public static function urlGetContents($url)
+    {
+        if (function_exists('curl_exec')) {
             $conn = curl_init($url);
             curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($conn, CURLOPT_FRESH_CONNECT,  true);
+            curl_setopt($conn, CURLOPT_FRESH_CONNECT, true);
             curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
             $url_get_contents_data = (curl_exec($conn));
             curl_close($conn);
-        }elseif(function_exists('file_get_contents')){
+        } elseif (function_exists('file_get_contents')) {
             $url_get_contents_data = file_get_contents($url);
-        }elseif(function_exists('fopen') && function_exists('stream_get_contents')){
-            $handle = fopen ($url, "r");
+        } elseif (function_exists('fopen') && function_exists('stream_get_contents')) {
+            $handle = fopen($url, "r");
             $url_get_contents_data = stream_get_contents($handle);
-        }else{
+        } else {
             $url_get_contents_data = false;
         }
         return $url_get_contents_data;
     }
 
+    /**
+     * Activates sub tables for the marketing performance report in the Piwik UI for Criteo.
+     *
+     * @return MarketingPerformanceSubTables
+     */
+    public function getMarketingPerformanceSubTables()
+    {
+        return new MarketingPerformanceSubTables();
+    }
+
+    
     /**
      * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
      * platform-specific description is available.

@@ -71,8 +71,8 @@ interface PlatformInterface
     public function merge($startDate, $endDate);
 
     /**
-     * Extracts advertisement platform specific data from the query params and stores it in piwik_log_visit.aom_ad_params.
-     * The implementation of this method must ensure a consistently ordered JSON.
+     * Extracts advertisement platform specific data from the query params and stores it in
+     * piwik_log_visit.aom_ad_params. The implementation of this method must ensure a consistently ordered JSON.
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -92,6 +92,14 @@ interface PlatformInterface
      * @return mixed
      */
     public function getAdDataFromAdParams($idSite, array $adParams, $date = null);
+
+    /**
+     * Returns the subTableId to drill into the first level of marketing performance statistics in the Piwik UI.
+     * When this method in not overwritten by a specific platform, drilling down is not possible.
+     *
+     * @return MarketingPerformanceSubTablesInterface|false
+     */
+    public function getMarketingPerformanceSubTables();
 
     /**
      * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no

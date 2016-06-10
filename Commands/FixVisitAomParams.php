@@ -16,13 +16,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Piwik\Plugins\SitesManager\API as APISitesManager;
-use Piwik\Plugin\Manager;
 
 /**
  * Example:
- * ./console aom:reimport-visits --startDate=2016-05-06 --endDate=2016-05-06
+ * ./console aom:fix-visit-aom-params --startDate=2016-05-06 --endDate=2016-05-06
  */
-class ReimportVisits extends ConsoleCommand
+class FixVisitAomParams extends ConsoleCommand
 {
     /**
      * @var LoggerInterface
@@ -52,7 +51,7 @@ class ReimportVisits extends ConsoleCommand
         $this->logger->log(
             $logLevel,
             $message,
-            array_merge(['task' => 'reimport-visits'], $additionalContext)
+            array_merge(['task' => 'fix-visit-aom-params'], $additionalContext)
         );
     }
 
@@ -66,11 +65,11 @@ class ReimportVisits extends ConsoleCommand
     protected function configure()
     {
         $this
-            ->setName('aom:reimport-visits')
+            ->setName('aom:fix-visit-aom-params')
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->setDescription(
-                'Refills columns depending on entryUrl or referrer.'
+                'Refills aom_platform and aom_ad_params columns based on action URL and referrer URL.'
             );
     }
 
@@ -161,7 +160,7 @@ class ReimportVisits extends ConsoleCommand
 
         $this->log(
             Logger::INFO,
-            "{$date}: Found {$countUpdateStatements} out of {$totalPiwikVisits} to reimport."
+            "{$date}: Found {$countUpdateStatements} out of {$totalPiwikVisits} to fix."
         );
     }
 
@@ -211,6 +210,4 @@ class ReimportVisits extends ConsoleCommand
 
         return $visits;
     }
-
-
 }

@@ -17,6 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Example:
  * ./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20
+ * ./console aom:import --platform=AdWords --startDate=2015-12-20 --endDate=2015-12-20 --merge=true
  */
 class PlatformImport extends ConsoleCommand
 {

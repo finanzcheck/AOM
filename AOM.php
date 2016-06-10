@@ -90,31 +90,27 @@ class AOM extends \Piwik\Plugin
             $platform->installPlugin();
         }
 
-        try {
-            $sql = 'CREATE TABLE ' . Common::prefixTable('aom_visits') . ' (
-                        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        idsite INTEGER NOT NULL,
-                        piwik_idvisit INTEGER,
-                        piwik_idvisitor VARCHAR(100),
-                        first_action_time_utc DATETIME NOT NULL,
-                        date_website_timezone DATE NOT NULL,
-                        channel VARCHAR(100),
-                        campaign_data TEXT,
-                        platform_data TEXT,
-                        cost FLOAT,
-                        conversions INTEGER,
-                        revenue FLOAT,
-                        ts_created TIMESTAMP
-                    )  DEFAULT CHARSET=utf8';
-            Db::exec($sql);
-        } catch (\Exception $e) {
-            // ignore error if table already exists (1050 code is for 'table already exists')
-            if (!Db::get()->isErrNo($e, '1050')) {
-                throw $e;
-            }
-        }
+        self::addDatabaseTable(
+            'CREATE TABLE ' . Common::prefixTable('aom_visits') . ' (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                idsite INTEGER NOT NULL,
+                piwik_idvisit INTEGER,
+                piwik_idvisitor VARCHAR(100),
+                first_action_time_utc DATETIME NOT NULL,
+                date_website_timezone DATE NOT NULL,
+                channel VARCHAR(100),
+                campaign_data TEXT,
+                platform_data TEXT,
+                cost FLOAT,
+                conversions INTEGER,
+                revenue FLOAT,
+                ts_created TIMESTAMP
+            )  DEFAULT CHARSET=utf8');
 
-        // TODO: Create indices!
+        // Optimize for queries from MarketingPerformanceController.php
+        self::addDatabaseIndex(
+            'CREATE INDEX index_aom_visits ON ' . Common::prefixTable('aom_visits')
+            . ' (idsite, channel, date_website_timezone)');
 
         $this->getLogger()->debug('Installed AOM.');
     }
@@ -384,5 +380,42 @@ class AOM extends \Piwik\Plugin
     public static function getPlatformDataTableNameByPlatformName($platformName)
     {
         return Common::prefixTable('aom_' . strtolower($platformName));
+    }
+
+    /**
+     * Adds a database table unless it already exists
+     *
+     * @param $sql
+     * @throws \Exception
+     */
+    public static function addDatabaseTable($sql)
+    {
+        try {
+            Db::exec($sql);
+        } catch (\Exception $e) {
+            // ignore error if table already exists (1050 code is for 'table already exists')
+            if (!Db::get()->isErrNo($e, '1050')) {
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * Adds an index to the database unless it already exists
+     *
+     * @param $sql
+     * @throws \Exception
+     */
+
+    public static function addDatabaseIndex($sql)
+    {
+        try {
+            Db::exec($sql);
+        } catch (\Exception $e) {
+            // ignore error if index already exists (1061)
+            if (!Db::get()->isErrNo($e, '1061')) {
+                throw $e;
+            }
+        }
     }
 }

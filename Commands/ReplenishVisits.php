@@ -92,6 +92,7 @@ class ReplenishVisits extends ConsoleCommand
     public function processDate($date)
     {
         // Clean up replenished data
+        // TODO: Use Platform::deleteReplenishedData($websiteId, $date) instead
         Db::deleteAllRows(Common::prefixTable('aom_visits'), 'WHERE date_website_timezone = ?', 'id', 100000, [$date,]);
 
         // Get visits

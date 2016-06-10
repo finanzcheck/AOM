@@ -103,6 +103,16 @@ class Criteo extends Platform implements PlatformInterface
     }
 
     /**
+     * Activates sub tables for the marketing performance report in the Piwik UI for Criteo.
+     *
+     * @return MarketingPerformanceSubTables
+     */
+    public function getMarketingPerformanceSubTables()
+    {
+        return new MarketingPerformanceSubTables();
+    }
+
+    /**
      * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
      * platform-specific description is available.
      *

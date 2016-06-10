@@ -106,7 +106,6 @@ class API extends \Piwik\Plugin\API
      * This data is used by the marketing performance report in the Piwik front-end!
      *
      * TODO: What about segments?! piwik_aom_visits contains non-Piwik-visits which cannot be segmented!
-     * TODO: Move to "Verweise" below "Kampagnen" as "Marketing"
      *
      * @param int $idSite
      * @param string $period
@@ -115,10 +114,10 @@ class API extends \Piwik\Plugin\API
      * @return DataTable
      * @throws Exception
      */
-    public function getMarketingPerformance($idSite, $period, $date, $segment = false)
+    public function getMarketingPerformance($idSite, $period, $date, $segment = false, $idSubtable = null)
     {
         Piwik::checkUserHasViewAccess($idSite);
 
-        return MarketingPerformanceController::getMarketingPerformance($idSite, $period, $date);
+        return MarketingPerformanceController::getMarketingPerformance($idSite, $period, $date, $idSubtable);
     }
 }

@@ -26,16 +26,20 @@ class MarketingPerformanceController
      * @param int $idSite
      * @param $period
      * @param $date
+     * @param string $idSubtable
      * @return DataTable|Map
      */
-    public static function getMarketingPerformance($idSite, $period, $date)
+    public static function getMarketingPerformance($idSite, $period, $date, $idSubtable)
     {
         // Multiple periods
         if (Period::isMultiplePeriod($date, $period)) {
             $map = new Map();
             $period = PeriodFactory::build($period, $date, Site::getTimezoneFor($idSite));
             foreach ($period->getSubperiods() as $subperiod) {
-                $map->addTable(self::getPeriodDataTable($idSite, $subperiod), $subperiod->getLocalizedShortString());
+                $map->addTable(
+                    self::getPeriodDataTable($idSite, $subperiod, $idSubtable),
+                    $subperiod->getLocalizedShortString()
+                );
             }
 
             return $map;
@@ -44,16 +48,17 @@ class MarketingPerformanceController
         // One period only
         $period = PeriodFactory::makePeriodFromQueryParams(Site::getTimezoneFor($idSite), $period, $date);
 
-        return self::getPeriodDataTable($idSite, $period);
+        return self::getPeriodDataTable($idSite, $period, $idSubtable);
     }
 
     /**
      * @param int $idSite
      * @param Period $period
+     * @param string $idSubtable
      * @return DataTable
      * @throws Exception
      */
-    private static function getPeriodDataTable($idSite, Period $period)
+    private static function getPeriodDataTable($idSite, Period $period, $idSubtable)
     {
         $table = new DataTable();
         $table->setMetadata(DataTableFactory::TABLE_METADATA_PERIOD_INDEX, $period);
@@ -72,8 +77,12 @@ class MarketingPerformanceController
             'revenue' => 0,
         ];
 
-        list($table, $summaryRow) = self::addPlatformData($table, $summaryRow, $startDate, $endDate, $idSite);
-        list($table, $summaryRow) = self::addNonPlatformData($table, $summaryRow, $startDate, $endDate, $idSite);
+        if($idSubtable) {
+            list($table, $summaryRow) = self::addSubTableData($table, $summaryRow, $startDate, $endDate, $idSite, $idSubtable);
+        } else {
+            list($table, $summaryRow) = self::addPlatformData($table, $summaryRow, $startDate, $endDate, $idSite);
+            list($table, $summaryRow) = self::addNonPlatformData($table, $summaryRow, $startDate, $endDate, $idSite);
+        }
 
         $formatter = new Formatter();
 
@@ -81,13 +90,20 @@ class MarketingPerformanceController
         $summaryRow['platform_cpc'] = $summaryRow['platform_clicks'] > 0
             ? $formatter->getPrettyMoney($summaryRow['platform_cost'] / $summaryRow['platform_clicks'], $idSite)
             : 0;
-        $summaryRow['conversion_rate'] = ($summaryRow['nb_visits'] > 0)
+        $summaryRow['conversion_rate'] = $summaryRow['nb_conversions'] > 0 && $summaryRow['nb_visits'] > 0
             ? $formatter->getPrettyPercentFromQuotient($summaryRow['nb_conversions'] / $summaryRow['nb_visits'])
+            : 0;
+        $summaryRow['cost_per_conversion'] = $summaryRow['platform_cost'] > 0 && $summaryRow['nb_conversions'] > 0
+            ? $formatter->getPrettyMoney($summaryRow['platform_cost'] / $summaryRow['nb_conversions'], $idSite)
+            : 0;
+        $summaryRow['return_on_ad_spend'] = $summaryRow['revenue'] > 0 && $summaryRow['platform_cost'] > 0
+            ? $formatter->getPrettyMoney($summaryRow['revenue'] / $summaryRow['platform_cost'], $idSite)
             : 0;
 
         // Summary formatting (must happen after calculations!)
         $summaryRow['platform_cost'] = $formatter->getPrettyMoney($summaryRow['platform_cost'], $idSite);
         $summaryRow['revenue'] = $formatter->getPrettyMoney($summaryRow['revenue'], $idSite);
+        $summaryRow['return_on_ad_spend'] = $formatter->getPrettyPercentFromQuotient($summaryRow['return_on_ad_spend'], $idSite);
 
         $table->addSummaryRow(new Row([Row::COLUMNS => $summaryRow]));
 
@@ -109,18 +125,17 @@ class MarketingPerformanceController
 
         foreach (AOM::getPlatforms() as $platformName) {
 
-            // TODO: Timezones correct?!
+            $platform = AOM::getPlatformInstance($platformName);
 
             // Imported data (data like impressions is not available in aom_visits table!)
-            $platform = AOM::getPlatformInstance($platformName);
             $platformData = Db::fetchRow(
                 'SELECT ROUND(sum(cost), 2) as cost, sum(clicks) as clicks, sum(impressions) as impressions '
                     . ' FROM ' . $platform->getDataTableName() . ' AS platform '
-                    . ' WHERE date >= ? AND date <= ? AND idsite = ?',
+                    . ' WHERE idsite = ? AND date >= ? AND date <= ?',
                 [
+                    $idSite,
                     $startDate,
                     $endDate,
-                    $idSite,
                 ]
             );
 
@@ -129,17 +144,17 @@ class MarketingPerformanceController
                 'SELECT COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, '
                     . 'SUM(conversions) AS conversions, SUM(revenue) AS revenue '
                     . ' FROM ' . Common::prefixTable('aom_visits')
-                    . ' WHERE channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ? AND idsite = ?',
+                    . ' WHERE idsite = ? AND channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ?',
                 [
+                    $idSite,
                     $platformName,
                     $startDate,
                     $endDate,
-                    $idSite,
                 ]
             );
 
             // Add to DataTable
-            $table->addRowFromArray([
+            $row = [
                 Row::COLUMNS => [
                     'label' => $platformName,
                     'platform_impressions' => $platformData['impressions'],
@@ -153,10 +168,21 @@ class MarketingPerformanceController
                     'conversion_rate' => ($replenishedVisitsData['visits'] > 0)
                         ? $formatter->getPrettyPercentFromQuotient($replenishedVisitsData['conversions'] / $replenishedVisitsData['visits']) : null,
                     'nb_conversions' => $replenishedVisitsData['conversions'],
+                    'cost_per_conversion' => ($platformData['cost'] > 0 && $replenishedVisitsData['conversions'] > 0)
+                        ? $formatter->getPrettyMoney($platformData['cost'] / $replenishedVisitsData['conversions'], $idSite) : null,
                     'revenue' => ($replenishedVisitsData['revenue'] > 0)
                         ? $formatter->getPrettyMoney($replenishedVisitsData['revenue'], $idSite) : null,
-                ]
-            ]);
+                    'return_on_ad_spend' => ($replenishedVisitsData['revenue'] > 0 && $platformData['cost'] > 0)
+                        ? $formatter->getPrettyPercentFromQuotient($replenishedVisitsData['revenue'] / $platformData['cost']) : null,
+                ],
+            ];
+
+            // TODO: Add drill-down only when data is not null!
+            if ($platform->getMarketingPerformanceSubTables()) {
+                $row[Row::DATATABLE_ASSOCIATED] = $platformName . '_'
+                    . $platform->getMarketingPerformanceSubTables()->getMainSubTableId();
+            }
+            $table->addRowFromArray($row);
 
             // Add to summary
             $summaryRow['platform_impressions'] += $platformData['impressions'];
@@ -190,12 +216,12 @@ class MarketingPerformanceController
             'SELECT channel, COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, '
                 . 'SUM(conversions) AS conversions, SUM(revenue) AS revenue '
                 . ' FROM ' . Common::prefixTable('aom_visits') . ' AS visits '
-                . ' WHERE channel NOT IN ("' . $platforms . '") AND date_website_timezone >= ? '
-                . ' AND date_website_timezone <= ? AND idsite = ? GROUP BY channel',
+                . ' WHERE idsite = ? AND channel NOT IN ("' . $platforms . '") AND date_website_timezone >= ? '
+                . ' AND date_website_timezone <= ? GROUP BY channel',
             [
+                $idSite,
                 $startDate,
                 $endDate,
-                $idSite,
             ]
         );
 
@@ -218,9 +244,59 @@ class MarketingPerformanceController
             $summaryRow['nb_uniq_visitors'] += (int) $row['unique_visitors'];
             $summaryRow['nb_conversions'] += $row['conversions'];
             $summaryRow['revenue'] += $row['revenue'];
-
         }
 
         return [$table, $summaryRow];
+    }
+
+    /**
+     * @param DataTable $table
+     * @param array $summaryRow
+     * @param $startDate
+     * @param $endDate
+     * @param $idSite
+     * @param string $idSubTable
+     * @return array
+     * @throws Exception
+     */
+    private static function addSubTableData(
+        DataTable $table,
+        array $summaryRow,
+        $startDate,
+        $endDate,
+        $idSite,
+        $idSubTable
+    )
+    {
+        $exploded = explode('_', $idSubTable);
+
+        // Validate $idSubTable
+        if (!in_array($exploded[0], AOM::getPlatforms())) {
+            throw new \Exception('idSubTable must start with platform name');
+        }
+
+        $platform = AOM::getPlatformInstance($exploded[0]);
+
+        $marketingPerformanceSubTables = $platform->getMarketingPerformanceSubTables();
+        if (!$marketingPerformanceSubTables) {
+            throw new \Exception('platform does not support marketing performance sub tables');
+        }
+
+        if (count($exploded) < 2) {
+            throw new \Exception('idSubTable must at least consist of platform name and sub table identifier');
+        }
+
+        if (!in_array($exploded[1], $marketingPerformanceSubTables->getSubTableIds())) {
+            throw new \Exception('platform does not support the given sub table');
+        }
+
+        return $marketingPerformanceSubTables->{'get' . $exploded[1]}(
+            $table,
+            $summaryRow,
+            $startDate,
+            $endDate,
+            $idSite,
+            count($exploded) == 3 ? $exploded[2] : null
+        );
     }
 }

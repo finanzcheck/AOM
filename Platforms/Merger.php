@@ -210,4 +210,40 @@ abstract class Merger
             array_merge(['platform' => $this->platform->getName(), 'task' => 'merge'], $additionalContext)
         );
     }
+
+    /**
+     * Deletes all merged data (updates aom_ad_data and aom_platform_row_id to NULL) for the given combination of
+     * platform account, website and date.
+     * Removes all replenished visits for the combination of website and date.
+     *
+     * @param string $platformName
+     * @param int $websiteId
+     */
+    public function deleteExistingData($platformName, $websiteId)
+    {
+        foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
+
+            // Updates aom_ad_data and aom_platform_row_id to NULL of all visits who lost their related platform records
+            list($unsetMergedDataRecords, $timeToUnsetMergedData) =
+                Platform::deleteMergedData($platformName, $websiteId, $date);
+
+            // Removes all replenished visits for the combination of website and date!
+            list($deletedReplenishedVisitsRecords, $timeToDeleteReplenishedVisits) =
+                Platform::deleteReplenishedData($websiteId, $date);
+
+            $this->logger->debug(
+                sprintf(
+                    'Deleted existing %s data for date %s '
+                    . '(%fs for %d merged data records, %fs for %d replenished data records).',
+                    $platformName,
+                    $date,
+                    $timeToUnsetMergedData,
+                    is_int($unsetMergedDataRecords) ? $unsetMergedDataRecords : 0,
+                    $timeToDeleteReplenishedVisits,
+                    is_int($deletedReplenishedVisitsRecords) ? $deletedReplenishedVisitsRecords : 0
+                ),
+                ['platform' => $platformName, 'task' => 'merge']
+            );
+        }
+    }
 }

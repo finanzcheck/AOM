@@ -90,52 +90,17 @@ abstract class Importer
     public function deleteExistingData($platformName, $accountId, $websiteId, $date)
     {
         // Delete all imported data for the given combination of platform account, website and date
-        $timeStart = microtime(true);
-        $deletedImportedDataRecords = Db::deleteAllRows(
-            AOM::getPlatformDataTableNameByPlatformName($platformName),
-            'WHERE id_account_internal = ? AND idsite = ? AND date = ?',
-            'date',
-            100000,
-            [
-                $accountId,
-                $websiteId,
-                $date,
-            ]
-        );
-        $timeToDeleteImportedData = microtime(true) - $timeStart;
+        list($deletedImportedDataRecords, $timeToDeleteImportedData) =
+            Platform::deleteImportedData($platformName, $accountId, $websiteId, $date);
 
         // Updates aom_ad_data and aom_platform_row_id to NULL of all visits who lost their related platform records
-        $timeStart = microtime(true);
-        $unsetMergedDataRecords = Db::query(
-            'UPDATE ' . Common::prefixTable('log_visit') . ' AS v
-                LEFT OUTER JOIN ' . AOM::getPlatformDataTableNameByPlatformName($platformName) . ' AS p
-                ON (p.id = v.aom_platform_row_id)
-                SET v.aom_ad_data = NULL, v.aom_platform_row_id = NULL
-                WHERE v.idsite = ? AND v.aom_platform = ? AND p.id IS NULL
-                    AND visit_first_action_time >= ? AND visit_first_action_time <= ?',
-            [
-                $websiteId,
-                $platformName,
-                AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($websiteId)),
-                AOM::convertLocalDateTimeToUTC($date . ' 23:59:59', Site::getTimezoneFor($websiteId)),
-            ]
-        );
-        $timeToUnsetMergedData = microtime(true) - $timeStart;
+        list($unsetMergedDataRecords, $timeToUnsetMergedData) =
+            Platform::deleteMergedData($platformName, $websiteId, $date);
 
         // Removes all replenished visits for the combination of website and date!
-        $timeStart = microtime(true);
-        $deletedReplenishedVisitsRecords = Db::deleteAllRows(
-            Common::prefixTable('aom_visits'),
-            'WHERE idsite = ? AND date_website_timezone = ?',
-            'date_website_timezone',
-            100000,
-            [
-                $websiteId,
-                $date,
-            ]
-        );
-        $timeToDeleteReplenishedVisits = microtime(true) - $timeStart;
-
+        list($deletedReplenishedVisitsRecords, $timeToDeleteReplenishedVisits) =
+            Platform::deleteReplenishedData($websiteId, $date);
+ 
         $this->logger->debug(
             sprintf(
                 'Deleted existing %s data (%fs for %d imported data records, %fs for %d merged data records, '
