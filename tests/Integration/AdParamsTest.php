@@ -13,18 +13,20 @@ use Piwik\Tracker\Action;
 use Piwik\Tracker\Request;
 use Piwik\Tracker\Visit\VisitProperties;
 use Piwik\Tracker\Visitor;
+use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 
 /**
  * @group AOM
- * @group AOM_Unit
+ * @group AOM_Unit2
  */
-class AdParamsTest extends \PHPUnit_Framework_TestCase
+class AdParamsTest extends IntegrationTestCase
 {
     /** @var AdData */
     private $data;
 
     public function setUp()
     {
+        parent::setUp();
         $this->data = new AdParams();
     }
 
