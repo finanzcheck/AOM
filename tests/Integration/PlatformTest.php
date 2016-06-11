@@ -12,13 +12,23 @@ use Piwik\Tracker\Request;
 use Piwik\Plugins\AOM\Columns\AdData;
 use Piwik\Tracker\Visit\VisitProperties;
 use Piwik\Tracker\Visitor;
+use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
+use Piwik\Tests\Framework\Fixture;
+use Piwik;
+
+
 
 /**
  * @group AOM
- * @group AOM_Unit
+ * @group AOM_Integration
  */
-class PlatformTest extends \PHPUnit_Framework_TestCase
+class PlatformTest extends IntegrationTestCase
 {
+    /**
+     * @var Fixture
+     */
+    public static $fixture = null; // initialized below class definition
+
     /** @var AdData */
     private $data;
 
@@ -58,3 +68,5 @@ class PlatformTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("Bing", $result);
     }
 }
+
+PlatformTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();
