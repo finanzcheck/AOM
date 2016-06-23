@@ -3,11 +3,11 @@
     "bramus/monolog-colored-line-formatter": "~2.0",
     "facebook/php-sdk-v4": "^5.1",
     "facebook/php-ads-sdk": "^2.6",
-    "googleads/googleads-php-lib": "^8.3"
+    "googleads/googleads-php-lib": "^10.0.0"
   },
   "autoload": {
     "classmap": [
-      "vendor/googleads/googleads-php-lib/src/Google/Api/Ads/AdWords/Util/v201603"
+      "vendor/googleads/googleads-php-lib/src/Google/Api/Ads/AdWords/Util/v201605"
     ]
   }
 }

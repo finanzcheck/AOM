@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "4740cd08abdd547fcc07d69e70c69de2",
-    "content-hash": "44682ab7a2bc3eb7c3ecc8570b97915f",
+    "hash": "ebc4ca58e3c223440c4db66f15218c19",
+    "content-hash": "54bc949c99bc3ad00839fb0ec21d7588",
     "packages": [
         {
             "name": "bramus/ansi-php",
@@ -128,21 +128,20 @@
         },
         {
             "name": "facebook/php-sdk-v4",
-            "version": "5.1.2",
+            "version": "5.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/facebook/facebook-php-sdk-v4.git",
-                "reference": "2c42fb3002953355f12d3c6e8003a9fd5af563d9"
+                "reference": "c60fba1fe1de62db1e0776d32fc2fb778189459c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/facebook/facebook-php-sdk-v4/zipball/2c42fb3002953355f12d3c6e8003a9fd5af563d9",
-                "reference": "2c42fb3002953355f12d3c6e8003a9fd5af563d9",
+                "url": "https://api.github.com/repos/facebook/facebook-php-sdk-v4/zipball/c60fba1fe1de62db1e0776d32fc2fb778189459c",
+                "reference": "c60fba1fe1de62db1e0776d32fc2fb778189459c",
                 "shasum": ""
             },
             "require": {
-                "ext-mbstring": "*",
-                "php": ">=5.4.0"
+                "php": "^5.4|^7.0"
             },
             "require-dev": {
                 "guzzlehttp/guzzle": "~5.0",
@@ -161,7 +160,10 @@
             "autoload": {
                 "psr-4": {
                     "Facebook\\": "src/Facebook/"
-                }
+                },
+                "files": [
+                    "src/Facebook/polyfills.php"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -179,20 +181,20 @@
                 "facebook",
                 "sdk"
             ],
-            "time": "2015-11-19 21:07:36"
+            "time": "2016-05-18 22:04:36"
         },
         {
             "name": "googleads/googleads-php-lib",
-            "version": "8.3.0",
+            "version": "10.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleads/googleads-php-lib.git",
-                "reference": "681cec877e9672120a574bdbe8f6583faffdb814"
+                "reference": "110caf7d8662312eb60f7bca24a33a9c4a585216"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/681cec877e9672120a574bdbe8f6583faffdb814",
-                "reference": "681cec877e9672120a574bdbe8f6583faffdb814",
+                "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/110caf7d8662312eb60f7bca24a33a9c4a585216",
+                "reference": "110caf7d8662312eb60f7bca24a33a9c4a585216",
                 "shasum": ""
             },
             "require": {
@@ -220,7 +222,7 @@
             ],
             "description": "Google Ads APIs Client Library for PHP (AdWords and DFP)",
             "homepage": "https://github.com/googleads/googleads-php-lib",
-            "time": "2016-04-08 05:50:03"
+            "time": "2016-06-20 16:34:13"
         }
     ],
     "packages-dev": [],
