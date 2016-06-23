@@ -1,6 +1,6 @@
 {
-    "name": "AdvancedOnlineMarketing",
-    "version": "0.3.5",
+    "name": "AOM",
+    "version": "0.3.6",
     "keywords": [
         "Advertising",
         "Google AdWords",
@@ -12,7 +12,7 @@
         "Performance"
     ],
     "homepage": "http://www.advanced-online-marketing.com",
-    "description": "Integrate additional data like costs from advertiser platforms like AdWords, Bing and Facebook into Piwik.",
+    "description": "Integrate additional data like costs from advertising platforms like AdWords, Bing, Criteo and Facebook into Piwik.",
     "license": "GPL v3+",
     "authors": [
         {
