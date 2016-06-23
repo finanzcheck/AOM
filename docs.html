@@ -67,12 +67,8 @@ title: Piwik AOM Plugin Documentation
 <p>MySQL 5.0.3 or higher is required as we store more than 255 characters in VARCHAR. You must be able to run cron jobs
     to set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a>.</p>
 
-<p>To install AOM, <a href="https://github.com/advanced-online-marketing/AOM/releases">grab the latest release from
-    github</a>, rename the folder to AOM (without version number) and upload it to <code>/path/to/piwik/plugins</code>.
-    You might also clone the code to that location with git. Make sure <a href="https://getcomposer.org/">Composer</a>
-    is installed and run <code>composer install</code> in <code>plugins/AOM</code> to install dependencies, such as the
-    Facebook Ads and Google AdWords SDKs. Activate and configure the plugin (e.g. provide API credentials to
-    advertiser's platforms).</p>
+<p>You can install the Piwik AOM plugin from the <a href="https://plugins.piwik.org/AdvancedOnlineMarketing">Piwik
+    marketplace</a>.</p>
 
 <p>Set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> to automatically import and merge
     data from the advertiser's platforms. The auto archiving cron job executes the <code>core:archive command</code>
