@@ -8,23 +8,31 @@ namespace Piwik\Plugins\AOM\tests\System;
 
 use Piwik\Plugins\AOM\Columns\AdData;
 use Piwik\Plugins\AOM\Columns\AdParams;
-use Piwik\Plugins\AOM\Columns\Platform;
 use Piwik\Tracker\Action;
 use Piwik\Tracker\Request;
 use Piwik\Tracker\Visit\VisitProperties;
 use Piwik\Tracker\Visitor;
-
+use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
+use Piwik;
+use Piwik\Db;
+use Piwik\Tests\Framework\Fixture;
 /**
  * @group AOM
- * @group AOM_Unit
+ * @group AOM_Integration
  */
-class AdParamsTest extends \PHPUnit_Framework_TestCase
+class AdParamsTest extends IntegrationTestCase
 {
+    /**
+     * @var Fixture
+     */
+    public static $fixture = null; // initialized below class definition
+
     /** @var AdData */
     private $data;
 
     public function setUp()
     {
+        parent::setUp();
         $this->data = new AdParams();
     }
 
@@ -34,7 +42,9 @@ class AdParamsTest extends \PHPUnit_Framework_TestCase
 
         $request = new Request($params);
         $visitor = new Visitor(new VisitProperties());
-        $action = Action::factory($request);
+        $action = $this->getMockBuilder('\Piwik\Tracker\Action')
+            ->disableOriginalConstructor()->getMock();
+//        $action = Action::factory($request);
 
         $request->setParam(
             'url',
@@ -60,3 +70,5 @@ class AdParamsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('{"platform":"Bing","campaignId":"184747916","adGroupId":"9810883196","orderItemId":"1","targetId":"kwd-97675593","adId":"12"}', $result);
     }
 }
+
+AdParamsTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();
