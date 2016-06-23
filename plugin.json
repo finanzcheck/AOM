@@ -1,18 +1,18 @@
 {
     "name": "AdvancedOnlineMarketing",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "keywords": [
         "Advertising",
-        "AdWords",
-        "Bing",
+        "Google AdWords",
+        "Microsoft Bing",
         "Criteo",
-        "Facebook",
+        "Facebook Ads",
         "Marketing",
         "Online Marketing",
         "Performance"
     ],
     "homepage": "http://www.advanced-online-marketing.com",
-    "description": "Integrate additional data (e.g. campaign names, costs, ad impressions) from advertisers like Google AdWords, Bing, Criteo and Facebook into Piwik and combine that data with individual visits - create a whole bunch of new opportunities.",
+    "description": "Integrate additional data like costs from advertiser platforms like AdWords, Bing and Facebook into Piwik.",
     "license": "GPL v3+",
     "authors": [
         {
