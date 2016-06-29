@@ -13,7 +13,7 @@ attribution models.
 
 ## Description
 
-**This plugin can create a lot of value. But be aware that its initial setup will requires some effort!**
+**This plugin can create a lot of value. But be aware that its initial setup will require some effort!**
  
 See [http://www.advanced-online-marketing.com/docs.html](http://www.advanced-online-marketing.com/docs.html) for this 
 plugin's documentation.
