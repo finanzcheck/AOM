@@ -108,7 +108,7 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <p>A typical link at Google AdWords (with the prefix "aom") should have the following params:</p>
 <pre><code>&amp;aom_platform=AdWords&amp;aom_campaign_id={campaignid}&amp;aom_ad_group_id={adgroupid}&amp;aom_feed_item_id={feeditemid}&amp;aom_target_id={targetid}&amp;aom_creative={creative}&amp;aom_placement={placement}&amp;aom_target={target}&amp;aom_network={network}&amp;aom_device={device}&amp;aom_ad_position={adposition}&amp;aom_loc_physical={loc_physical_ms}&amp;aom_loc_Interest={loc_interest_ms}</code></pre>
 
-<p>When a Google AdWords ad is clicked, data like the following can be found in <code>piwik_log_visit.aom_ad_params</code>:</p>
+<p>When a Google AdWords ad is clicked, data like the following can be found in <code>log_visit.aom_ad_params</code>:</p>
 <div class="code-block">
     <pre><code class="language-php">{
     "platform":"AdWords",
@@ -220,7 +220,7 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <p>A typical link at Microsoft Bing Ads (with the prefix "aom") should have the following params:</p>
 <pre><code>&amp;aom_platform=Bing&amp;aom_campaign_id={CampaignId}&amp;aom_ad_group_id={AdGroupId}&amp;aom_order_item_id={OrderItemId}&amp;aom_target_id={TargetId}&amp;aom_ad_id={AdId}</code></pre>
 
-<p>When a Bing ad is clicked, data like the following can be found in <code>piwik_log_visit.aom_ad_params</code>:</p>
+<p>When a Bing ad is clicked, data like the following can be found in <code>log_visit.aom_ad_params</code>:</p>
 <div class="code-block">
     <pre><code class="language-php">{
     "platform":"Bing",
@@ -275,7 +275,7 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <pre><code>&amp;aom_platform=Criteo&amp;aom_campaign_id=14340</code></pre>
 
 <p>When a Criteo ad is clicked, data like the following can be found in
-    <code>piwik_log_visit.aom_ad_params</code>:</p>
+    <code>log_visit.aom_ad_params</code>:</p>
 <div class="code-block">
     <pre><code class="language-php">{
     "platform":"Criteo",
@@ -331,7 +331,7 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <pre><code>&amp;aom_platform=FacebookAds&amp;aom_campaign_id=4160286035775&amp;aom_adset_id=6028603577541&amp;aom_ad_id=5760286037541</code></pre>
 
 <p>When a Facebook Ads ad is clicked, data like the following can be found in
-    <code>piwik_log_visit.aom_ad_params</code>:</p>
+    <code>log_visit.aom_ad_params</code>:</p>
 <div class="code-block">
     <pre><code class="language-php">{
     "platform":"FacebookAds",

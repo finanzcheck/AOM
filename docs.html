@@ -16,32 +16,31 @@ title: Piwik AOM Plugin Documentation
 
 <p>To map individual visits with the data from the advertising platforms, all links from the platforms must have
     <a href="advertisers-platforms.html">additional params</a> that supply mapping-related data like campaign and ad IDs
-    to the Piwik AOM plugin. This data is stored in the database columns <code>piwik_log_visit.aom_platform</code> and
-    <code>piwik_log_visit.aom_ad_params</code>. When a visitor returns with other tracking params, a new visit is
-    started automatically.</p>
+    to the Piwik AOM plugin. This data is stored in the database columns <code>log_visit.aom_platform</code> and
+    <code>log_visit.aom_ad_params</code>. When a visitor returns with other tracking params, a new visit is started
+    automatically.</p>
 
 <p>After you have set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> background jobs will
     work on the following three tasks:</p>
 
 <h4 class="sub-title">1. Import data from advertising platforms</h4>
-<p>Imported data is stored in the database table <code>piwik_aom_{platformName}</code>. Every advertising platform's
-    data is aggregated on a daily basis in the timezone of the advertising platform's account. Merged data will only be
-    correct, when your website's timezone matches the timezones of each advertising platform account.</p>
+<p>Imported data is stored in the database table <code>aom_{platformName}</code>. Every advertising platform's data is
+    aggregated on a daily basis in the timezone of the advertising platform's account. Merged data will only be correct,
+    when your website's timezone matches the timezones of each advertising platform account.</p>
 
 <h4 class="sub-title">2. Merge imported data with individual visits</h4>
-<p>The background job tries to reference individual visits based on <code>piwik_log_visit.aom_platform</code> and
-    <code>piwik_log_visit.aom_ad_params</code> to advertising platform's data in <code>piwik_aom_{platformName}</code>.
-    When a match is found, it is stored in <code>piwik_log_visit.aom_ad_data</code> (containing the merged data as JSON)
-    and in <code>piwik_log_visit.aom_platform_row_id</code> (containing a reference to a record in
-    <code>piwik_aom_{platformName}</code>).</p>
+<p>The background job tries to reference individual visits based on <code>log_visit.aom_platform</code> and
+    <code>log_visit.aom_ad_params</code> to advertising platform's data in <code>aom_{platformName}</code>. When a match
+    is found, it is stored in <code>log_visit.aom_ad_data</code> (containing the merged data as JSON) and in
+    <code>log_visit.aom_platform_row_id</code> (containing a reference to a record in
+    <code>aom_{platformName}</code>).</p>
 
 <h4 class="sub-title">3. Replenish visits / allocate costs</h4>
-<p>Platform costs are being allocated to (merged) Piwik visits and the results are stored in
-    <code>piwik_aom_visits</code>. There might be more visits in <code>piwik_aom_visits</code> then in
-    <code>piwik_log_visits</code> when there a platform costs that could not be assigned to visits from
-    <code>piwik_log_visits</code>.</p>
+<p>Platform costs are being allocated to (merged) Piwik visits and the results are stored in <code>aom_visits</code>.
+    There might be more visits in <code>aom_visits</code> then in <code>log_visits</code> when there a platform costs
+    that could not be assigned to visits from <code>log_visits</code>.</p>
 
-<p>The data in <code>piwik_aom_visits</code> contains both all Piwik visits and all costs. It is used in the marketing
+<p>The data in <code>aom_visits</code> contains both all Piwik visits and all costs. It is used in the marketing
     performance report in the Piwik UI and it can be used via the <a href="api.html">API endpoints provided by the Piwik
     AOM plugin</a> (e.g. for further processing in a data warehouse).</p>
 
@@ -104,6 +103,11 @@ title: Piwik AOM Plugin Documentation
 
 <!-- Changelog -->
 <h2 class="sub-title text-center">Changelog</h2>
+<p><strong>0.3.7</strong> on 2 August 2016</p>
+<ul>
+    <li>Fixes [prefixed database table names](https://github.com/advanced-online-marketing/AOM/issues/19) and updates
+        dependencies (libraries of AdWords and Facebook Ads)</li>
+</ul>
 <p><strong>0.3.1</strong> on 9 June 2016</p>
 <ul>
     <li>Adds drill-downs into marketing performance reports (campaigns, ad groups)</li>

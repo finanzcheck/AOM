@@ -1,0 +1,30 @@
+---
+layout: docs
+title: Piwik AOM Plugin Documentation - Extending AOM
+---
+
+<h2 class="title text-center">Extending AOM</h2>
+<p>...</p>
+
+
+<!-- Events -->
+<h2 class="sub-title text-center">Events</h2>
+<p>...</p>
+
+<h3 class="sub-title text-center">AOM.updateVisitAdData</h3>
+<p>Triggered after a visit's ad data has been updated in <code>visit.aom_ad_data</code>.</p>
+
+<h4>Callback signature</h4>
+<div class="code-block">
+    <pre><code class="language-php">function($idvisit, $adData)</code></pre>
+</div>
+
+<ul>
+    <li>int <code>idvisit</code> The visit the advertising platform data belongs to.</li>
+    <li>string <code>adData</code> JSON-encoded advertising platform data for the given visit.</li>
+</ul>
+
+
+<!-- Support -->
+<h2 class="sub-title text-center">Support</h2>
+<p>If you need need assistance in ensuring data quality, please feel free to <a href="#contact">get in touch</a>.</p>
