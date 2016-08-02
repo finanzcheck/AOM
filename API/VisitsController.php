@@ -51,6 +51,12 @@ class VisitsController
         return $visits;
     }
 
+    /**
+     * @param $idSite
+     * @param $orderId
+     * @return bool|mixed
+     * @throws Exception
+     */
     public static function getEcommerceOrderWithVisits($idSite, $orderId)
     {
         $orders = self::getEcommerceOrdersWithVisits($idSite, $orderId);
@@ -61,7 +67,15 @@ class VisitsController
 
         return false;
     }
-    
+
+    /**
+     * @param $idSite
+     * @param bool $orderId
+     * @param bool $period
+     * @param bool $date
+     * @return array
+     * @throws Exception
+     */
     public static function getEcommerceOrdersWithVisits($idSite, $orderId = false, $period = false, $date = false)
     {
         // Return specific ecommerce orders
@@ -241,10 +255,10 @@ class VisitsController
                 $visit['adData'] = [];
                 if (is_array($visit) && array_key_exists('rawAdData', $visit) || 0 === strlen($visit['rawAdData'])) {
 
-                    $adParams = @json_decode($visit['rawAdData'], true);
+                    $adData = @json_decode($visit['rawAdData'], true);
 
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($adParams)) {
-                        $visit['adData'] = $adParams;
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($adData)) {
+                        $visit['adData'] = $adData;
                     }
                 }
 

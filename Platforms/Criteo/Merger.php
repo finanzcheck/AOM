@@ -88,7 +88,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                     ];
                 }
             }
-            if($updateMap) {
+            if ($updateMap) {
                 $updateStatements[] = [$visit['idvisit'], $updateMap];
             }
         }

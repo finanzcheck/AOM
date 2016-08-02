@@ -81,7 +81,6 @@ class API extends \Piwik\Plugin\API
         Piwik::checkUserHasViewAccess($idSite);
 
         return VisitsController::getEcommerceOrdersWithVisits($idSite, $orderId, $period, $date);
-
     }
 
     /**
@@ -105,7 +104,7 @@ class API extends \Piwik\Plugin\API
      *
      * This data is used by the marketing performance report in the Piwik front-end!
      *
-     * TODO: What about segments?! piwik_aom_visits contains non-Piwik-visits which cannot be segmented!
+     * TODO: What about segments?! aom_visits contains non-Piwik-visits which cannot be segmented!
      *
      * @param int $idSite
      * @param string $period

@@ -13,7 +13,6 @@ use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Tracker\Action;
 use Piwik\Tracker\Request;
 use Psr\Log\LoggerInterface;
 

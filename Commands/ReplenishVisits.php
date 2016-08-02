@@ -78,7 +78,7 @@ class ReplenishVisits extends ConsoleCommand
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->setDescription(
-                'Allocates platform costs to Piwik visits and stores them in piwik_aom_visits for further processing.'
+                'Allocates platform costs to Piwik visits and stores them in aom_visits for further processing.'
             );
     }
 
@@ -224,7 +224,7 @@ class ReplenishVisits extends ConsoleCommand
             );
         }
 
-        // Add remaining Piwik visits (visits without aom_platform_row_id) to piwik_aom_visits.
+        // Add remaining Piwik visits (visits without aom_platform_row_id) to aom_visits.
         $this->log(
             Logger::DEBUG,
             'Will add ' . count($visits) . ' remaining visits now (Piwik visits without aom_platform_row_id).'
@@ -296,7 +296,7 @@ class ReplenishVisits extends ConsoleCommand
     }
 
     /**
-     * Stores a visit with allocated costs and various platform data in piwik_aom_visits.
+     * Stores a visit with allocated costs and various platform data in aom_visits.
      *
      * TODO: Collect queries and perform multiple queries at once to improve performance.
      *
@@ -389,7 +389,8 @@ class ReplenishVisits extends ConsoleCommand
                             v.aom_platform_row_id AS aom_platform_row_id,
                             COUNT(c.idorder) AS conversions,
                             SUM(c.revenue) AS revenue
-                        FROM piwik_log_visit AS v LEFT JOIN piwik_log_conversion AS c ON v.idvisit = c.idvisit
+                        FROM ' . Common::prefixTable('log_visit') . '  AS v 
+                        LEFT JOIN ' . Common::prefixTable('log_conversion') . ' AS c ON v.idvisit = c.idvisit
                         WHERE v.idsite = ? AND v.visit_first_action_time >= ? AND v.visit_first_action_time <= ?
                         GROUP BY v.idvisit',
                     [

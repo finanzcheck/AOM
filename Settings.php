@@ -14,7 +14,7 @@ use Piwik\Settings\SystemSetting;
 class Settings extends \Piwik\Plugin\Settings
 {
     /**
-     * Various plugin configuration stored as a serialized array in piwik_option.Plugin_AOM_CustomSettings.
+     * Various plugin configuration stored as a serialized array in option.Plugin_AOM_CustomSettings.
      *
      * @var string
      */

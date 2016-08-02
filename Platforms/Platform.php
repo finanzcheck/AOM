@@ -292,7 +292,9 @@ abstract class Platform
      */
     public static function getHumanReadableDescriptionForVisit($idVisit)
     {
-        $platform = Db::fetchOne('SELECT aom_platform FROM piwik_log_visit WHERE idvisit = ?', [$idVisit]);
+        $platform = Db::fetchOne(
+            'SELECT aom_platform FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?', [$idVisit]
+        );
 
         if (in_array($platform, AOM::getPlatforms())) {
 

@@ -84,7 +84,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
         // Download report (@see https://developers.google.com/adwords/api/docs/appendix/reports?hl=de#criteria)
         // https://developers.google.com/adwords/api/docs/appendix/reports/criteria-performance-report?hl=de
-        $xmlString = ReportUtils::DownloadReportWithAwql(
+        $reportUtils = new ReportUtils();
+        $xmlString = $reportUtils->DownloadReportWithAwql(
             'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZoneId, CampaignId, CampaignName, '
             . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, '
             . 'Conversions, QualityScore, CpcBid, Impressions, Clicks, GmailSecondaryClicks, Cost, Date '

@@ -191,7 +191,8 @@ class FixVisitAomParams extends ConsoleCommand
                             v.aom_ad_params,
                             v.aom_ad_data,
                             v.aom_platform_row_id
-                        FROM piwik_log_visit AS v LEFT JOIN piwik_log_action AS c ON v.visit_entry_idaction_url = c.idaction
+                        FROM ' . Common::prefixTable('log_visit') . ' AS v 
+                        LEFT JOIN ' . Common::prefixTable('log_action') . ' AS c ON v.visit_entry_idaction_url = c.idaction
                         WHERE v.idsite = ? AND v.visit_first_action_time >= ? AND v.visit_first_action_time <= ?',
                     [
                         $site['idsite'],
