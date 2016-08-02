@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2014-present, Facebook, Inc. All rights reserved.
+ * Copyright (c) 2015-present, Facebook, Inc. All rights reserved.
  *
  * You are hereby granted a non-exclusive, worldwide, royalty-free license to
  * use, copy, modify, and distribute this software in source code or binary
@@ -24,18 +24,35 @@
 
 namespace FacebookAds\Object;
 
-use FacebookAds\Api;
-use FacebookAds\Object\Fields\ProductCatalogFields;
-use FacebookAds\Object\Traits\FieldValidation;
-use FacebookAds\Http\RequestInterface;
+use FacebookAds\ApiRequest;
 use FacebookAds\Cursor;
+use FacebookAds\Http\RequestInterface;
+use FacebookAds\TypeChecker;
+use FacebookAds\Object\Fields\ProductCatalogFields;
+use FacebookAds\Object\Values\AdVideoContentCategoryValues;
+use FacebookAds\Object\Values\AdVideoUnpublishedContentTypeValues;
+use FacebookAds\Object\Values\AdVideoUploadPhaseValues;
+use FacebookAds\Object\Values\ProductCatalogHotelRoomsBatchStandardValues;
+use FacebookAds\Object\Values\ProductCatalogVerticalValues;
+use FacebookAds\Object\Values\ProductFeedDelimiterValues;
+use FacebookAds\Object\Values\ProductFeedEncodingValues;
+use FacebookAds\Object\Values\ProductFeedQuotedFieldsModeValues;
+use FacebookAds\Object\Values\ProductItemAvailabilityValues;
+use FacebookAds\Object\Values\ProductItemConditionValues;
+use FacebookAds\Object\Values\ProductItemGenderValues;
+use FacebookAds\Object\Values\ProductItemVisibilityValues;
+
+/**
+ * This class is auto-genereated.
+ *
+ * For any issues or feature requests related to this class, please let us know
+ * on github and we'll fix in our codegen framework. We'll not be able to accept
+ * pull request for this class.
+ *
+ */
 
 class ProductCatalog extends AbstractCrudObject {
-  use FieldValidation;
 
-  /**
-   * @return string
-   */
   protected function getEndpoint() {
     return 'product_catalogs';
   }
@@ -47,86 +64,656 @@ class ProductCatalog extends AbstractCrudObject {
     return ProductCatalogFields::getInstance();
   }
 
-  /**
-   * @param array $fields
-   * @param array $params
-   * @return Cursor
-   */
-  public function getProducts(
-    array $fields = array(), array $params = array()) {
-    return $this->getManyByConnection(
-      Product::className(), $fields, $params);
+  protected static function getReferencedEnums() {
+    $ref_enums = array();
+    $ref_enums['Vertical'] = ProductCatalogVerticalValues::getInstance()->getValues();
+    return $ref_enums;
   }
 
-  /**
-   * @param array $fields
-   * @param array $params
-   * @return Cursor
-   */
-  public function getProductSets(
-    array $fields = array(), array $params = array()) {
-    return $this->getManyByConnection(
-      ProductSet::className(), $fields, $params);
-  }
 
-  /**
-   * @param array $fields
-   * @param array $params
-   * @return Cursor
-   */
-  public function getProductFeeds(
-    array $fields = array(), array $params = array()) {
-    return $this->getManyByConnection(
-      ProductFeed::className(), $fields, $params);
-  }
+  public function getAgencies(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
 
-  /**
-   * @return array
-   */
-  public function getExternalEventSources() {
-    $response = $this->getApi()->call(
-      '/'.$this->assureId().'/external_event_sources',
-      RequestInterface::METHOD_GET);
-    $data = $response->getContent();
-    return (isset($data['data'])) ? $data['data'] : array();
-  }
-
-  /**
-   * @param array $pixel_ids
-   * @return bool
-   */
-  public function setExternalEventSources(array $pixel_ids) {
-    return $this->modifyExternalEventSources(
-      RequestInterface::METHOD_POST,
-      $pixel_ids);
-  }
-
-  /**
-   * @param array $pixel_ids
-   * @return bool
-   */
-  public function removeExternalEventSources(array $pixel_ids) {
-    return $this->modifyExternalEventSources(
-      RequestInterface::METHOD_DELETE,
-      $pixel_ids);
-  }
-
-  /**
-   * @param string $method
-   * @param array $pixel_ids
-   * @return bool
-   */
-  protected function modifyExternalEventSources($method, array $pixel_ids) {
-    $params = array(
-      ProductCatalogFields::EXTERNAL_EVENT_SOURCES => $pixel_ids,
+    $param_types = array(
+    );
+    $enums = array(
     );
 
-    $response = $this->getApi()->call(
-      '/'.$this->assureId().'/external_event_sources',
-      $method,
-      $params);
-    $data = $response->getContent();
-    return (isset($data['success'])) ? $data['success'] : false;
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/agencies',
+      new Business(),
+      'EDGE',
+      Business::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getExternalEventSources(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/external_event_sources',
+      new ExternalEventSource(),
+      'EDGE',
+      ExternalEventSource::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createExternalEventSource(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'external_event_sources' => 'list<string>',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/external_event_sources',
+      new ExternalEventSource(),
+      'EDGE',
+      ExternalEventSource::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getHotelRoomsBatch(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'handle' => 'string',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/hotel_rooms_batch',
+      new ProductCatalogHotelRoomsBatch(),
+      'EDGE',
+      ProductCatalogHotelRoomsBatch::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createHotelRoomsBatch(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'file' => 'file',
+      'standard' => 'standard_enum',
+      'update_only' => 'bool',
+    );
+    $enums = array(
+      'standard_enum' => ProductCatalogHotelRoomsBatchStandardValues::getInstance()->getValues(),
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/hotel_rooms_batch',
+      new ProductCatalogHotelRoomsBatch(),
+      'EDGE',
+      ProductCatalogHotelRoomsBatch::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getHotels(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/hotels',
+      new Hotel(),
+      'EDGE',
+      Hotel::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createHotel(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'address' => 'Object',
+      'applinks' => 'Object',
+      'brand' => 'string',
+      'description' => 'string',
+      'guest_ratings' => 'list<Object>',
+      'hotel_id' => 'string',
+      'images' => 'list<Object>',
+      'name' => 'string',
+      'phone' => 'string',
+      'star_rating' => 'float',
+      'url' => 'string',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/hotels',
+      new Hotel(),
+      'EDGE',
+      Hotel::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getPricingVariablesBatch(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'handle' => 'string',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/pricing_variables_batch',
+      new AbstractCrudObject(),
+      'EDGE',
+      array(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getProductFeeds(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/product_feeds',
+      new ProductFeed(),
+      'EDGE',
+      ProductFeed::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createProductFeed(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'country' => 'string',
+      'default_currency' => 'string',
+      'deletion_enabled' => 'bool',
+      'delimiter' => 'delimiter_enum',
+      'encoding' => 'encoding_enum',
+      'file_name' => 'string',
+      'name' => 'string',
+      'quoted_fields_mode' => 'quoted_fields_mode_enum',
+      'schedule' => 'string',
+    );
+    $enums = array(
+      'delimiter_enum' => ProductFeedDelimiterValues::getInstance()->getValues(),
+      'encoding_enum' => ProductFeedEncodingValues::getInstance()->getValues(),
+      'quoted_fields_mode_enum' => ProductFeedQuotedFieldsModeValues::getInstance()->getValues(),
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/product_feeds',
+      new ProductFeed(),
+      'EDGE',
+      ProductFeed::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getProductGroups(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/product_groups',
+      new ProductGroup(),
+      'EDGE',
+      ProductGroup::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createProductGroup(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'retailer_id' => 'string',
+      'variants' => 'list<Object>',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/product_groups',
+      new ProductGroup(),
+      'EDGE',
+      ProductGroup::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getProductSets(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'ancestor_id' => 'string',
+      'has_children' => 'bool',
+      'parent_id' => 'string',
+      'retailer_id' => 'string',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/product_sets',
+      new ProductSet(),
+      'EDGE',
+      ProductSet::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createProductSet(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'filter' => 'Object',
+      'name' => 'string',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/product_sets',
+      new ProductSet(),
+      'EDGE',
+      ProductSet::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getProductSetsBatch(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'handle' => 'string',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/product_sets_batch',
+      new AbstractCrudObject(),
+      'EDGE',
+      array(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getProducts(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'filter' => 'Object',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/products',
+      new ProductItem(),
+      'EDGE',
+      ProductItem::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createProduct(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'additional_image_urls' => 'list<string>',
+      'android_app_name' => 'string',
+      'android_class' => 'string',
+      'android_package' => 'string',
+      'android_url' => 'string',
+      'availability' => 'availability_enum',
+      'brand' => 'string',
+      'category' => 'string',
+      'checkout_url' => 'string',
+      'color' => 'string',
+      'condition' => 'condition_enum',
+      'currency' => 'string',
+      'custom_data' => 'map',
+      'custom_label_0' => 'string',
+      'custom_label_1' => 'string',
+      'custom_label_2' => 'string',
+      'custom_label_3' => 'string',
+      'custom_label_4' => 'string',
+      'description' => 'string',
+      'expiration_date' => 'string',
+      'gender' => 'gender_enum',
+      'gtin' => 'string',
+      'image_url' => 'string',
+      'inventory' => 'unsigned int',
+      'ios_app_name' => 'string',
+      'ios_app_store_id' => 'unsigned int',
+      'ios_url' => 'string',
+      'ipad_app_name' => 'string',
+      'ipad_app_store_id' => 'unsigned int',
+      'ipad_url' => 'string',
+      'iphone_app_name' => 'string',
+      'iphone_app_store_id' => 'unsigned int',
+      'iphone_url' => 'string',
+      'manufacturer_part_number' => 'string',
+      'name' => 'string',
+      'ordering_index' => 'unsigned int',
+      'pattern' => 'string',
+      'price' => 'unsigned int',
+      'product_type' => 'string',
+      'retailer_id' => 'string',
+      'retailer_product_group_id' => 'string',
+      'sale_price' => 'unsigned int',
+      'sale_price_end_date' => 'datetime',
+      'sale_price_start_date' => 'datetime',
+      'size' => 'string',
+      'start_date' => 'string',
+      'url' => 'string',
+      'visibility' => 'visibility_enum',
+      'windows_phone_app_id' => 'unsigned int',
+      'windows_phone_app_name' => 'string',
+      'windows_phone_url' => 'string',
+    );
+    $enums = array(
+      'availability_enum' => ProductItemAvailabilityValues::getInstance()->getValues(),
+      'condition_enum' => ProductItemConditionValues::getInstance()->getValues(),
+      'gender_enum' => ProductItemGenderValues::getInstance()->getValues(),
+      'visibility_enum' => ProductItemVisibilityValues::getInstance()->getValues(),
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/products',
+      new ProductItem(),
+      'EDGE',
+      ProductItem::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function createVideo(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'content_category' => 'content_category_enum',
+      'description' => 'string',
+      'embeddable' => 'bool',
+      'file_size' => 'unsigned int',
+      'file_url' => 'string',
+      'referenced_sticker_id' => 'string',
+      'slideshow_spec' => 'map',
+      'source' => 'string',
+      'start_offset' => 'unsigned int',
+      'thumb' => 'file',
+      'title' => 'string',
+      'unpublished_content_type' => 'unpublished_content_type_enum',
+      'upload_phase' => 'upload_phase_enum',
+      'upload_session_id' => 'string',
+      'video_file_chunk' => 'string',
+    );
+    $enums = array(
+      'content_category_enum' => array(
+        'BEAUTY_FASHION',
+        'BUSINESS',
+        'CARS_TRUCKS',
+        'COMEDY',
+        'CUTE_ANIMALS',
+        'ENTERTAINMENT',
+        'FAMILY',
+        'FOOD_HEALTH',
+        'HOME',
+        'LIFESTYLE',
+        'MUSIC',
+        'NEWS',
+        'POLITICS',
+        'SCIENCE',
+        'SPORTS',
+        'TECHNOLOGY',
+        'VIDEO_GAMING',
+        'OTHER',
+      ),
+      'unpublished_content_type_enum' => array(
+        'SCHEDULED',
+        'DRAFT',
+        'ADS_POST',
+      ),
+      'upload_phase_enum' => array(
+        'start',
+        'transfer',
+        'finish',
+        'cancel',
+      ),
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/videos',
+      new AbstractCrudObject(),
+      'EDGE',
+      array(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function deleteSelf(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_DELETE,
+      '/',
+      new AbstractCrudObject(),
+      'NODE',
+      array(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function getSelf(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_GET,
+      '/',
+      new ProductCatalog(),
+      'NODE',
+      ProductCatalog::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  public function updateSelf(array $fields = array(), array $params = array(), $pending = false) {
+    $this->assureId();
+
+    $param_types = array(
+      'name' => 'string',
+    );
+    $enums = array(
+    );
+
+    $request = new ApiRequest(
+      $this->api,
+      $this->data['id'],
+      RequestInterface::METHOD_POST,
+      '/',
+      new ProductCatalog(),
+      'NODE',
+      ProductCatalog::getFieldsEnum()->getValues(),
+      new TypeChecker($param_types, $enums)
+    );
+    $request->addParams($params);
+    $request->addFields($fields);
+    return $pending ? $request : $request->execute();
+  }
+
+  /**
+   * @deprecated use createExternalEventSource instead
+   */
+  public function setExternalEventSources(array $pixel_ids, $pending = false) {
+    $params = array(
+      'external_event_sources' => $pixel_ids,
+    );
+    return $this->createExternalEventSource(array(), $params, $pending);
+  }
+
+  /**
+   * @deprecated use deleteExternalEventSources instead
+   */
+  public function removeExternalEventSources(array $pixel_ids, $pending = false) {
+    $params = array(
+      'external_event_sources' => $pixel_ids,
+    );
+    return $this->deleteExternalEventSources(array(), $params, $pending);
   }
 
   /**
