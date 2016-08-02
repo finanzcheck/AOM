@@ -30,11 +30,15 @@ use FacebookAds\Http\Util;
 use FacebookAds\Object\AbstractObject;
 
 class Cursor implements \Iterator, \Countable, \arrayaccess {
-
   /**
    * @var ResponseInterface
    */
   protected $response;
+
+  /**
+   * @var Api
+   */
+  protected $api;
 
   /**
    * @var AbstractObject[]
@@ -72,10 +76,12 @@ class Cursor implements \Iterator, \Countable, \arrayaccess {
   protected $useImplicitFectch;
 
   public function __construct(
-    ResponseInterface $response, AbstractObject $object_prototype) {
-
+    ResponseInterface $response,
+    AbstractObject $object_prototype,
+    Api $api = null) {
     $this->response = $response;
     $this->objectPrototype = $object_prototype;
+    $this->api = $api !== null ? $api : Api::instance();
     $this->appendResponse($response);
   }
 
@@ -86,7 +92,9 @@ class Cursor implements \Iterator, \Countable, \arrayaccess {
   protected function createObject(array $object_data) {
     $object = clone $this->objectPrototype;
     $object->setDataWithoutValidation($object_data);
-
+    if ($object instanceof AbstractCrudObject) {
+      $object->setApi($this->api);
+    }
     return $object;
   }
 
@@ -97,11 +105,71 @@ class Cursor implements \Iterator, \Countable, \arrayaccess {
    */
   protected function assureResponseData(ResponseInterface $response) {
     $content = $response->getContent();
-    if (!isset($content['data']) || !is_array($content['data'])) {
-      throw new \InvalidArgumentException("Malformed response data");
+
+    // First, check if the content contains data
+    if (isset($content['data']) && is_array($content['data'])) {
+      $data = $content['data'];
+
+      // If data is an object wrap the object into an array
+      if ($this->isJsonObject($data)) {
+        $data = array($data);
+      }
+      return $data;
     }
 
-    return $content['data'];
+    // Second, check if the content contains special entries
+    if (isset($content['targetingsentencelines'])) {
+      return $content['targetingsentencelines'];
+    }
+    if (isset($content['adaccounts'])) {
+      return $content['adaccounts'];
+    }
+    if (isset($content['users'])) {
+      return $content['users'];
+    }
+
+    // Third, check if the content is an array of objects indexed by id
+    $is_id_indexed_array = true;
+    $objects = array();
+    if (is_array($content) && count($content) >= 1) {
+      foreach ($content as $key => $value) {
+        if ($key === '__fb_trace_id__') {
+          continue;
+        }
+
+        if ($value !== null &&
+            $this->isJsonObject($value) &&
+            isset($value['id']) &&
+            $value['id'] !== null &&
+            $value['id'] === $key) {
+          $objects[] = $value;
+        } else {
+          $is_id_indexed_array = false;
+          break;
+        }
+      }
+    } else {
+      $is_id_indexed_array = false;
+    }
+    if ($is_id_indexed_array) {
+      return $objects;
+    }
+
+    throw new \InvalidArgumentException("Malformed response data");
+  }
+
+  private function isJsonObject($object) {
+    if (!is_array($object)) {
+      return false;
+    }
+
+    // Consider an empty array as not object
+    if (empty($object)) {
+      return false;
+    }
+
+    // A json object is represented by a map instead of a pure list
+    return array_keys($object) !== range(0, count($object) - 1);
   }
 
   /**
@@ -181,7 +249,6 @@ class Cursor implements \Iterator, \Countable, \arrayaccess {
    */
   public function getBefore() {
     $content = $this->getLastResponse()->getContent();
-
     return isset($content['paging']['cursors']['before'])
       ? $content['paging']['cursors']['before']
       : null;
@@ -192,7 +259,6 @@ class Cursor implements \Iterator, \Countable, \arrayaccess {
    */
   public function getAfter() {
     $content = $this->getLastResponse()->getContent();
-
     return isset($content['paging']['cursors']['after'])
       ? $content['paging']['cursors']['after']
       : null;

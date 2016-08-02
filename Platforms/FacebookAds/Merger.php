@@ -13,7 +13,7 @@ use Piwik\Site;
 
 /*
 Query for single keyword
-select count(*), date, campaign_id, adset_id, ad_id from piwik_aom_facebookads group by date, campaign_id, adset_id, ad_id  order by count(*) desc
+select count(*), date, campaign_id, adset_id, ad_id from aom_facebookads group by date, campaign_id, adset_id, ad_id  order by count(*) desc
  */
 
 

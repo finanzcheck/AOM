@@ -72,7 +72,7 @@ interface PlatformInterface
 
     /**
      * Extracts advertisement platform specific data from the query params and stores it in
-     * piwik_log_visit.aom_ad_params. The implementation of this method must ensure a consistently ordered JSON.
+     * log_visit.aom_ad_params. The implementation of this method must ensure a consistently ordered JSON.
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -81,7 +81,7 @@ interface PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams);
 
     /**
-     * Extracts advertisement data from the ad params and stores it in piwik_log_visit.aom_ad_data.
+     * Extracts advertisement data from the ad params and stores it in log_visit.aom_ad_data.
      * At this point it is likely that there is no actual ad data available. In this case historical data is used to
      * add some basic information.
      * The implementation of this method must ensure a consistently ordered JSON.

@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\Platforms;
 use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\SitesManager\API as APISitesManager;
 use Psr\Log\LoggerInterface;
@@ -154,6 +155,10 @@ abstract class Merger
                     $sql .= ', ';
                 }
                 $sql .= $key.' = \''. $val.'\'';
+
+                if ('aom_ad_data' === $key) {
+                    Piwik::postEvent('AOM.updateVisitAdData', ['idvisit' => $idvisit, 'adData' => $val]);
+                }
             }
 
             $sql .= ' WHERE idvisit = ' . $idvisit;
