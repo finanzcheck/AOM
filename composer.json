@@ -1,5 +1,6 @@
 {
   "require": {
+    "php": ">=5.5.0",
     "bramus/monolog-colored-line-formatter": "~2.0",
     "facebook/php-sdk-v4": "^5.1",
     "facebook/php-ads-sdk": "^2.6",

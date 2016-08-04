@@ -29,7 +29,7 @@ env:
     - PIWIK_ROOT_DIR=$TRAVIS_BUILD_DIR/piwik
     # this variable controls the version of Piwik your tests will run against. increment it when
     # making your plugin compatible with the new version of Piwik.
-    - PIWIK_TEST_TARGET=2.16.0-b1
+    - PIWIK_TEST_TARGET=2.16.2
   matrix:
     - TEST_SUITE=PluginTests MYSQL_ADAPTER=PDO_MYSQL TEST_AGAINST_PIWIK_BRANCH=$PIWIK_TEST_TARGET
     - TEST_SUITE=PluginTests MYSQL_ADAPTER=PDO_MYSQL TEST_AGAINST_CORE=minimum_required_piwik
@@ -37,7 +37,7 @@ env:
 matrix:
   exclude:
     # execute latest stable tests only w/ PHP 5.5
-    - php: 5.3.3
+    - php: 5.3
       env: TEST_SUITE=PluginTests MYSQL_ADAPTER=PDO_MYSQL TEST_AGAINST_CORE=minimum_required_piwik
 
 sudo: required
