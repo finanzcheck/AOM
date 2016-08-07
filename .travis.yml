@@ -3,8 +3,8 @@
 language: php
 
 php:
-  - 5.6
   - 5.5
+  - 5.6
 #  - hhvm
 
 services:
@@ -29,7 +29,7 @@ env:
     - PIWIK_ROOT_DIR=$TRAVIS_BUILD_DIR/piwik
     # this variable controls the version of Piwik your tests will run against. increment it when
     # making your plugin compatible with the new version of Piwik.
-    - PIWIK_TEST_TARGET=2.16.0-b1
+    - PIWIK_TEST_TARGET=2.16.2
   matrix:
     - TEST_SUITE=PluginTests MYSQL_ADAPTER=PDO_MYSQL TEST_AGAINST_PIWIK_BRANCH=$PIWIK_TEST_TARGET
     - TEST_SUITE=PluginTests MYSQL_ADAPTER=PDO_MYSQL TEST_AGAINST_CORE=minimum_required_piwik
@@ -37,7 +37,7 @@ env:
 matrix:
   exclude:
     # execute latest stable tests only w/ PHP 5.5
-    - php: 5.3.3
+    - php: 5.3
       env: TEST_SUITE=PluginTests MYSQL_ADAPTER=PDO_MYSQL TEST_AGAINST_CORE=minimum_required_piwik
 
 sudo: required
@@ -66,7 +66,7 @@ install:
   - '[ -d ./tests/travis/.git ] || sh -c "rm -rf ./tests/travis && git clone https://github.com/piwik/travis-scripts.git ./tests/travis"'
   - cd ./tests/travis ; git checkout master ; cd ../..
 
-  - export GENERATE_TRAVIS_YML_COMMAND="php ./tests/travis/generator/main.php generate:travis-yml --plugin=\"AOM\" --verbose"
+  - export GENERATE_TRAVIS_YML_COMMAND="php ./tests/travis/generator/main.php generate:travis-yml --plugin=\"AOM\" --php-versions=\"5.5,5.6\" --verbose"
   - '[[ "$TRAVIS_JOB_NUMBER" != *.1 || "$TRAVIS_PULL_REQUEST" != "false" ]] || ./tests/travis/autoupdate_travis_yml.sh'
 
   - ./tests/travis/checkout_test_against_branch.sh
@@ -80,8 +80,8 @@ install:
 
   # travis now complains about this failing 9 times out of 10, so removing it
   #- travis_retry composer self-update
-
-  - '[ "$SKIP_COMPOSER_INSTALL" == "1" ] || travis_retry composer install'
+  - '[ "$SKIP_COMPOSER_INSTALL" == "1" ] || travis_retry composer install' 
+ 
 
   # move plugin contents to folder in the plugins subdirectory
   - rm -rf plugins/$PLUGIN_NAME
