@@ -7,7 +7,6 @@
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use Monolog\Logger;
-use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
 

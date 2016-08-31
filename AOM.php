@@ -272,7 +272,6 @@ class AOM extends \Piwik\Plugin
         return self::getAdParamsFromUrl(AOM::getParamsUrl($request));
     }
 
-
     /**
      * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.
      *
@@ -287,6 +286,11 @@ class AOM extends \Piwik\Plugin
         $queryString = parse_url($url, PHP_URL_QUERY);
 
         parse_str($queryString, $queryParams);
+
+        // gclid is a special param used by Google AdWords
+        if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
+            $queryParams[$paramPrefix . '_platform'] = AOM::PLATFORM_AD_WORDS;
+        }
 
         if (is_array($queryParams)
             && array_key_exists($paramPrefix . '_platform', $queryParams)

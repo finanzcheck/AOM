@@ -14,7 +14,6 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use ReportUtils;
 
 class AdWords extends Platform implements PlatformInterface
 {
@@ -60,7 +59,9 @@ class AdWords extends Platform implements PlatformInterface
     ];
 
     /**
-     * Extracts advertisement platform specific data from the query params and validates it.
+     * Extracts advertisement platform specific data from the query params and validates it:
+     *  - Either there is a "gclid" (then all other params are optional)
+     *  - Or there is no "glicd" (then a lot of ValueTrack params are required)
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -69,42 +70,63 @@ class AdWords extends Platform implements PlatformInterface
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
         // Validate required params
-        $missingParams = array_diff(
-            [
-                $paramPrefix . '_campaign_id',
-                $paramPrefix . '_ad_group_id',
-                $paramPrefix . '_feed_item_id',
-                $paramPrefix . '_target_id',
-                $paramPrefix . '_creative',
-                $paramPrefix . '_placement',
-                $paramPrefix . '_target',
-                $paramPrefix . '_network',
-            ],
-            array_keys($queryParams)
-        );
-        if (count($missingParams)) {
-            $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_AD_WORDS
-                . ' without required param' . (count($missingParams) > 0 ? 's' : '') . ': '
-                . implode(', ', $missingParams)
+        if (!array_key_exists('gclid', $queryParams)) {
+            $missingParams = array_diff(
+                [
+                    $paramPrefix . '_campaign_id',
+                    $paramPrefix . '_ad_group_id',
+                    $paramPrefix . '_feed_item_id',
+                    $paramPrefix . '_target_id',
+                    $paramPrefix . '_creative',
+                    $paramPrefix . '_placement',
+                    $paramPrefix . '_target',
+                    $paramPrefix . '_network',
+                ],
+                array_keys($queryParams)
             );
+            if (count($missingParams)) {
+                $this->getLogger()->warning(
+                    'Visit with platform ' . AOM::PLATFORM_AD_WORDS
+                    . ' without required param' . (count($missingParams) > 0 ? 's' : '') . ': '
+                    . implode(', ', $missingParams)
+                );
 
-            return null;
+                return null;
+            }
         }
 
         $adParams = [
             'platform' => AOM::PLATFORM_AD_WORDS,
-            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
-            'adGroupId' => $queryParams[$paramPrefix . '_ad_group_id'],
-            'feedItemId' => $queryParams[$paramPrefix . '_feed_item_id'],
-            'targetId' => $queryParams[$paramPrefix . '_target_id'],
-            'creative' => $queryParams[$paramPrefix . '_creative'],
-            'placement' => $queryParams[$paramPrefix . '_placement'],
-            'target' => $queryParams[$paramPrefix . '_target'],
-            'network' => $queryParams[$paramPrefix . '_network'],
         ];
 
         // Add optional params
+        if (array_key_exists('gclid', $queryParams)) {
+            $adParams['gclid'] = $queryParams['gclid'];
+        }
+        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
+            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
+        }
+        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
+            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
+        }
+        if (array_key_exists($paramPrefix . '_feed_item_id', $queryParams)) {
+            $adParams['feedItemId'] = $queryParams[$paramPrefix . '_feed_item_id'];
+        }
+        if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
+            $adParams['targetId'] = $queryParams[$paramPrefix . '_target_id'];
+        }
+        if (array_key_exists($paramPrefix . '_creative', $queryParams)) {
+            $adParams['creative'] = $queryParams[$paramPrefix . '_creative'];
+        }
+        if (array_key_exists($paramPrefix . '_placement', $queryParams)) {
+            $adParams['placement'] = $queryParams[$paramPrefix . '_placement'];
+        }
+        if (array_key_exists($paramPrefix . '_target', $queryParams)) {
+            $adParams['target'] = $queryParams[$paramPrefix . '_target'];
+        }
+        if (array_key_exists($paramPrefix . '_network', $queryParams)) {
+            $adParams['network'] = $queryParams[$paramPrefix . '_network'];
+        }
         if (array_key_exists($paramPrefix . '_ad_position', $queryParams)) {
             $adParams['adPosition'] = $queryParams[$paramPrefix . '_ad_position'];
         }
@@ -114,8 +136,6 @@ class AdWords extends Platform implements PlatformInterface
         if (array_key_exists($paramPrefix . '_loc_Interest', $queryParams)) {
             $adParams['locInterest'] = $queryParams[$paramPrefix . '_loc_Interest'];
         }
-
-        // TODO: Shorten placement when entire data as JSON has more than 1,024 chars.
 
         return $adParams;
     }
@@ -175,11 +195,21 @@ class AdWords extends Platform implements PlatformInterface
      * @param int $idsite
      * @param string $date
      * @param array $adParams
-     * @return array|null
+     * @return array|null Either a [{visitId}, {adData}] array or null (when no adData could be found)
      * @throws \Exception
      */
     public static function getAdData($idsite, $date, $adParams)
     {
+        // We cannot get adData for adParams when required data is missing
+        if (!array_key_exists('network', $adParams) || 0 === strlen($adParams['network'])
+            || !array_key_exists('campaignId', $adParams) || 0 === strlen($adParams['campaignId'])
+            || !array_key_exists('adGroupId', $adParams) || 0 === strlen($adParams['adGroupId'])
+            || !array_key_exists('placement', $adParams) || 0 === strlen($adParams['placement'])
+            || !array_key_exists('targetId', $adParams) || 0 === strlen($adParams['targetId'])
+        ) {
+            return null;
+        }
+
         if ($adParams['network'] == 'd') {
 
             $query = 'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
@@ -200,7 +230,7 @@ class AdWords extends Platform implements PlatformInterface
                 AND keyword_id = "' . $targetId . '"';
         }
 
-        $result = DB::fetchAll($query);
+        $result = Db::fetchAll($query);
 
         if (count($result) > 1) {
             throw new \Exception('Found more than one match for exact match query: ' . $query);
@@ -223,6 +253,11 @@ class AdWords extends Platform implements PlatformInterface
      */
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
+        // We cannot get the desired data required attributes are missing (we might get this data later via gclid!)
+        if (0 === strlen($campaignId) || 0 === strlen($adGroupId)) {
+            return null;
+        }
+
         $result = Db::fetchRow(
             'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
                 WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? ORDER BY date DESC LIMIT 1',

@@ -9,12 +9,12 @@ namespace Piwik\Plugins\AOM\Platforms\AdWords;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
-use ReportUtils;
 
 class Installer implements InstallerInterface
 {
     public function installPlugin()
     {
+        // aom_adwords
         AOM::addDatabaseTable(
             'CREATE TABLE ' .  AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -41,6 +41,33 @@ class Installer implements InstallerInterface
         AOM::addDatabaseIndex(
             'CREATE INDEX index_aom_adwords ON ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (idsite, date)');
+
+        // aom_adwords_gclid
+        AOM::addDatabaseTable(
+            'CREATE TABLE ' .  AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                id_account_internal VARCHAR(50) NOT NULL,
+                idsite INTEGER NOT NULL,
+                date DATE NOT NULL,
+                account VARCHAR(255) NOT NULL,
+                campaign_id BIGINT NOT NULL,
+                campaign VARCHAR(255) NOT NULL,
+                ad_group_id BIGINT NOT NULL,
+                ad_group VARCHAR(255) NOT NULL,
+                keyword_id BIGINT NOT NULL,
+                keyword_placement VARCHAR(255) NOT NULL,
+                match_type VARCHAR(255) NOT NULL,
+                ad_id BIGINT NOT NULL,
+                ad_type VARCHAR(255) NOT NULL,
+                network VARCHAR(255) NOT NULL,
+                device VARCHAR(255) NOT NULL,
+                gclid VARCHAR(255) NOT NULL
+                ts_created TIMESTAMP
+            )  DEFAULT CHARSET=utf8');
+
+        AOM::addDatabaseIndex(
+            'CREATE INDEX index_aom_adwords_gclid ON '
+            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid (idsite, date, gclid)');
     }
 
     public function uninstallPlugin()

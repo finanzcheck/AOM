@@ -118,7 +118,7 @@ abstract class Merger
      */
     protected function getPlatformData()
     {
-        $platformData = DB::fetchAll(
+        $platformData = Db::fetchAll(
             'SELECT * FROM ' . $this->platform->getDataTableName() . ' WHERE date >= ? AND date <= ?',
             [
                 $this->startDate,
@@ -163,7 +163,7 @@ abstract class Merger
 
             $sql .= ' WHERE idvisit = ' . $idvisit;
 
-            DB::exec($sql);
+            Db::exec($sql);
         }
     }
 
