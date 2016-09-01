@@ -61,7 +61,7 @@ class Installer implements InstallerInterface
                 ad_type VARCHAR(255) NOT NULL,
                 network VARCHAR(255) NOT NULL,
                 device VARCHAR(255) NOT NULL,
-                gclid VARCHAR(255) NOT NULL
+                gclid VARCHAR(255) NOT NULL,
                 ts_created TIMESTAMP
             )  DEFAULT CHARSET=utf8');
 
