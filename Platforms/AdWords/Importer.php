@@ -116,7 +116,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $user,
             'XML',
             [
-                'version' => 'v201605',
+                'version' => 'v201607',
                 'skipReportHeader' => true,
                 'skipColumnHeader' => true,
                 'skipReportSummary' => true,
@@ -258,7 +258,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $user,
             'XML',
             [
-                'version' => 'v201605',
+                'version' => 'v201607',
                 'skipReportHeader' => true,
                 'skipColumnHeader' => true,
                 'skipReportSummary' => true,

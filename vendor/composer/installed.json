@@ -86,65 +86,6 @@
         "description": "Colored Line Formatter for Monolog"
     },
     {
-        "name": "facebook/php-sdk-v4",
-        "version": "5.2.0",
-        "version_normalized": "5.2.0.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/facebook/facebook-php-sdk-v4.git",
-            "reference": "c60fba1fe1de62db1e0776d32fc2fb778189459c"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/facebook/facebook-php-sdk-v4/zipball/c60fba1fe1de62db1e0776d32fc2fb778189459c",
-            "reference": "c60fba1fe1de62db1e0776d32fc2fb778189459c",
-            "shasum": ""
-        },
-        "require": {
-            "php": "^5.4|^7.0"
-        },
-        "require-dev": {
-            "guzzlehttp/guzzle": "~5.0",
-            "mockery/mockery": "~0.8",
-            "phpunit/phpunit": "~4.0"
-        },
-        "suggest": {
-            "guzzlehttp/guzzle": "Allows for implementation of the Guzzle HTTP client"
-        },
-        "time": "2016-05-18 22:04:36",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "5.x-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "Facebook\\": "src/Facebook/"
-            },
-            "files": [
-                "src/Facebook/polyfills.php"
-            ]
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "Facebook Platform"
-        ],
-        "authors": [
-            {
-                "name": "Facebook",
-                "homepage": "https://github.com/facebook/facebook-php-sdk-v4/contributors"
-            }
-        ],
-        "description": "Facebook SDK for PHP",
-        "homepage": "https://github.com/facebook/facebook-php-sdk-v4",
-        "keywords": [
-            "facebook",
-            "sdk"
-        ]
-    },
-    {
         "name": "facebook/php-ads-sdk",
         "version": "2.7.1",
         "version_normalized": "2.7.1.0",
@@ -185,23 +126,26 @@
     },
     {
         "name": "googleads/googleads-php-lib",
-        "version": "10.1.0",
-        "version_normalized": "10.1.0.0",
+        "version": "13.0.0",
+        "version_normalized": "13.0.0.0",
         "source": {
             "type": "git",
             "url": "https://github.com/googleads/googleads-php-lib.git",
-            "reference": "c358f2998bca7c08cc25359692dfd3098de6af9d"
+            "reference": "bfee7c03abb62fb8afaca1f24c05ce20e340b405"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/c358f2998bca7c08cc25359692dfd3098de6af9d",
-            "reference": "c358f2998bca7c08cc25359692dfd3098de6af9d",
+            "url": "https://api.github.com/repos/googleads/googleads-php-lib/zipball/bfee7c03abb62fb8afaca1f24c05ce20e340b405",
+            "reference": "bfee7c03abb62fb8afaca1f24c05ce20e340b405",
             "shasum": ""
         },
         "require": {
+            "ext-curl": "*",
+            "ext-openssl": "*",
+            "ext-soap": "*",
             "php": ">=5.3.0"
         },
-        "time": "2016-07-29 15:13:58",
+        "time": "2016-09-02 20:52:32",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -225,5 +169,65 @@
         ],
         "description": "Google Ads APIs Client Library for PHP (AdWords and DFP)",
         "homepage": "https://github.com/googleads/googleads-php-lib"
+    },
+    {
+        "name": "facebook/php-sdk-v4",
+        "version": "5.3.1",
+        "version_normalized": "5.3.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/facebook/php-graph-sdk.git",
+            "reference": "7ed1ecdae6a5b2f8b8f60e132d06594b39b16fb1"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/facebook/php-graph-sdk/zipball/7ed1ecdae6a5b2f8b8f60e132d06594b39b16fb1",
+            "reference": "7ed1ecdae6a5b2f8b8f60e132d06594b39b16fb1",
+            "shasum": ""
+        },
+        "require": {
+            "php": "^5.4|^7.0"
+        },
+        "require-dev": {
+            "guzzlehttp/guzzle": "~5.0",
+            "mockery/mockery": "~0.8",
+            "phpunit/phpunit": "~4.0"
+        },
+        "suggest": {
+            "guzzlehttp/guzzle": "Allows for implementation of the Guzzle HTTP client"
+        },
+        "time": "2016-08-09 11:32:26",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "5.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Facebook\\": "src/Facebook/"
+            },
+            "files": [
+                "src/Facebook/polyfills.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "Facebook Platform"
+        ],
+        "authors": [
+            {
+                "name": "Facebook",
+                "homepage": "https://github.com/facebook/facebook-php-sdk-v4/contributors"
+            }
+        ],
+        "description": "Facebook SDK for PHP",
+        "homepage": "https://github.com/facebook/facebook-php-sdk-v4",
+        "keywords": [
+            "facebook",
+            "sdk"
+        ],
+        "abandoned": "facebook/graph-sdk"
     }
 ]

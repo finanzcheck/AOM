@@ -59,6 +59,22 @@ class AdWords extends Platform implements PlatformInterface
     ];
 
     /**
+     * @see https://developers.google.com/adwords/api/docs/appendix/reports/click-performance-report#device
+     */
+    const DEVICE_COMPUTERS = 'Computers';
+    const DEVICE_MOBILE = 'Mobile devices with full browsers';
+    const DEVICE_TABLETS = 'Tablets with full browsers';
+
+    /**
+     * @var array All supported devices
+     */
+    public static $devices = [
+        self::DEVICE_COMPUTERS => 'c',
+        self::DEVICE_MOBILE => 'm',
+        self::DEVICE_TABLETS => 't',
+    ];
+
+    /**
      * Extracts advertisement platform specific data from the query params and validates it:
      *  - Either there is a "gclid" (then all other params are optional)
      *  - Or there is no "glicd" (then a lot of ValueTrack params are required)

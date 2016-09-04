@@ -52,7 +52,7 @@ class AdWordsMergerTest extends IntegrationTestCase
      */
     private function getAdDataByVisitId($id)
     {
-        $data =  DB::fetchRow('SELECT * FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?', [$id]);
+        $data =  Db::fetchRow('SELECT * FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit = ?', [$id]);
 
         return json_decode($data['aom_ad_data'], true);
     }
