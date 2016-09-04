@@ -10,8 +10,24 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <p>Make sure that you have understood and followed the <a href="docs.html">introduction</a> before adding params.</p>
 
 <h2 class="sub-title text-center">Google AdWords</h2>
+
 <h3>Tracking params</h3>
-<p>We use <a href="https://support.google.com/adwords/answer/2375447?hl=en">ValueTrack params</a> to obtain the required
+
+<p>The recommended way is to use <a href="https://support.google.com/analytics/answer/1733663">auto-tagging</a>, which
+    automatically adds a parameter named <code>gclid</code> to all links coming from AdWords. With the help of AdWords'
+    <a href="https://developers.google.com/adwords/api/docs/appendix/reports/click-performance-report">click performance
+    report</a> we can identify campaign, ad group etc. for every single AdWords click afterwards.</p>
+
+<p>When a Google AdWords ad for which you enabled auto-tagging is clicked, data like the following can be found in
+    <code>log_visit.aom_ad_params</code>:</p>
+<div class="code-block">
+    <pre><code class="language-php">{
+    "platform":"AdWords",
+    "gclid":"CICO-Krt9c4CFSQz0wodCNUH8Q"
+}</code></pre></div>
+
+<p>Only if you cannot or don't want to use auto-tagging for whatever reason, you can use
+    <a href="https://support.google.com/adwords/answer/2375447?hl=en">ValueTrack params</a> to obtain the required
     data. The following params are supported:</p>
 
 <table><thead>
@@ -105,10 +121,12 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 </tr>
 </tbody></table>
 
-<p>A typical link at Google AdWords (with the prefix "aom") should have the following params:</p>
+<p>A typical link at Google AdWords (with the prefix "aom") should have the following params (as mentioned previously,
+    <strong>this is only necessary when you don't use auto-tagging</strong>):</p>
 <pre><code>&amp;aom_platform=AdWords&amp;aom_campaign_id={campaignid}&amp;aom_ad_group_id={adgroupid}&amp;aom_feed_item_id={feeditemid}&amp;aom_target_id={targetid}&amp;aom_creative={creative}&amp;aom_placement={placement}&amp;aom_target={target}&amp;aom_network={network}&amp;aom_device={device}&amp;aom_ad_position={adposition}&amp;aom_loc_physical={loc_physical_ms}&amp;aom_loc_Interest={loc_interest_ms}</code></pre>
 
-<p>When a Google AdWords ad is clicked, data like the following can be found in <code>log_visit.aom_ad_params</code>:</p>
+<p>When a Google AdWords ad for which URL you provided ValueTrack params is clicked, data like the following can be
+    found in <code>log_visit.aom_ad_params</code>:</p>
 <div class="code-block">
     <pre><code class="language-php">{
     "platform":"AdWords",
@@ -167,7 +185,11 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
     <a href="http://local.piwik.de?module=AOM&amp;action=platformAction&amp;platform=AdWords&amp;method=processOAuthRedirect">http://local.piwik.de?module=AOM&amp;action=platformAction&amp;platform=AdWords&amp;method=processOAuthRedirect</a>)
     being an authorized redirect URI.</p>
 
-<p>AdWords data is being (re)imported for the last 3 days (as old data might change).</p>
+<p>AdWords data is being (re)imported for the last 3 days (as old data might change). When you rely on auto-tagging
+    (which is preferred) and therefore do not provide any ValueTrack params, merging will first fetch a
+    <a href="https://developers.google.com/adwords/api/docs/appendix/reports/click-performance-report">click performance
+    report</a> to identify campaign, ad group etc. for every single AdWords click (gclid). Afterwards, the merging
+    process for auto-tagging and ValueTrack params is the same.</p>
 
 
 <!-- Microsoft Bing Ads -->
