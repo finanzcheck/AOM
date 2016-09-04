@@ -172,7 +172,7 @@ class AdWords extends Platform implements PlatformInterface
      */
     public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
     {
-        if(!$date) {
+        if (!$date) {
             $date = date('Y-m-d', strtotime(AOM::convertUTCToLocalDateTime(date('Y-m-d H:i:s'), $idsite)));
         }
 
@@ -204,8 +204,8 @@ class AdWords extends Platform implements PlatformInterface
         if (!array_key_exists('network', $adParams) || 0 === strlen($adParams['network'])
             || !array_key_exists('campaignId', $adParams) || 0 === strlen($adParams['campaignId'])
             || !array_key_exists('adGroupId', $adParams) || 0 === strlen($adParams['adGroupId'])
-            || !array_key_exists('placement', $adParams) || 0 === strlen($adParams['placement'])
-            || !array_key_exists('targetId', $adParams) || 0 === strlen($adParams['targetId'])
+            || ((!array_key_exists('placement', $adParams) || 0 === strlen($adParams['placement']))
+                && (!array_key_exists('targetId', $adParams) || 0 === strlen($adParams['targetId'])))
         ) {
             return null;
         }
