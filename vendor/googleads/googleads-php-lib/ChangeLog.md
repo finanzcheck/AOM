@@ -1,3 +1,29 @@
+### 13.0.0
+
+Common:
+  - Fixed
+    [issue #162](https://github.com/googleads/googleads-php-lib/issues/162).
+  - Removed the ability to set the OAuth2 server host as it is not useful.
+
+### 12.0.0
+
+AdWords:
+  - Removed support for v201601.
+  - Fixed [issue #158](https://github.com/googleads/googleads-php-lib/issues/158).
+  - User agent is now optional. If no user agent is specified, 'unknown' will
+    be passed instead. If provided, user agent must contain US-ASCII characters
+    only.
+
+### 11.0.0
+
+DFP:
+  - Added support and examples for v201608.
+  - Removed support for v201505 (sunset).
+  - Removed examples for v201508 and v201511 (deprecated).
+
+Common:
+  - Fixed [issue #155](https://github.com/googleads/googleads-php-lib/pull/155).
+
 ### 10.1.0
 
 AdWords:
