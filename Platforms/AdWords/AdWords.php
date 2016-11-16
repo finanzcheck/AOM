@@ -115,11 +115,11 @@ class AdWords extends Platform implements PlatformInterface
         if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
 
             // No validation possible, as there either is a gclid or not (the _platform param won't be set!)
-
-            return [
-                'platform' => AOM::PLATFORM_AD_WORDS,
-                'gclid' => $queryParams['gclid'],
-            ];
+            return array_key_exists('gclid', $queryParams)
+                ? [
+                    'platform' => AOM::PLATFORM_AD_WORDS,
+                    'gclid' => $queryParams['gclid'],
+                ] : null;
 
         } elseif (self::TRACKING_VARIANT_REGULAR_PARAMS === $this->getTrackingVariant()) {
 
