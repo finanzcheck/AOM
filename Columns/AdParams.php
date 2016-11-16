@@ -56,7 +56,7 @@ class AdParams extends VisitDimension
         $adParams = AOM::getAdParamsFromUrl($action->getActionUrl());
 
         // Keep Piwik's default behaviour when we do not have any ad data
-        if (!is_array($adParams)) {
+        if (!is_array($adParams) || 0 === count($adParams)) {
             return false;
         }
 
