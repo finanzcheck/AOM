@@ -227,6 +227,11 @@ class AOM extends \Piwik\Plugin
             return $queryParams[$paramPrefix . '_platform'];
         }
 
+        //When gclid is set then use Adwords
+        if (array_key_exists('gclid', $queryParams)) {
+            return AOM::PLATFORM_AD_WORDS;
+        }
+
         return null;
     }
 

@@ -232,7 +232,7 @@ class AdWords extends Platform implements PlatformInterface
             $adParams
         );
 
-        if (!$adData[0]) {
+        if (!$adData[0] && array_key_exists('campaignId', $adParams) && array_key_exists('adGroupId', $adParams)) {
             $adData = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
         }
 
