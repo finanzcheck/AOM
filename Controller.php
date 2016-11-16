@@ -9,7 +9,6 @@ namespace Piwik\Plugins\AOM;
 use Piwik\Common;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\Platforms\ControllerInterface;
-use Piwik\View;
 
 class Controller extends \Piwik\Plugin\ControllerAdmin
 {

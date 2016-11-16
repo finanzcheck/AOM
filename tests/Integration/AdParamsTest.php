@@ -14,7 +14,6 @@ use Piwik\Tracker\Visit\VisitProperties;
 use Piwik\Tracker\Visitor;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik;
-use Piwik\Db;
 use Piwik\Tests\Framework\Fixture;
 /**
  * @group AOM

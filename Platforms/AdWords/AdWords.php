@@ -17,6 +17,20 @@ use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 
 class AdWords extends Platform implements PlatformInterface
 {
+    /**
+     * AdWords can either track and merge via gclid (auto-tagging) or via regular-params but not both at the same time!
+     */
+    const TRACKING_VARIANT_GCLID = 'gclid';
+    const TRACKING_VARIANT_REGULAR_PARAMS = 'regular-params';
+
+    /**
+     * @var array All supported tracking variants
+     */
+    public static $trackingVariants = [
+        self::TRACKING_VARIANT_GCLID,
+        self::TRACKING_VARIANT_REGULAR_PARAMS,
+    ];
+
     const CRITERIA_TYPE_AGE = 'age';
     const CRITERIA_TYPE_GENDER = 'gender';
     const CRITERIA_TYPE_KEYWORD = 'keyword';
@@ -75,9 +89,22 @@ class AdWords extends Platform implements PlatformInterface
     ];
 
     /**
-     * Extracts advertisement platform specific data from the query params and validates it:
-     *  - Either there is a "gclid" (then all other params are optional)
-     *  - Or there is no "glicd" (then a lot of ValueTrack params are required)
+     * Whether or not this platform has been activated in the plugin's configuration.
+     *
+     * @return string
+     */
+    public function getTrackingVariant()
+    {
+        $trackingVariant = $this->getSettings()->{'platformAdWordsTrackingVariant'}->getValue();
+
+        return in_array($trackingVariant, self::$trackingVariants) ? $trackingVariant : self::TRACKING_VARIANT_GCLID;
+    }
+
+    /**
+     * Extracts advertisement platform specific data from the query params based on the configured tracking variant
+     * (either gclid or regular parameters) and validates it:
+     *  - When "gclid" is configured, then all other params are being ignored
+     *  - When "regular-params" are configured, then gclid is ignored but a lot of ValueTrack params are required
      *
      * @param string $paramPrefix
      * @param array $queryParams
@@ -85,8 +112,18 @@ class AdWords extends Platform implements PlatformInterface
      */
     public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
     {
-        // Validate required params
-        if (!array_key_exists('gclid', $queryParams)) {
+        if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
+
+            // No validation possible, as there either is a gclid or not (the _platform param won't be set!)
+
+            return [
+                'platform' => AOM::PLATFORM_AD_WORDS,
+                'gclid' => $queryParams['gclid'],
+            ];
+
+        } elseif (self::TRACKING_VARIANT_REGULAR_PARAMS === $this->getTrackingVariant()) {
+
+            // Validate required params
             $missingParams = array_diff(
                 [
                     $paramPrefix . '_campaign_id',
@@ -115,10 +152,7 @@ class AdWords extends Platform implements PlatformInterface
             'platform' => AOM::PLATFORM_AD_WORDS,
         ];
 
-        // Add optional params
-        if (array_key_exists('gclid', $queryParams)) {
-            $adParams['gclid'] = $queryParams['gclid'];
-        }
+        // Add params
         if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
             $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
         }

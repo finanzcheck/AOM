@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM;
 use Piwik\NoAccessException;
 use Piwik\Option;
 use Piwik\Piwik;
+use Piwik\Plugins\AOM\Platforms\AdWords\AdWords;
 use Piwik\Settings\SystemSetting;
 
 class Settings extends \Piwik\Plugin\Settings
@@ -29,6 +30,11 @@ class Settings extends \Piwik\Plugin\Settings
      * @var SystemSetting
      */
     public $platformAdWordsIsActive;
+
+    /**
+     * @var SystemSetting
+     */
+    public $platformAdWordsTrackingVariant;
 
     /**
      * @var SystemSetting
@@ -55,6 +61,7 @@ class Settings extends \Piwik\Plugin\Settings
 
         // Add settings for platforms
         $this->createPlatformAdWordsIsActiveSetting();
+        $this->createPlatformAdWordsTrackingVariantSetting();
         $this->createPlatformBingIsActiveSetting();
         $this->createPlatformCriteoIsActiveSetting();
         $this->createPlatformFacebookAdsIsActiveSetting();
@@ -81,11 +88,33 @@ class Settings extends \Piwik\Plugin\Settings
             Piwik::translate('AOM_PluginSettings_Setting_EnableAdWords_Title')
         );
         $this->platformAdWordsIsActive->readableByCurrentUser = true;
-        $this->platformAdWordsIsActive->type  = static::TYPE_BOOL;
+        $this->platformAdWordsIsActive->type = static::TYPE_BOOL;
         $this->platformAdWordsIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformAdWordsIsActive->defaultValue  = false;
+        $this->platformAdWordsIsActive->defaultValue = false;
 
         $this->addSetting($this->platformAdWordsIsActive);
+    }
+
+    private function createPlatformAdWordsTrackingVariantSetting()
+    {
+        $this->platformAdWordsTrackingVariant = new SystemSetting(
+            'platformAdWordsTrackingVariant',
+            Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_Title')
+        );
+        $this->platformAdWordsTrackingVariant->readableByCurrentUser = true;
+        $this->platformAdWordsTrackingVariant->type = static::TYPE_STRING;
+        $this->platformAdWordsTrackingVariant->uiControlType = static::CONTROL_SINGLE_SELECT;
+        $this->platformAdWordsTrackingVariant->availableValues = [
+            AdWords::TRACKING_VARIANT_GCLID =>
+                Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_OptionGclid'),
+            AdWords::TRACKING_VARIANT_REGULAR_PARAMS =>
+                Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_OptionRegularParams'),
+        ];
+        $this->platformAdWordsTrackingVariant->defaultValue = AdWords::TRACKING_VARIANT_GCLID;
+        $this->platformAdWordsTrackingVariant->description =
+            Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_Description');
+
+        $this->addSetting($this->platformAdWordsTrackingVariant);
     }
 
     private function createPlatformBingIsActiveSetting()
@@ -95,9 +124,9 @@ class Settings extends \Piwik\Plugin\Settings
             Piwik::translate('AOM_PluginSettings_Setting_EnableBing_Title')
         );
         $this->platformBingIsActive->readableByCurrentUser = true;
-        $this->platformBingIsActive->type  = static::TYPE_BOOL;
+        $this->platformBingIsActive->type = static::TYPE_BOOL;
         $this->platformBingIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformBingIsActive->defaultValue  = false;
+        $this->platformBingIsActive->defaultValue = false;
 
         $this->addSetting($this->platformBingIsActive);
     }
@@ -109,9 +138,9 @@ class Settings extends \Piwik\Plugin\Settings
             Piwik::translate('AOM_PluginSettings_Setting_EnableCriteo_Title')
         );
         $this->platformCriteoIsActive->readableByCurrentUser = true;
-        $this->platformCriteoIsActive->type  = static::TYPE_BOOL;
+        $this->platformCriteoIsActive->type = static::TYPE_BOOL;
         $this->platformCriteoIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformCriteoIsActive->defaultValue  = false;
+        $this->platformCriteoIsActive->defaultValue = false;
 
         $this->addSetting($this->platformCriteoIsActive);
     }
@@ -123,9 +152,9 @@ class Settings extends \Piwik\Plugin\Settings
             Piwik::translate('AOM_PluginSettings_Setting_EnableFacebookAds_Title')
         );
         $this->platformFacebookAdsIsActive->readableByCurrentUser = true;
-        $this->platformFacebookAdsIsActive->type  = static::TYPE_BOOL;
+        $this->platformFacebookAdsIsActive->type = static::TYPE_BOOL;
         $this->platformFacebookAdsIsActive->uiControlType = static::CONTROL_CHECKBOX;
-        $this->platformFacebookAdsIsActive->defaultValue  = false;
+        $this->platformFacebookAdsIsActive->defaultValue = false;
 
         $this->addSetting($this->platformFacebookAdsIsActive);
     }
