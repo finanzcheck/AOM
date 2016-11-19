@@ -303,7 +303,7 @@ class AdWords extends Platform implements PlatformInterface
      */
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
-        // We cannot get the desired data required attributes are missing (we might get this data later via gclid!)
+        // We cannot get the desired data as required attributes are missing (we might get this data later via gclid!)
         if (0 === strlen($campaignId) || 0 === strlen($adGroupId)) {
             return null;
         }
