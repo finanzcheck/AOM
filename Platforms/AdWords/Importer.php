@@ -130,7 +130,6 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $consolidatedData = [];
         foreach ($xml->table->row as $row) {
 
-
             // Clicks of Google Sponsored Promotions (GSP) are more like more engaged ad views than real visits,
             // i.e. we have to reassign clicks (and therewith recalculate CpC)
             // (see http://marketingland.com/gmail-sponsored-promotions-everything-need-know-succeed-direct-response-gsp-part-1-120938)
@@ -266,20 +265,28 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         );
         $xml = simplexml_load_string($xmlString);
 
+
         // Get all visits which ad params we could possibly improve
+
+        // Leave one hour tolerance for visits that arrive late
+        $endDate = new \DateTime($date . ' 23:59:59', new \DateTimeZone(Site::getTimezoneFor($account['websiteId'])));
+        $endDate->add(new \DateInterval('PT1H'));
+        $endDate->setTimezone(new \DateTimeZone('UTC'));
+        $endDate = $endDate->format('Y-m-d H:i:s');
+
         // We cannot use gclid as key as multiple visits might have the same gclid!
         $visits = Db::fetchAssoc(
             'SELECT idvisit, 
                   SUBSTRING_INDEX(SUBSTR(aom_ad_params, LOCATE(\'gclid\', aom_ad_params)+CHAR_LENGTH(\'gclid\')+3),\'"\',1) AS gclid, 
                   aom_ad_params
                 FROM ' . Common::prefixTable('log_visit') . '
-                WHERE idsite = ? AND aom_platform = ? AND visit_first_action_time >= ? AND
-                    visit_first_action_time <= ?',
+                WHERE idsite = ? AND aom_platform = ? AND visit_first_action_time >= ?
+                     AND visit_first_action_time <= ?',
             [
                 $account['websiteId'],
                 AOM::PLATFORM_AD_WORDS,
                 AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($account['websiteId'])),
-                AOM::convertLocalDateTimeToUTC($date . ' 23:59:59', Site::getTimezoneFor($account['websiteId'])),
+                $endDate,
             ]
         );
         foreach ($visits as &$visit) {
@@ -304,6 +311,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $gclids[(string) $row['googleClickID']] = [
                 'campaignId' => (string) $row['campaignID'],
                 'adGroupId' => (string) $row['adGroupID'],
+                'targetId' => 'kwd-' . (string) $row['keywordID'],
                 'placement' => (string) $row['keywordPlacement'],
                 'creative' => (string) $row['adID'],
                 'network' => $network,
@@ -344,11 +352,13 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     || $visit['adParams']['campaignId'] != $gclids[$visit['gclid']]['campaignId']
                     || !array_key_exists('adGroupId', $visit['adParams'])
                     || $visit['adParams']['adGroupId'] != $gclids[$visit['gclid']]['adGroupId']
+                    || !array_key_exists('targetId', $visit['adParams'])
                     || !array_key_exists('network', $visit['adParams'])
                     || $visit['adParams']['network'] != $gclids[$visit['gclid']]['network'])
             ) {
                 $visit['adParams']['campaignId'] = $gclids[$visit['gclid']]['campaignId'];
                 $visit['adParams']['adGroupId'] = $gclids[$visit['gclid']]['adGroupId'];
+                $visit['adParams']['targetId'] = $gclids[$visit['gclid']]['targetId'];
                 $visit['adParams']['placement'] = $gclids[$visit['gclid']]['placement'];
                 $visit['adParams']['creative'] = $gclids[$visit['gclid']]['creative'];
                 $visit['adParams']['network'] = $gclids[$visit['gclid']]['network'];
@@ -362,7 +372,12 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     'Improved ad params of visit ' . $visit['idvisit'] . ' via gclid-matching.'
                 );
             }
+
+            // TODO:
+            // There are often visits with gclid that belongs to previous days,
+            // i.e. this visit should not be assigned to AdWords!
         }
+
     }
 
     /**
