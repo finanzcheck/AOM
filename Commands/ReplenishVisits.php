@@ -20,7 +20,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Piwik\Plugins\SitesManager\API as APISitesManager;
 
-
 /**
  * Example:
  * ./console aom:replenish-visits --startDate=2016-01-06 --endDate=2016-01-06

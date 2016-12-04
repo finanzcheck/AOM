@@ -8,7 +8,7 @@
   },
   "autoload": {
     "classmap": [
-      "vendor/googleads/googleads-php-lib/src/Google/Api/Ads/AdWords/Util/v201607"
+      "vendor/googleads/googleads-php-lib/src/Google/Api/Ads/AdWords/Util/v201609"
     ]
   }
 }

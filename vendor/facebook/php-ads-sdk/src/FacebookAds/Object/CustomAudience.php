@@ -148,6 +148,7 @@ class CustomAudience extends AbstractCrudObject {
 
     $param_types = array(
       'effective_status' => 'list<string>',
+      'status' => 'list<string>',
     );
     $enums = array(
     );
@@ -218,6 +219,7 @@ class CustomAudience extends AbstractCrudObject {
     $this->assureId();
 
     $param_types = array(
+      'namespace' => 'string',
       'payload' => 'Object',
       'session' => 'Object',
     );
@@ -243,6 +245,7 @@ class CustomAudience extends AbstractCrudObject {
     $this->assureId();
 
     $param_types = array(
+      'namespace' => 'string',
       'payload' => 'Object',
       'session' => 'Object',
     );
