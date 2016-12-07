@@ -127,6 +127,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
         // Matching placements based on the string in the value track param {placement} did not work successfully.
         // This is why we aggregate up all placements of an ad group and merge on that level.
+        // TODO: This might be no longer necessary since we can match based on gclid?!
         $consolidatedData = [];
         foreach ($xml->table->row as $row) {
 
@@ -205,12 +206,17 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // Write consolidated data to Piwik's database
         // TODO: Use MySQL transaction to improve performance!
         foreach ($consolidatedData as $data) {
+
+            $uniqueHash = $account['websiteId'] . '-' . $data['date'] . '-'
+                . hash('md5', $data['account'] . $data['campaignId'] . $data['adGroupId'] . $data['keywordId']
+                    . $data['keywordPlacement'] . $data['criteriaType'] . $data['network']);
+
             Db::query(
                 'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
                 . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
                 . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, '
-                . 'ts_created) '
-                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                . 'unique_hash, ts_created) '
+                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $accountId,
                     $account['websiteId'],
@@ -228,6 +234,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $data['clicks'],
                     $data['cost'],
                     $data['conversions'],
+                    $uniqueHash,
                 ]
             );
         }
