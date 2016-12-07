@@ -38,6 +38,12 @@ class Installer implements InstallerInterface
                 ts_created TIMESTAMP
             )  DEFAULT CHARSET=utf8');
 
+        // Avoid issues from parallel imports
+        AOM::addDatabaseIndex(
+            'CREATE UNIQUE INDEX index_aom_criteo_unique ON '
+            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (idsite, date, campaign_id)'
+        );
+
         // Optimize for queries from MarketingPerformanceController.php
         AOM::addDatabaseIndex(
             'CREATE INDEX index_aom_criteo ON '

@@ -94,7 +94,7 @@ class AOM extends \Piwik\Plugin
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 idsite INTEGER NOT NULL,
                 piwik_idvisit INTEGER,
-                piwik_idvisitor VARCHAR(100),
+                piwik_idvisitor VARCHAR(100) NOT NULL,
                 first_action_time_utc DATETIME NOT NULL,
                 date_website_timezone DATE NOT NULL,
                 channel VARCHAR(100),
@@ -103,8 +103,15 @@ class AOM extends \Piwik\Plugin
                 cost FLOAT,
                 conversions INTEGER,
                 revenue FLOAT,
+                unique_hash VARCHAR(100) NOT NULL,
                 ts_created TIMESTAMP
             )  DEFAULT CHARSET=utf8');
+
+        // Use piwik_idvisit as unique key to avoid race conditions (manually created visits would have null here)
+        // Manually created visits must create consistent keys from the same raw data
+        self::addDatabaseIndex(
+            'CREATE UNIQUE INDEX index_aom_unique_visits ON ' . Common::prefixTable('aom_visits') . ' (unique_hash)'
+        );
 
         // Optimize for queries from MarketingPerformanceController.php
         self::addDatabaseIndex(

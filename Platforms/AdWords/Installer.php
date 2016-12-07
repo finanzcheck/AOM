@@ -34,13 +34,21 @@ class Installer implements InstallerInterface
                 clicks INTEGER NOT NULL,
                 cost FLOAT NOT NULL,
                 conversions INTEGER NOT NULL,
+                unique_hash VARCHAR(100) NOT NULL,
                 ts_created TIMESTAMP
             )  DEFAULT CHARSET=utf8');
+
+        // Avoid issues from parallel imports
+        AOM::addDatabaseIndex(
+            'CREATE UNIQUE INDEX index_aom_adwords_unique ON '
+            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . ' (unique_hash)'
+        );
 
         // Optimize for queries from MarketingPerformanceController.php
         AOM::addDatabaseIndex(
             'CREATE INDEX index_aom_adwords ON ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
-            . ' (idsite, date)');
+            . ' (idsite, date)'
+        );
 
         // aom_adwords_gclid
         AOM::addDatabaseTable(
@@ -65,9 +73,11 @@ class Installer implements InstallerInterface
                 ts_created TIMESTAMP
             )  DEFAULT CHARSET=utf8');
 
+        // Avoid issues from parallel imports and ensure faster queries
         AOM::addDatabaseIndex(
-            'CREATE INDEX index_aom_adwords_gclid ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid (idsite, date, gclid)');
+            'CREATE UNIQUE INDEX index_aom_adwords_gclid ON '
+            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid (idsite, date, gclid)'
+        );
     }
 
     public function uninstallPlugin()

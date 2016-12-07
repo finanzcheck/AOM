@@ -40,9 +40,7 @@ class AdSetFields extends AbstractEnum {
   const ACCOUNT_ID = 'account_id';
   const ADLABELS = 'adlabels';
   const ADSET_SCHEDULE = 'adset_schedule';
-  const ASSET_FEED_ID = 'asset_feed_id';
   const ATTRIBUTION_WINDOW_DAYS = 'attribution_window_days';
-  const BEST_CREATIVE = 'best_creative';
   const BID_AMOUNT = 'bid_amount';
   const BID_INFO = 'bid_info';
   const BILLING_EVENT = 'billing_event';
@@ -60,6 +58,7 @@ class AdSetFields extends AbstractEnum {
   const FREQUENCY_CONTROL_SPECS = 'frequency_control_specs';
   const ID = 'id';
   const IS_AUTOBID = 'is_autobid';
+  const IS_AVERAGE_PRICE_PACING = 'is_average_price_pacing';
   const LIFETIME_BUDGET = 'lifetime_budget';
   const LIFETIME_FREQUENCY_CAP = 'lifetime_frequency_cap';
   const LIFETIME_IMPS = 'lifetime_imps';
@@ -68,6 +67,7 @@ class AdSetFields extends AbstractEnum {
   const PACING_TYPE = 'pacing_type';
   const PROMOTED_OBJECT = 'promoted_object';
   const RECOMMENDATIONS = 'recommendations';
+  const RECURRING_BUDGET_SEMANTICS = 'recurring_budget_semantics';
   const RF_PREDICTION_ID = 'rf_prediction_id';
   const RTB_FLAG = 'rtb_flag';
   const START_TIME = 'start_time';
@@ -86,9 +86,7 @@ class AdSetFields extends AbstractEnum {
       'account_id' => 'string',
       'adlabels' => 'list<AdLabel>',
       'adset_schedule' => 'list<DayPart>',
-      'asset_feed_id' => 'string',
       'attribution_window_days' => 'unsigned int',
-      'best_creative' => 'Object',
       'bid_amount' => 'unsigned int',
       'bid_info' => 'map<string, unsigned int>',
       'billing_event' => 'BillingEvent',
@@ -106,6 +104,7 @@ class AdSetFields extends AbstractEnum {
       'frequency_control_specs' => 'list<Object>',
       'id' => 'string',
       'is_autobid' => 'bool',
+      'is_average_price_pacing' => 'bool',
       'lifetime_budget' => 'string',
       'lifetime_frequency_cap' => 'unsigned int',
       'lifetime_imps' => 'int',
@@ -114,6 +113,7 @@ class AdSetFields extends AbstractEnum {
       'pacing_type' => 'list<string>',
       'promoted_object' => 'AdPromotedObject',
       'recommendations' => 'list<AdRecommendation>',
+      'recurring_budget_semantics' => 'bool',
       'rf_prediction_id' => 'string',
       'rtb_flag' => 'bool',
       'start_time' => 'datetime',
@@ -124,7 +124,7 @@ class AdSetFields extends AbstractEnum {
       'updated_time' => 'datetime',
       'use_new_app_click' => 'bool',
       'daily_imps' => 'unsigned int',
-      'execution_options' => 'ExecutionOptions',
+      'execution_options' => 'list<ExecutionOptions>',
       'redownload' => 'bool',
     );
   }

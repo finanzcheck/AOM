@@ -71,11 +71,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             $date = date_create_from_format('m/j/Y', $row->GregorianDate->attributes()['value']);
             $date = $date->format('Y-m-d');
 
+            $uniqueHash = $account['websiteId'] . '-' . $date . '-'
+                . hash('md5', $row->AccountId->attributes()['value'] . $row->CampaignId->attributes()['value']
+                    . $row->AdGroupId->attributes()['value'] . $row->KeywordId->attributes()['value']);
+
             Db::query(
                 'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING)
                     . ' (id_account_internal, idsite, date, account_id, account, campaign_id, campaign, ad_group_id, '
-                    . 'ad_group, keyword_id, keyword, impressions, clicks, cost, conversions, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                    . 'ad_group, keyword_id, keyword, impressions, clicks, cost, conversions, unique_hash, ts_created) '
+                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $accountId,
                     $account['websiteId'],
@@ -92,6 +96,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     $row->Clicks->attributes()['value'],
                     $row->Spend->attributes()['value'],
                     $row->Conversions->attributes()['value'],
+                    $uniqueHash,
                 ]
             );
         }

@@ -20,10 +20,9 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Piwik\Plugins\SitesManager\API as APISitesManager;
 
-
 /**
  * Example:
- * ./console aom:replenish-visits --startDate=2016-01-06 --endDate=2016-01-06
+ * ./console aom:replenish-visits --startDate=2016-12-01 --endDate=2016-12-01
  */
 class ReplenishVisits extends ConsoleCommand
 {
@@ -133,17 +132,23 @@ class ReplenishVisits extends ConsoleCommand
                     // Add matched Piwik visits with calculated CPC and platform data to database
                     foreach ($matchingVisits as $matchingVisit) {
                         $this->addVisit(
-                            $cost['idsite'],
-                            $matchingVisit['idvisit'],
-                            $matchingVisit['idvisitor'],
-                            AOM::convertUTCToLocalDateTime($matchingVisit['visit_first_action_time'], $cost['idsite']),
-                            $date,
-                            $this->determineChannel($platformName, $matchingVisit['referer_type'], $matchingVisit['campaign_name']),
-                            $matchingVisit['campaign_data'],
-                            json_encode($cost),
-                            ($cost['cost'] / count($matchingVisits)),    // Calculate CPC based on Piwik visits
-                            $matchingVisit['conversions'],
-                            $matchingVisit['revenue']
+                            [
+                                'siteId' => $cost['idsite'],
+                                'visitId' => $matchingVisit['idvisit'],
+                                'visitorId' => $matchingVisit['idvisitor'],
+                                'firstActionTimeUTC' => $matchingVisit['visit_first_action_time'],
+                                'dateWebsiteTimezone' => $date,
+                                'channel' => $this->determineChannel(
+                                    $platformName,
+                                    $matchingVisit['referer_type'],
+                                    $matchingVisit['campaign_name']
+                                ),
+                                'campaignData' => $matchingVisit['campaign_data'],
+                                'platformData' => json_encode($cost),
+                                'cost' => ($cost['cost'] / count($matchingVisits)), // Calculate CPC based on Piwik visits
+                                'conversions' => $matchingVisit['conversions'],
+                                'revenue' => $matchingVisit['revenue'],
+                            ]
                         );
 
                         $totalMatchingVisits++;
@@ -158,15 +163,17 @@ class ReplenishVisits extends ConsoleCommand
 
                     // Costs but no match -> create visit (so that total costs will match)
                     $this->addVisit(
-                        $cost['idsite'],
-                        null,
-                        uniqid(),
-                        AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($cost['idsite'])),
-                        $date,
-                        $platformName,
-                        null,
-                        json_encode($cost),
-                        $cost['cost']
+                        [
+                            'siteId' => $cost['idsite'],
+                            'firstActionTimeUTC' => AOM::convertLocalDateTimeToUTC(
+                                $date . ' 00:00:00',
+                                Site::getTimezoneFor($cost['idsite'])
+                            ),
+                            'dateWebsiteTimezone' => $date,
+                            'channel' => $this->determineChannel($platformName),
+                            'platformData' => json_encode($cost),
+                            'cost' => $cost['cost'],
+                        ]
                     );
 
                     $totalCreatedVisits++;
@@ -212,7 +219,7 @@ class ReplenishVisits extends ConsoleCommand
                 sprintf(
                     'Total costs reported vs. total costs of all resulting visits are %f vs. %f.',
                     $totalCosts,
-                    DB::fetchOne(
+                    Db::fetchOne(
                         'SELECT SUM(cost) FROM ' . Common::prefixTable('aom_visits')
                         . ' WHERE date_website_timezone = ? AND channel = ?',
                         [
@@ -232,22 +239,22 @@ class ReplenishVisits extends ConsoleCommand
 
         foreach ($visits as $visit) {
             $this->addVisit(
-                $visit['idsite'],
-                $visit['idvisit'],
-                $visit['idvisitor'],
-                $visit['visit_first_action_time'],
-                $date,
-                $this->determineChannel(null, $visit['referer_type'], $visit['campaign_name']),
-                $visit['campaign_data'],
-                null,
-                null,
-                $visit['conversions'],
-                $visit['revenue']
+                [
+                    'siteId' => $visit['idsite'],
+                    'visitId' => $visit['idvisit'],
+                    'visitorId' => $visit['idvisitor'],
+                    'firstActionTimeUTC' => $visit['visit_first_action_time'],
+                    'dateWebsiteTimezone' => $date,
+                    'channel' => $this->determineChannel(null, $visit['referer_type'], $visit['campaign_name']),
+                    'campaignData' => $visit['campaign_data'],
+                    'conversions' => $visit['conversions'],
+                    'revenue' => $visit['revenue'],
+                ]
             );
         }
 
         // Final stats
-        $totalResultingVisits = DB::fetchOne(
+        $totalResultingVisits = Db::fetchOne(
             'SELECT COUNT(*) FROM ' . Common::prefixTable('aom_visits') . ' WHERE date_website_timezone = ?',
             [$date,]
         );
@@ -284,7 +291,7 @@ class ReplenishVisits extends ConsoleCommand
      * @param null|string $campaignName
      * @return null|string
      */
-    private function determineChannel($platform, $refererType, $campaignName)
+    private function determineChannel($platform, $refererType = null, $campaignName = null)
     {
         if (null !== $platform) {
             return $platform;
@@ -300,49 +307,51 @@ class ReplenishVisits extends ConsoleCommand
      *
      * TODO: Collect queries and perform multiple queries at once to improve performance.
      *
-     * @param int $siteId Website ID
-     * @param int $visitId Piwik visit ID
-     * @param string $visitorId Piwik visitor ID
-     * @param string $firstActionTimeUTC The UTC datetime of the visit's first action
-     * @param string $dateWebsiteTimezone The date in the website's timezone
-     * @param string|null $channel The platform (or source) this visit came from (can be null)
-     * @param string|null $campaignData
-     * @param string|null $platformData JSON platform data (can be null)
-     * @param float|null $cost The price paid to the advertising platform for this specific visit
-     * @param int|null $conversions Number of conversions the visit created
-     * @param float|null $revenue Total revenue of conversions the visit created
+     * @param array $visit The following information about the visit:
+     *   string $visitId Piwik visit ID / Manually created visits must create consistent keys from the same raw data
+     *   string $visitorId Piwik visitor ID
+     *   string $firstActionTimeUTC The UTC datetime of the visit's first action
+     *   string $dateWebsiteTimezone The date in the website's timezone
+     *   string|null $channel The platform (or source) this visit came from (can be null)
+     *   array|null $campaignData
+     *   string|null $platformData JSON platform data (can be null)
+     *   float|null $cost The price paid to the advertising platform for this specific visit
+     *   int|null $conversions Number of conversions the visit created
+     *   float|null $revenue Total revenue of conversions the visit created
      */
-    private function addVisit(
-        $siteId,
-        $visitId,
-        $visitorId,
-        $firstActionTimeUTC,
-        $dateWebsiteTimezone,
-        $channel = null,
-        $campaignData = null,
-        $platformData = null,
-        $cost = null,
-        $conversions = null,
-        $revenue = null
-    )
+    private function addVisit(array $visit)
     {
+        // TODO: Mixing FK with uniqid() might not be good, but it seems we need a unique visitor Id somewhere?!
+        $visitorId =  array_key_exists('visitorId', $visit) ? $visit['visitorId'] : uniqid();
+
+        $channel = array_key_exists('channel', $visit) ? $visit['channel'] : null;
+        $platformData = array_key_exists('platformData', $visit) ? $visit['platformData'] : null;
+
+        // We must avoid having the same record multiple times in this table, e.g. when this command is being executed
+        // in parallel. For regular piwik visits we can use piwik_idvisit as a unique hash. Manually created visits must
+        // make sure that they create consistent unique hashed from the same raw data.
+        $uniqueHash = array_key_exists('visitId', $visit)
+            ? 'piwik-visit-' . $visit['visitId']
+            : $visit['dateWebsiteTimezone'] . '-' . $channel . '-' . hash('md5', $platformData);
+
         Db::query(
             'INSERT INTO ' . Common::prefixTable('aom_visits')
-                . ' (idsite, piwik_idvisit, piwik_idvisitor, first_action_time_utc, date_website_timezone, channel, 
-                     campaign_data, platform_data, cost, conversions, revenue, ts_created) '
-                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, date_website_timezone,  
+                     channel, campaign_data, platform_data, cost, conversions, revenue, ts_created) '
+                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
             [
-                $siteId,
-                $visitId,
+                $visit['siteId'],
+                array_key_exists('visitId', $visit) ? $visit['visitId'] : null,
                 $visitorId,
-                $firstActionTimeUTC,
-                $dateWebsiteTimezone,
+                $uniqueHash,
+                $visit['firstActionTimeUTC'],
+                $visit['dateWebsiteTimezone'],
                 $channel,
-                json_encode($campaignData),
+                array_key_exists('campaignData', $visit) ? json_encode($visit['campaignData']) : null,
                 $platformData,
-                $cost,
-                $conversions,
-                $revenue,
+                array_key_exists('cost', $visit) ? $visit['cost'] : null,
+                array_key_exists('conversions', $visit) ? $visit['conversions'] : null,
+                array_key_exists('revenue', $visit) ? $visit['revenue'] : null,
             ]
         );
     }
@@ -438,6 +447,4 @@ class ReplenishVisits extends ConsoleCommand
 
         return $visits;
     }
-
-
 }
