@@ -10,7 +10,6 @@ use AdWordsUser;
 use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
-use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Settings;

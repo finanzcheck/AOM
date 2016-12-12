@@ -12,6 +12,14 @@ use Piwik\Plugins\AOM\AOM;
 
 class StatusController
 {
+    /**
+     * Returns various status information (e.g. last imports, last visits with ad params) that can be used for
+     * monitoring.
+     *
+     * TODO: Add support for segmentation by site.
+     *
+     * @return array
+     */
     public static function getStatus()
     {
         $status = [
@@ -98,5 +106,32 @@ class StatusController
         }
 
         return $status;
+    }
+
+    /**
+     * Returns various stats about replenished visits that can be used for monitoring.
+     *
+     * @param $idSite
+     * @param bool $groupByChannel
+     *
+     * @return array
+     */
+    public static function getReplenishedVisitsStatus($idSite, $groupByChannel = false)
+    {
+        if ($groupByChannel) {
+            return Db::fetchAll(
+                'SELECT date_website_timezone, channel, COUNT(*) AS visits, SUM(conversions) AS conversions, SUM(cost) AS cost
+                 FROM piwik_aom_visits
+                 WHERE date_website_timezone >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+                 GROUP BY date_website_timezone, channel'
+            );
+        } else {
+            return Db::fetchAll(
+                'SELECT date_website_timezone, COUNT(*) AS visits, SUM(conversions) AS conversions, SUM(cost) AS cost
+                 FROM piwik_aom_visits
+                 WHERE date_website_timezone >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+                 GROUP BY date_website_timezone'
+            );
+        }
     }
 }
