@@ -36,7 +36,7 @@ class Installer implements InstallerInterface
 
         // Avoid issues from parallel imports
         AOM::addDatabaseIndex(
-            'CREATE UNIQUE INDEX index_aom_criteo_unique ON '
+            'CREATE UNIQUE INDEX index_aom_facebook_unique ON '
             . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
             . ' (idsite, date, account_id, campaign_id, adset_id, ad_id)'
         );

@@ -334,6 +334,11 @@ class ReplenishVisits extends ConsoleCommand
             ? 'piwik-visit-' . $visit['visitId']
             : $visit['dateWebsiteTimezone'] . '-' . $channel . '-' . hash('md5', $platformData);
 
+        // Allow adding additional data to campaign_data
+        if (is_file(getcwd() . '/plugins/AOM/custom.php')) {
+            include getcwd() . '/plugins/AOM/custom.php';
+        }
+
         Db::query(
             'INSERT INTO ' . Common::prefixTable('aom_visits')
                 . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, date_website_timezone,  
@@ -442,7 +447,8 @@ class ReplenishVisits extends ConsoleCommand
         $this->log(
             Logger::DEBUG,
             'Got ' . count($visits) . ' Piwik visits with '
-            . array_sum(array_map(function($visit) { return $visit['conversions']; }, $visits)) . ' conversions.'
+            . array_sum(array_map(function($visit) { return $visit['conversions']; }, $visits)) . ' conversions for '
+            . $date . '.'
         );
 
         return $visits;

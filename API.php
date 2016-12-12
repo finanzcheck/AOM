@@ -6,19 +6,12 @@
  */
 namespace Piwik\Plugins\AOM;
 
-use Piwik\DataTable\Row;
-
 use Exception;
-use Piwik\Archive;
 use Piwik\DataTable;
 use Piwik\Piwik;
-use Piwik\Plugin\Report;
-use Piwik\Db;
-use Piwik\Period;
 use Piwik\Plugins\AOM\API\MarketingPerformanceController;
 use Piwik\Plugins\AOM\API\StatusController;
 use Piwik\Plugins\AOM\API\VisitsController;
-use Piwik\Segment;
 
 class API extends \Piwik\Plugin\API
 {
@@ -94,7 +87,23 @@ class API extends \Piwik\Plugin\API
      */
     public function getStatus()
     {
+        Piwik::isUserHasSomeViewAccess();
+
         return StatusController::getStatus();
+    }
+
+    /**
+     * Returns various information about replenished visits that can be used for monitoring:
+     * ?module=API&token_auth=...&method=AOM.getReplenishedVisitsStatus&idSite=1&format=json
+     *
+     * @param $idSite
+     * @param bool $groupByChannel
+     * @return array
+     * @throws Exception
+     */
+    public function getReplenishedVisitsStatus($idSite, $groupByChannel = false)
+    {
+        return StatusController::getReplenishedVisitsStatus($idSite, $groupByChannel);
     }
 
     /**
