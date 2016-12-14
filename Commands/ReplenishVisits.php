@@ -335,8 +335,8 @@ class ReplenishVisits extends ConsoleCommand
             : $visit['dateWebsiteTimezone'] . '-' . $channel . '-' . hash('md5', $platformData);
 
         // Allow adding additional data to campaign_data
-        if (is_file(getcwd() . '/plugins/AOM/custom.php')) {
-            include getcwd() . '/plugins/AOM/custom.php';
+        if (is_file(PIWIK_DOCUMENT_ROOT . '/plugins/AOM/custom.php')) {
+            include PIWIK_DOCUMENT_ROOT . '/plugins/AOM/custom.php';
         }
 
         Db::query(
