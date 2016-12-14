@@ -88,7 +88,6 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         $user = AdWords::getAdWordsUser($account);
 
         $user->LogAll();
-
         $reportUtils = new ReportUtils();
 
         $this->importCriteriaPerformanceReport($reportUtils, $user, $accountId, $account, $date);
@@ -129,7 +128,6 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // TODO: This might be no longer necessary since we can match based on gclid?!
         $consolidatedData = [];
         foreach ($xml->table->row as $row) {
-
             // Clicks of Google Sponsored Promotions (GSP) are more like more engaged ad views than real visits,
             // i.e. we have to reassign clicks (and therewith recalculate CpC)
             // (see http://marketingland.com/gmail-sponsored-promotions-everything-need-know-succeed-direct-response-gsp-part-1-120938)
@@ -321,6 +319,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 'placement' => (string) $row['keywordPlacement'],
                 'creative' => (string) $row['adID'],
                 'network' => $network,
+                'matchType' => (string) $row['matchType'],
             ];
 
             // Write to database
@@ -360,7 +359,9 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                     || $visit['adParams']['adGroupId'] != $gclids[$visit['gclid']]['adGroupId']
                     || !array_key_exists('targetId', $visit['adParams'])
                     || !array_key_exists('network', $visit['adParams'])
-                    || $visit['adParams']['network'] != $gclids[$visit['gclid']]['network'])
+                    || $visit['adParams']['network'] != $gclids[$visit['gclid']]['network']
+                    || !array_key_exists('matchType', $visit['adParams'])
+                    || $visit['adParams']['matchType'] != $gclids[$visit['gclid']]['matchType'])
             ) {
                 $visit['adParams']['campaignId'] = $gclids[$visit['gclid']]['campaignId'];
                 $visit['adParams']['adGroupId'] = $gclids[$visit['gclid']]['adGroupId'];
@@ -368,6 +369,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 $visit['adParams']['placement'] = $gclids[$visit['gclid']]['placement'];
                 $visit['adParams']['creative'] = $gclids[$visit['gclid']]['creative'];
                 $visit['adParams']['network'] = $gclids[$visit['gclid']]['network'];
+                $visit['adParams']['matchType'] = $gclids[$visit['gclid']]['matchType'];
 
                 Db::exec("UPDATE " . Common::prefixTable('log_visit')
                     . " SET aom_ad_params = '" . json_encode($visit['adParams']) . "'"
