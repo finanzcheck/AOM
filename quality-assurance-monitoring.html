@@ -4,9 +4,9 @@ title: Piwik AOM Plugin Documentation - Quality assurance and monitoring
 ---
 
 <h2 class="title text-center">Quality assurance and monitoring</h2>
-<p>It is essential to ensure that all your data is a correct as possible. Significant errors, such as undetected
+<p>It is essential to ensure that all your data is as correct as possible. Significant errors, such as undetected
     deviations between imported platform data and data within the platforms itself, might seriously harm your marketing
-    efforts. You should therefore establish sound monitoring processes.</p>
+    efforts. You should therefore establish sound monitoring and alerting processes.</p>
 
 
 <!-- Logging -->
@@ -21,9 +21,17 @@ title: Piwik AOM Plugin Documentation - Quality assurance and monitoring
 <p>It might be a good idea to rotate these log files on a daily basis.</p>
 
 
-<!-- Logging -->
+<!-- Monitoring -->
 <h2 class="sub-title text-center">Monitoring</h2>
 <p>...</p>
+
+<h3 class="sub-title text-center">Monitoring API endpoints</h3>
+<p>By monitoring the <a href="api.html">API endpoint AOM.getStatus</a> you can easily validate
+<ul>
+    <li>that Piwik gathers tracking data like visits and orders,</li>
+    <li>that the marketing data imports are working and</li>
+    <li>that the matching of visits and marketing data is working.</li>
+</ul>
 
 <h3 class="sub-title text-center">Monitoring database contents</h3>
 <p>...</p>
@@ -38,6 +46,12 @@ title: Piwik AOM Plugin Documentation - Quality assurance and monitoring
 
 <h3 class="sub-title text-center">Manual monitoring efforts</h3>
 <p>...</p>
+
+
+<!-- Alerting -->
+<h2 class="sub-title text-center">Alerting</h2>
+<p>Based on the monitoring possibilities described above, you should setup alerting processes that inform those who are
+    responsible as soon as possible after an error is being detected.</p>
 
 
 <!-- Support -->
