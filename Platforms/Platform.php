@@ -217,16 +217,16 @@ abstract class Platform
     }
 
     /**
-     * Removes all replenished visits for the combination of website and date.
+     * Removes all reprocessed visits for the combination of website and date.
      *
      * @param int $websiteId
      * @param string $date
      * @return array
      */
-    public static function deleteReplenishedData($websiteId, $date)
+    public static function deleteReprocessedData($websiteId, $date)
     {
         $timeStart = microtime(true);
-        $deletedReplenishedVisitsRecords = Db::deleteAllRows(
+        $deletedReprocessedVisitsRecords = Db::deleteAllRows(
             Common::prefixTable('aom_visits'),
             'WHERE idsite = ? AND date_website_timezone = ?',
             'date_website_timezone',
@@ -236,9 +236,9 @@ abstract class Platform
                 $date,
             ]
         );
-        $timeToDeleteReplenishedVisits = microtime(true) - $timeStart;
+        $timeToDeleteReprocessedVisits = microtime(true) - $timeStart;
 
-        return [$deletedReplenishedVisitsRecords, $timeToDeleteReplenishedVisits];
+        return [$deletedReprocessedVisitsRecords, $timeToDeleteReprocessedVisits];
     }
 
     /**

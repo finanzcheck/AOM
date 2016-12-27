@@ -139,8 +139,8 @@ class MarketingPerformanceController
                 ]
             );
 
-            // Replenished visits data
-            $replenishedVisitsData = Db::fetchRow(
+            // Reprocessed visits data
+            $reprocessedVisitsData = Db::fetchRow(
                 'SELECT COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, '
                     . 'SUM(conversions) AS conversions, SUM(revenue) AS revenue '
                     . ' FROM ' . Common::prefixTable('aom_visits')
@@ -163,17 +163,17 @@ class MarketingPerformanceController
                         ? $formatter->getPrettyMoney($platformData['cost'], $idSite) : null,
                     'platform_cpc' => ($platformData['clicks'] > 0 && $platformData['cost'] / $platformData['clicks'] > 0)
                         ? $formatter->getPrettyMoney($platformData['cost'] / $platformData['clicks'], $idSite) : null,
-                    'nb_visits' => $replenishedVisitsData['visits'],
-                    'nb_uniq_visitors' => $replenishedVisitsData['unique_visitors'],
-                    'conversion_rate' => ($replenishedVisitsData['visits'] > 0)
-                        ? $formatter->getPrettyPercentFromQuotient($replenishedVisitsData['conversions'] / $replenishedVisitsData['visits']) : null,
-                    'nb_conversions' => $replenishedVisitsData['conversions'],
-                    'cost_per_conversion' => ($platformData['cost'] > 0 && $replenishedVisitsData['conversions'] > 0)
-                        ? $formatter->getPrettyMoney($platformData['cost'] / $replenishedVisitsData['conversions'], $idSite) : null,
-                    'revenue' => ($replenishedVisitsData['revenue'] > 0)
-                        ? $formatter->getPrettyMoney($replenishedVisitsData['revenue'], $idSite) : null,
-                    'return_on_ad_spend' => ($replenishedVisitsData['revenue'] > 0 && $platformData['cost'] > 0)
-                        ? $formatter->getPrettyPercentFromQuotient($replenishedVisitsData['revenue'] / $platformData['cost']) : null,
+                    'nb_visits' => $reprocessedVisitsData['visits'],
+                    'nb_uniq_visitors' => $reprocessedVisitsData['unique_visitors'],
+                    'conversion_rate' => ($reprocessedVisitsData['visits'] > 0)
+                        ? $formatter->getPrettyPercentFromQuotient($reprocessedVisitsData['conversions'] / $reprocessedVisitsData['visits']) : null,
+                    'nb_conversions' => $reprocessedVisitsData['conversions'],
+                    'cost_per_conversion' => ($platformData['cost'] > 0 && $reprocessedVisitsData['conversions'] > 0)
+                        ? $formatter->getPrettyMoney($platformData['cost'] / $reprocessedVisitsData['conversions'], $idSite) : null,
+                    'revenue' => ($reprocessedVisitsData['revenue'] > 0)
+                        ? $formatter->getPrettyMoney($reprocessedVisitsData['revenue'], $idSite) : null,
+                    'return_on_ad_spend' => ($reprocessedVisitsData['revenue'] > 0 && $platformData['cost'] > 0)
+                        ? $formatter->getPrettyPercentFromQuotient($reprocessedVisitsData['revenue'] / $platformData['cost']) : null,
                 ],
             ];
 
@@ -188,10 +188,10 @@ class MarketingPerformanceController
             $summaryRow['platform_impressions'] += $platformData['impressions'];
             $summaryRow['platform_clicks'] += $platformData['clicks'];
             $summaryRow['platform_cost'] += $platformData['cost'];
-            $summaryRow['nb_visits'] += $replenishedVisitsData['visits'];
-            $summaryRow['nb_uniq_visitors'] += (int) $replenishedVisitsData['unique_visitors'];
-            $summaryRow['nb_conversions'] += $replenishedVisitsData['conversions'];
-            $summaryRow['revenue'] += $replenishedVisitsData['revenue'];
+            $summaryRow['nb_visits'] += $reprocessedVisitsData['visits'];
+            $summaryRow['nb_uniq_visitors'] += (int) $reprocessedVisitsData['unique_visitors'];
+            $summaryRow['nb_conversions'] += $reprocessedVisitsData['conversions'];
+            $summaryRow['revenue'] += $reprocessedVisitsData['revenue'];
 
         }
 

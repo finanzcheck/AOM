@@ -72,9 +72,9 @@ class MarketingPerformanceSubTables implements MarketingPerformanceSubTablesInte
             ]
         );
 
-        // Replenished visits data
+        // Reprocess visits data
         // TODO: This will have bad performance when there's lots of data
-        $replenishedVisitsData = Db::fetchAssoc(
+        $reprocessVisitsData = Db::fetchAssoc(
             'SELECT '
                 . 'CONCAT(\'C\', SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'campaign_id\', platform_data)+CHAR_LENGTH(\'campaign_id\')+3),\'"\',1)) as campaignId, '
                 . 'COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, SUM(conversions) AS conversions, SUM(revenue) AS revenue '
@@ -90,7 +90,7 @@ class MarketingPerformanceSubTables implements MarketingPerformanceSubTablesInte
         );
 
         // Merge data based on campaignId
-        foreach (array_merge_recursive($campaignData, $replenishedVisitsData) as $data) {
+        foreach (array_merge_recursive($campaignData, $reprocessVisitsData) as $data) {
 
             // Add to DataTable
             $table->addRowFromArray([
@@ -161,9 +161,9 @@ class MarketingPerformanceSubTables implements MarketingPerformanceSubTablesInte
             ]
         );
 
-        // Replenished visits data
+        // Reprocssed visits data
         // TODO: This will have bad performance when there's lots of data
-        $replenishedVisitsData = Db::fetchAssoc(
+        $reprocessedVisitsData = Db::fetchAssoc(
             'SELECT '
             . 'CONCAT(\'AG\', SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'ad_group_id\', platform_data)+CHAR_LENGTH(\'ad_group_id\')+3),\'"\',1)) as adGroupId, '
             . 'COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, SUM(conversions) AS conversions, SUM(revenue) AS revenue '
@@ -180,7 +180,7 @@ class MarketingPerformanceSubTables implements MarketingPerformanceSubTablesInte
         );
 
         // Merge data based on campaignId
-        foreach (array_merge_recursive($campaignData, $replenishedVisitsData) as $data) {
+        foreach (array_merge_recursive($campaignData, $reprocessedVisitsData) as $data) {
 
             // Add to DataTable
             $table->addRowFromArray([

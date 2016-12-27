@@ -113,7 +113,7 @@ class AOM extends \Piwik\Plugin
             'CREATE UNIQUE INDEX index_aom_unique_visits ON ' . Common::prefixTable('aom_visits') . ' (unique_hash)'
         );
 
-        // Optimize for deleting replenished data
+        // Optimize for deleting reprocessed data
         self::addDatabaseIndex(
             'CREATE INDEX index_aom_visits_site_date ON ' . Common::prefixTable('aom_visits')
             . ' (idsite, date_website_timezone)');

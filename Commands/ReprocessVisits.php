@@ -22,9 +22,9 @@ use Piwik\Plugins\SitesManager\API as APISitesManager;
 
 /**
  * Example:
- * ./console aom:replenish-visits --startDate=2016-12-01 --endDate=2016-12-01
+ * ./console aom:reprocess-visits --startDate=2016-12-01 --endDate=2016-12-01
  */
-class ReplenishVisits extends ConsoleCommand
+class ReprocessVisits extends ConsoleCommand
 {
     /**
      * @var LoggerInterface
@@ -54,7 +54,7 @@ class ReplenishVisits extends ConsoleCommand
         $this->logger->log(
             $logLevel,
             $message,
-            array_merge(['task' => 'replenish-visits'], $additionalContext)
+            array_merge(['task' => 'reprocess-visits'], $additionalContext)
         );
     }
 
@@ -73,7 +73,7 @@ class ReplenishVisits extends ConsoleCommand
     protected function configure()
     {
         $this
-            ->setName('aom:replenish-visits')
+            ->setName('aom:reprocess-visits')
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->setDescription(
@@ -82,7 +82,7 @@ class ReplenishVisits extends ConsoleCommand
     }
 
     /**
-     * Replenishes the visits of a specific date.
+     * Reprocesses the visits of a specific date.
      * This method must be public so that it can be called from Tasks.php.
      *
      * @param string $date YYYY-MM-DD
@@ -90,8 +90,8 @@ class ReplenishVisits extends ConsoleCommand
      */
     public function processDate($date)
     {
-        // Clean up replenished data
-        // TODO: Use Platform::deleteReplenishedData($websiteId, $date) instead
+        // Clean up reprocessed data
+        // TODO: Use Platform::deleteReprocessedData($websiteId, $date) instead
         Db::deleteAllRows(Common::prefixTable('aom_visits'), 'WHERE date_website_timezone = ?', 'id', 100000, [$date,]);
 
         // Get visits
@@ -260,7 +260,7 @@ class ReplenishVisits extends ConsoleCommand
         );
         $this->log(
             Logger::DEBUG,
-            'Replenished ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . " visits ({$date})."
+            'Reprocessed ' . $totalPiwikVisits . ' Piwik visits to ' . $totalResultingVisits . " visits ({$date})."
         );
     }
 

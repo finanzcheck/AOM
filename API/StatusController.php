@@ -109,28 +109,34 @@ class StatusController
     }
 
     /**
-     * Returns various stats about replenished visits that can be used for monitoring.
+     * Returns various stats about reprocessed visits that can be used for monitoring.
      *
      * @param $idSite
      * @param bool $groupByChannel
      *
      * @return array
      */
-    public static function getReplenishedVisitsStatus($idSite, $groupByChannel = false)
+    public static function getReprocessedVisitsStatus($idSite, $groupByChannel = false)
     {
         if ($groupByChannel) {
             return Db::fetchAll(
                 'SELECT date_website_timezone, channel, COUNT(*) AS visits, SUM(conversions) AS conversions, SUM(cost) AS cost
-                 FROM piwik_aom_visits
-                 WHERE date_website_timezone >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
-                 GROUP BY date_website_timezone, channel'
+                    FROM piwik_aom_visits
+                    WHERE idsite >= ? AND date_website_timezone >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+                    GROUP BY date_website_timezone, channel',
+                [
+                    $idSite
+                ]
             );
         } else {
             return Db::fetchAll(
                 'SELECT date_website_timezone, COUNT(*) AS visits, SUM(conversions) AS conversions, SUM(cost) AS cost
-                 FROM piwik_aom_visits
-                 WHERE date_website_timezone >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
-                 GROUP BY date_website_timezone'
+                    FROM piwik_aom_visits
+                    WHERE idsite >= ? AND date_website_timezone >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+                    GROUP BY date_website_timezone',
+                [
+                    $idSite
+                ]
             );
         }
     }

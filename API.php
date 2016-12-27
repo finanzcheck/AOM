@@ -93,17 +93,17 @@ class API extends \Piwik\Plugin\API
     }
 
     /**
-     * Returns various information about replenished visits that can be used for monitoring:
-     * ?module=API&token_auth=...&method=AOM.getReplenishedVisitsStatus&idSite=1&format=json
+     * Returns various information about reprocessed visits that can be used for monitoring:
+     * ?module=API&token_auth=...&method=AOM.getReprocessedVisitsStatus&idSite=1&format=json
      *
      * @param $idSite
      * @param bool $groupByChannel
      * @return array
      * @throws Exception
      */
-    public function getReplenishedVisitsStatus($idSite, $groupByChannel = false)
+    public function getReprocessedVisitsStatus($idSite, $groupByChannel = false)
     {
-        return StatusController::getReplenishedVisitsStatus($idSite, $groupByChannel);
+        return StatusController::getReprocessedVisitsStatus($idSite, $groupByChannel);
     }
 
     /**
