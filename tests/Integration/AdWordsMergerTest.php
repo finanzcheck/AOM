@@ -65,10 +65,10 @@ class AdWordsMergerTest extends IntegrationTestCase
 
         Db::query(
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
-            . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-            . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
-            . 'conversions, ts_created) '
-            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+            . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
+            . 'keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, unique_hash, '
+            . 'ts_created) '
+            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
             [
                 '1000',
                 '1',
@@ -86,15 +86,16 @@ class AdWordsMergerTest extends IntegrationTestCase
                 12,
                 2.57,
                 1,
+                1,
             ]
         );
 
         Db::query(
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
-            . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-            . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
-            . 'conversions, ts_created) '
-            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+            . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
+            . 'keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, unique_hash, '
+            . 'ts_created) '
+            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
             [
                 '1000',
                 '1',
@@ -112,16 +113,17 @@ class AdWordsMergerTest extends IntegrationTestCase
                 12,
                 7.8,
                 1,
+                2,
             ]
         );
 
 
         Db::query(
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
-            . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-            . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, '
-            . 'conversions, ts_created) '
-            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+            . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
+            . 'keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, unique_hash, '
+            . 'ts_created) '
+            . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
             [
                 '1000',
                 '1',
@@ -139,6 +141,7 @@ class AdWordsMergerTest extends IntegrationTestCase
                 12,
                 8.90,
                 1,
+                3,
             ]
         );
 

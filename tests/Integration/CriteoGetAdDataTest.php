@@ -43,14 +43,14 @@ class CriteoGetAdDataTest extends IntegrationTestCase
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)
             . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
-            [1,'2015-12-28',14111,'Camp Name',7570,13,36.4]
+            [1, '2015-12-28', 14111, 'Camp Name', 7570, 13, 36.4]
         );
 
         Db::query(
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)
             . ' (idsite, date, campaign_id, campaign, impressions, clicks, cost) '.
             'VALUE ( ?, ?, ?, ?, ?, ?, ?);',
-            [1,date('Y-m-d'),14112,'Camp Name2',7570,13,36.4]
+            [1, date('Y-m-d'), 14112, 'Camp Name2', 7570, 13, 36.4]
         );
     }
 
