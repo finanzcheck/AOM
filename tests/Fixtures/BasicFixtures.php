@@ -6,7 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\tests\Fixtures;
 
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Tests\Framework\Fixture;
 use Piwik;
 
@@ -19,7 +19,7 @@ class BasicFixtures extends Fixture
         // since we're changing the list of activated plugins, we have to make sure file caches are reset
         Piwik\Cache::flushAll();
 
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $settings->paramPrefix->setValue('aom');
         $settings->platformAdWordsIsActive->setValue(true);
 

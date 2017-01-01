@@ -77,8 +77,15 @@ class MarketingPerformanceController
             'revenue' => 0,
         ];
 
-        if($idSubtable) {
-            list($table, $summaryRow) = self::addSubTableData($table, $summaryRow, $startDate, $endDate, $idSite, $idSubtable);
+        if ($idSubtable) {
+            list($table, $summaryRow) = self::addSubTableData(
+                $table,
+                $summaryRow,
+                $startDate,
+                $endDate,
+                $idSite,
+                $idSubtable
+            );
         } else {
             list($table, $summaryRow) = self::addPlatformData($table, $summaryRow, $startDate, $endDate, $idSite);
             list($table, $summaryRow) = self::addNonPlatformData($table, $summaryRow, $startDate, $endDate, $idSite);
@@ -103,7 +110,7 @@ class MarketingPerformanceController
         // Summary formatting (must happen after calculations!)
         $summaryRow['platform_cost'] = $formatter->getPrettyMoney($summaryRow['platform_cost'], $idSite);
         $summaryRow['revenue'] = $formatter->getPrettyMoney($summaryRow['revenue'], $idSite);
-        $summaryRow['return_on_ad_spend'] = $formatter->getPrettyPercentFromQuotient($summaryRow['return_on_ad_spend'], $idSite);
+        $summaryRow['return_on_ad_spend'] = $formatter->getPrettyPercentFromQuotient($summaryRow['return_on_ad_spend']);
 
         $table->addSummaryRow(new Row([Row::COLUMNS => $summaryRow]));
 
