@@ -87,7 +87,7 @@ class API extends \Piwik\Plugin\API
      */
     public function getStatus($idSite)
     {
-        Piwik::isUserHasSomeViewAccess();
+        Piwik::checkUserHasViewAccess($idSite);
 
         return StatusController::getStatus($idSite);
     }
@@ -103,7 +103,7 @@ class API extends \Piwik\Plugin\API
      */
     public function getReprocessedVisitsStatus($idSite, $groupByChannel = false)
     {
-        Piwik::isUserHasSomeViewAccess();
+        Piwik::checkUserHasViewAccess($idSite);
 
         return StatusController::getReprocessedVisitsStatus($idSite, $groupByChannel);
     }
