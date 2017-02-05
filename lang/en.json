@@ -7,6 +7,8 @@
         "Platform_VisitDescription_FacebookAds": "<span style=\"font-weight: bold;\">Visit coming from Facebook Ads for %1$s<\/span><br\/><nobr>Campaign: %2$s<\/nobr>, <nobr>AdGroup: %3$s<\/nobr>",
         "PluginSettings_Setting_ParamPrefix_Title": "Param-Prefix",
         "PluginSettings_Setting_ParamPrefix_Description": "Prefix of URL-parameter, e.g. \"aom\" for \"aom_campaign_id\"",
+        "PluginSettings_Setting_CreateNewVisitWhenCampaignChanges_Title": "Create new visit when campaign changes",
+        "PluginSettings_Setting_CreateNewVisitWhenCampaignChanges_Description": "Unless you have major reasons (like an external logic that determines the beginning of a new visit), this should always be activated.",
         "PluginSettings_Setting_EnableAdWords_Title": "Enable Google AdWords",
         "PluginSettings_Setting_AdWordsTrackingVariant_Title": "Google AdWords Tracking Variant",
         "PluginSettings_Setting_AdWordsTrackingVariant_OptionGclid": "gclid",

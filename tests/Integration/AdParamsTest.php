@@ -15,9 +15,12 @@ use Piwik\Tracker\Visitor;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik;
 use Piwik\Tests\Framework\Fixture;
+
 /**
  * @group AOM
+ * @group AOM_AdParams
  * @group AOM_Integration
+ * @group Plugins
  */
 class AdParamsTest extends IntegrationTestCase
 {
@@ -41,9 +44,9 @@ class AdParamsTest extends IntegrationTestCase
 
         $request = new Request($params);
         $visitor = new Visitor(new VisitProperties());
+        /** @var Action $action */
         $action = $this->getMockBuilder('\Piwik\Tracker\Action')
             ->disableOriginalConstructor()->getMock();
-//        $action = Action::factory($request);
 
         $request->setParam(
             'url',

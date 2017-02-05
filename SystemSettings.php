@@ -30,6 +30,11 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
     /**
      * @var SystemSetting
      */
+    public $createNewVisitWhenCampaignChanges;
+
+    /**
+     * @var SystemSetting
+     */
     public $platformAdWordsIsActive;
 
     /**
@@ -52,11 +57,11 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
      */
     public $platformFacebookAdsIsActive;
 
-
     protected function init()
     {
         // Generic settings
         $this->paramPrefix = $this->createParamPrefixSetting();
+        $this->createNewVisitWhenCampaignChanges = $this->createCreateNewVisitWhenCampaignChangesSetting();
 
         // Add settings for platforms
         $this->platformAdWordsIsActive = $this->createPlatformAdWordsIsActiveSetting();
@@ -76,6 +81,22 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
                 $field->title = Piwik::translate('AOM_PluginSettings_Setting_ParamPrefix_Title');
                 $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
                 $field->description = Piwik::translate('AOM_PluginSettings_Setting_ParamPrefix_Description');
+            }
+        );
+    }
+
+    private function createCreateNewVisitWhenCampaignChangesSetting()
+    {
+        return $this->makeSetting(
+            'createNewVisitWhenCampaignChanges',
+            $default = true,
+            FieldConfig::TYPE_BOOL,
+            function (FieldConfig $field) {
+                $field->title = Piwik::translate('AOM_PluginSettings_Setting_CreateNewVisitWhenCampaignChanges_Title');
+                $field->uiControl = FieldConfig::UI_CONTROL_CHECKBOX;
+                $field->description = Piwik::translate(
+                    'AOM_PluginSettings_Setting_CreateNewVisitWhenCampaignChanges_Description'
+                );
             }
         );
     }

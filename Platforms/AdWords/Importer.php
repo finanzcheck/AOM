@@ -12,7 +12,7 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
 use ReportUtils;
 
@@ -58,7 +58,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     public function import()
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_AD_WORDS]['accounts'] as $accountId => $account) {

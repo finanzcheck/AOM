@@ -10,6 +10,7 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugin\Dimension\VisitDimension;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Tracker\Action;
 use Piwik\Tracker\Request;
 use Piwik\Tracker\Visitor;
@@ -39,7 +40,7 @@ class AdParams extends VisitDimension
     /**
      * This hook is executed when determining if an action is the start of a new visit or part of an existing one.
      * We force the creation of a new visit when the ad data of the current action is different from the visit's
-     * current ad data.
+     * current ad data unless the configuration does not allow us to do so.
      *
      * @param Request $request
      * @param Visitor $visitor
@@ -48,6 +49,12 @@ class AdParams extends VisitDimension
      */
     public function shouldForceNewVisit(Request $request, Visitor $visitor, Action $action = null)
     {
+        // The plugin might be configured in a way that does not allow to split visits based on ad params.
+        $settings = new SystemSettings();
+        if (!$settings->createNewVisitWhenCampaignChanges->getValue()) {
+            return false;
+        }
+
         // There might be no action (e.g. when we track a conversion)
         if (null === $action) {
             return false;
