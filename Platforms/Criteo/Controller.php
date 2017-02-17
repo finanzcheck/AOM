@@ -8,7 +8,7 @@ namespace Piwik\Plugins\AOM\Platforms\Criteo;
 
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\Platforms\ControllerInterface;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 
 class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements ControllerInterface
 {
@@ -23,7 +23,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
     {
         Piwik::checkUserHasAdminAccess($idSites = [$websiteId]);
 
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         $configuration[$this->getPlatform()]['accounts'][uniqid('', true)] = [

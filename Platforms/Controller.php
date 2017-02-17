@@ -8,7 +8,7 @@ namespace Piwik\Plugins\AOM\Platforms;
 
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 
 abstract class Controller
 {
@@ -36,7 +36,7 @@ abstract class Controller
      */
     public function deleteAccount($id)
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         if (array_key_exists($id, $configuration[$this->getPlatform()]['accounts'])) {

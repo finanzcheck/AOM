@@ -140,7 +140,7 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * @see Piwik\Plugin::registerEvents
+     * @see \Piwik\Plugin::registerEvents
      */
     public function registerEvents()
     {
@@ -153,7 +153,7 @@ class AOM extends \Piwik\Plugin
     /**
      * Return list of plug-in specific JavaScript files to be imported by the asset manager.
      *
-     * @see Piwik\AssetManager
+     * @see \Piwik\AssetManager
      */
     public function getJsFiles(&$jsFiles)
     {
@@ -226,7 +226,7 @@ class AOM extends \Piwik\Plugin
      */
     public static function getPlatformFromUrl($url)
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $paramPrefix = $settings->paramPrefix->getValue();
 
         $queryString = parse_url($url, PHP_URL_QUERY);
@@ -297,7 +297,7 @@ class AOM extends \Piwik\Plugin
      */
     public static function getAdParamsFromUrl($url)
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $paramPrefix = $settings->paramPrefix->getValue();
 
         $queryString = parse_url($url, PHP_URL_QUERY);

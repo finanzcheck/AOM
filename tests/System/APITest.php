@@ -12,7 +12,7 @@ use Piwik\Tests\Framework\TestCase\SystemTestCase;
 /**
  * @group AOM
  * @group AOM_APITest
- * @group AOM_Integration
+ * @group AOM_System
  */
 class APITest extends SystemTestCase
 {

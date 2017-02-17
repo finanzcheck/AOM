@@ -7,7 +7,6 @@
 namespace Piwik\Plugins\AOM\tests\Fixtures;
 
 use Piwik;
-use Piwik\Date;
 
 class Fixtures extends BasicFixtures
 {
@@ -122,16 +121,5 @@ class Fixtures extends BasicFixtures
             . '&aom_ad_id=5760286037541'
         );
         self::checkResponse($t->doTrackPageView('Visit from Bing'));
-    }
-
-    /**
-     * @param \PiwikTracker $t
-     * @param $hourForward
-     * @param $dateTime
-     * @throws \Exception
-     */
-    protected function moveTimeForward(\PiwikTracker $t, $hourForward, $dateTime)
-    {
-        $t->setForceVisitDateTime(Date::factory($dateTime)->addHour($hourForward)->getDatetime());
     }
 }

@@ -6,12 +6,15 @@
  */
 namespace Piwik\Plugins\AOM\tests\Fixtures;
 
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Tests\Framework\Fixture;
 use Piwik;
+use Piwik\Date;
 
 class BasicFixtures extends Fixture
 {
+    public $tokenAuth;
+
     public function setUp()
     {
         $this->setUpWebsite();
@@ -19,8 +22,12 @@ class BasicFixtures extends Fixture
         // since we're changing the list of activated plugins, we have to make sure file caches are reset
         Piwik\Cache::flushAll();
 
-        $settings = new Settings();
+        $user = self::createSuperUser();
+        $this->tokenAuth = $user['token_auth'];
+
+        $settings = new SystemSettings();
         $settings->paramPrefix->setValue('aom');
+        $settings->createNewVisitWhenCampaignChanges->setValue(true);
         $settings->platformAdWordsIsActive->setValue(true);
 
         // TODO: Add tests for tracking variant "gclid"!
@@ -54,5 +61,16 @@ class BasicFixtures extends Fixture
                 }],
             ]),
         ];
+    }
+
+    /**
+     * @param \PiwikTracker $t
+     * @param $hourForward
+     * @param $dateTime
+     * @throws \Exception
+     */
+    public function moveTimeForward(\PiwikTracker $t, $hourForward, $dateTime)
+    {
+        $t->setForceVisitDateTime(Date::factory($dateTime)->addHour($hourForward)->getDatetime());
     }
 }

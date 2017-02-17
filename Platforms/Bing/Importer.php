@@ -24,7 +24,7 @@ use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 use SoapFault;
 
 //TODO Replace
@@ -39,7 +39,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     public function import()
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_BING]['accounts'] as $accountId => $account) {
@@ -255,7 +255,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function refreshAccessToken($accountId, &$account)
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
 
         // Attention: This is oauth20_token.srf!
         $url = 'https://login.live.com/oauth20_token.srf?client_id=' . $account['clientId']. '&client_secret='

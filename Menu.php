@@ -14,7 +14,7 @@ class Menu extends \Piwik\Plugin\Menu
     public function configureAdminMenu(MenuAdmin $menu)
     {
         if (Piwik::isUserHasSomeAdminAccess()) {
-            $menu->addSettingsItem('AOM_Menu_Settings', $this->urlForAction('settings'), $orderId = 30);
+            $menu->addSystemItem('AOM_Menu_Settings', $this->urlForAction('settings'), $orderId = 30);
         }
     }
 }

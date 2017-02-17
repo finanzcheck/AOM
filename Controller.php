@@ -19,7 +19,7 @@ class Controller extends \Piwik\Plugin\ControllerAdmin
     {
         Piwik::checkUserHasSomeAdminAccess();
 
-        $settings = new Settings();
+        $settings = new SystemSettings();
 
         $viewVariables = [
             'accounts' => $settings->getAccounts(),
