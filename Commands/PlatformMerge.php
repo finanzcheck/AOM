@@ -8,7 +8,7 @@ namespace Piwik\Plugins\AOM\Commands;
 
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -58,7 +58,7 @@ class PlatformMerge extends ConsoleCommand
         }
 
         // Is platform active?
-        $settings = new Settings();
+        $settings = new SystemSettings();
         if (!$settings->{'platform' . $input->getOption('platform') . 'IsActive'}->getValue()) {
             $this->logger->warning(
                 'Platform "' . $input->getOption('platform') . '" is not active.',

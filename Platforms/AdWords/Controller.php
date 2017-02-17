@@ -11,7 +11,7 @@ use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ControllerInterface;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 
 class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements ControllerInterface
 {
@@ -28,7 +28,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
     {
         Piwik::checkUserHasAdminAccess($idSites = [$websiteId]);
 
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         $configuration[AOM::PLATFORM_AD_WORDS]['accounts'][uniqid('', true)] = [
@@ -60,7 +60,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
      */
     public function getRefreshToken()
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         // Does the account exist?
@@ -85,7 +85,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             true,                       // This will provide us a refresh token (that won't expire)
             [
                 'state' => $id,
-                'approval_prompt' => 'force',   // This ensures the refresh token is being returned every time!
+                'prompt' => 'consent',  // This ensures the refresh token is being returned every time!
             ]
         );
 
@@ -102,7 +102,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
      */
     public function processOAuthRedirect()
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         // Is there a "state"-param holding an existing AdWords account?
@@ -130,6 +130,10 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
         $user->SetOAuth2Info($OAuth2Handler->GetAccessToken($user->GetOAuth2Info(), $code, $this->getRedirectURI()));
 
         $response = $user->GetOAuth2Info();
+
+        if (!array_key_exists('refresh_token', $response)) {
+            throw new \Exception('No refresh token in response.');
+        }
 
         // The access token expires but the refresh token doesn't, and should be stored for later use.
         $configuration[AOM::PLATFORM_AD_WORDS]['accounts'][$id]['refreshToken'] = $response['refresh_token'];

@@ -10,7 +10,7 @@ use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
@@ -22,7 +22,7 @@ abstract class Platform
     private $logger;
 
     /**
-     * @var Settings
+     * @var SystemSettings
      */
     private $settings;
 
@@ -31,7 +31,7 @@ abstract class Platform
      */
     public function __construct(LoggerInterface $logger = null)
     {
-        $this->settings = new Settings();
+        $this->settings = new SystemSettings();
 
         $this->logger = (null === $logger ? AOM::getLogger() : $logger);
     }
@@ -47,7 +47,7 @@ abstract class Platform
     /**
      * Returns this plugin's settings.
      *
-     * @return Settings
+     * @return SystemSettings
      */
     public function getSettings()
     {
@@ -217,16 +217,16 @@ abstract class Platform
     }
 
     /**
-     * Removes all replenished visits for the combination of website and date.
+     * Removes all reprocessed visits for the combination of website and date.
      *
      * @param int $websiteId
      * @param string $date
      * @return array
      */
-    public static function deleteReplenishedData($websiteId, $date)
+    public static function deleteReprocessedData($websiteId, $date)
     {
         $timeStart = microtime(true);
-        $deletedReplenishedVisitsRecords = Db::deleteAllRows(
+        $deletedReprocessedVisitsRecords = Db::deleteAllRows(
             Common::prefixTable('aom_visits'),
             'WHERE idsite = ? AND date_website_timezone = ?',
             'date_website_timezone',
@@ -236,9 +236,9 @@ abstract class Platform
                 $date,
             ]
         );
-        $timeToDeleteReplenishedVisits = microtime(true) - $timeStart;
+        $timeToDeleteReprocessedVisits = microtime(true) - $timeStart;
 
-        return [$deletedReplenishedVisitsRecords, $timeToDeleteReplenishedVisits];
+        return [$deletedReprocessedVisitsRecords, $timeToDeleteReprocessedVisits];
     }
 
     /**

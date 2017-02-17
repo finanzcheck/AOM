@@ -78,32 +78,34 @@ class API extends \Piwik\Plugin\API
 
     /**
      * Returns various status information that can be used for monitoring:
-     * ?module=API&token_auth=...&method=AOM.getStatus&format=json
+     * ?module=API&token_auth=...&method=AOM.getStatus&idSite=1&format=json
      *
-     * TODO: Add scoping for websites?
+     * @param $idSite
      *
      * @return array
      * @throws Exception
      */
-    public function getStatus()
+    public function getStatus($idSite)
     {
-        Piwik::isUserHasSomeViewAccess();
+        Piwik::checkUserHasViewAccess($idSite);
 
-        return StatusController::getStatus();
+        return StatusController::getStatus($idSite);
     }
 
     /**
-     * Returns various information about replenished visits that can be used for monitoring:
-     * ?module=API&token_auth=...&method=AOM.getReplenishedVisitsStatus&idSite=1&format=json
+     * Returns various information about reprocessed visits that can be used for monitoring:
+     * ?module=API&token_auth=...&method=AOM.getReprocessedVisitsStatus&idSite=1&format=json
      *
      * @param $idSite
      * @param bool $groupByChannel
      * @return array
      * @throws Exception
      */
-    public function getReplenishedVisitsStatus($idSite, $groupByChannel = false)
+    public function getReprocessedVisitsStatus($idSite, $groupByChannel = false)
     {
-        return StatusController::getReplenishedVisitsStatus($idSite, $groupByChannel);
+        Piwik::checkUserHasViewAccess($idSite);
+
+        return StatusController::getReprocessedVisitsStatus($idSite, $groupByChannel);
     }
 
     /**

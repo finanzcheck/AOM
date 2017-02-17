@@ -11,7 +11,7 @@ use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ControllerInterface;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 
 class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements ControllerInterface
 {
@@ -27,7 +27,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
     {
         Piwik::checkUserHasAdminAccess($idSites = [$websiteId]);
 
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         $configuration[AOM::PLATFORM_BING]['accounts'][uniqid('', true)] = [
@@ -54,7 +54,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
      */
     public function getAccessToken()
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         // Does the account exist?
@@ -83,7 +83,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
      */
     public function processAccessTokenCode()
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         // Does the account exist?

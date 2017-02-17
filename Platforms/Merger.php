@@ -219,7 +219,7 @@ abstract class Merger
     /**
      * Deletes all merged data (updates aom_ad_data and aom_platform_row_id to NULL) for the given combination of
      * platform account, website and date.
-     * Removes all replenished visits for the combination of website and date.
+     * Removes all reprocessed visits for the combination of website and date.
      *
      * @param string $platformName
      * @param int $websiteId
@@ -232,20 +232,20 @@ abstract class Merger
             list($unsetMergedDataRecords, $timeToUnsetMergedData) =
                 Platform::deleteMergedData($platformName, $websiteId, $date);
 
-            // Removes all replenished visits for the combination of website and date!
-            list($deletedReplenishedVisitsRecords, $timeToDeleteReplenishedVisits) =
-                Platform::deleteReplenishedData($websiteId, $date);
+            // Removes all reprocessed visits for the combination of website and date!
+            list($deletedReprocessedVisitsRecords, $timeToDeleteReprocessedVisits) =
+                Platform::deleteReprocessedData($websiteId, $date);
 
             $this->logger->debug(
                 sprintf(
                     'Deleted existing %s data for date %s '
-                    . '(%fs for %d merged data records, %fs for %d replenished data records).',
+                    . '(%fs for %d merged data records, %fs for %d reprocessed data records).',
                     $platformName,
                     $date,
                     $timeToUnsetMergedData,
                     is_int($unsetMergedDataRecords) ? $unsetMergedDataRecords : 0,
-                    $timeToDeleteReplenishedVisits,
-                    is_int($deletedReplenishedVisitsRecords) ? $deletedReplenishedVisitsRecords : 0
+                    $timeToDeleteReprocessedVisits,
+                    is_int($deletedReprocessedVisitsRecords) ? $deletedReprocessedVisitsRecords : 0
                 ),
                 ['platform' => $platformName, 'task' => 'merge']
             );

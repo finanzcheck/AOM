@@ -16,8 +16,6 @@ use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Tests\Framework\Fixture;
 use Piwik;
 
-
-
 /**
  * @group AOM
  * @group AOM_Integration

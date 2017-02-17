@@ -14,7 +14,7 @@ use Piwik\Tests\Framework\TestCase\SystemTestCase;
 /**
  * @group AOM
  * @group AOM_AdParamsExtractionTest
- * @group AOM_Integration
+ * @group AOM_System
  */
 class AdParamsExtractionTest extends SystemTestCase
 {

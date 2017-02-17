@@ -9,23 +9,19 @@ namespace Piwik\Plugins\AOM\Reports;
 use Piwik\Piwik;
 use Piwik\Plugin\Report;
 use Piwik\Plugin\ViewDataTable;
+use Piwik\Plugins\CoreVisualizations\Visualizations\HtmlTable;
 use Piwik\Plugins\Referrers\Columns\Referrer;
-use Piwik\View;
+use Piwik\Report\ReportWidgetFactory;
+use Piwik\Widget\WidgetsList;
 
-class GetMarketingPerformance extends Base
+class GetMarketingPerformance extends Report
 {
     protected function init()
     {
-        parent::init();
-
         $this->name = Piwik::translate('AOM_Report_MarketingPerformance');
-        $this->menuTitle = $this->name;
 
         $this->dimension = new Referrer();
         $this->documentation = Piwik::translate('AOM_Report_MarketingPerformance_Description');
-
-        // Place below "campaigns"
-        $this->order = 999;
 
         // TODO: Current width of columns is a little too big
         // TODO: Add actions, time on site and bounce rate?!
@@ -42,6 +38,18 @@ class GetMarketingPerformance extends Base
             'revenue',
             'return_on_ad_spend',
         ];
+    }
+
+    public function configureWidgets(WidgetsList $widgetsList, ReportWidgetFactory $factory)
+    {
+        $widgetsList->addWidgetConfig(
+            $factory->createWidget()
+                ->setCategoryId('Referrers_Referrers')
+                ->setName(Piwik::translate('AOM_Report_MarketingPerformance'))
+                ->setSubcategoryId(Piwik::translate('AOM_Report_MarketingPerformance'))
+                ->setDefaultViewDataTable(HtmlTable::ID)
+                ->setOrder(5)
+        );
     }
 
     /**

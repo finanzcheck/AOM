@@ -14,7 +14,7 @@ use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
-use Piwik\Plugins\AOM\Settings;
+use Piwik\Plugins\AOM\SystemSettings;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
@@ -23,7 +23,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     public function import()
     {
-        $settings = new Settings();
+        $settings = new SystemSettings();
         $configuration = $settings->getConfiguration();
 
         foreach ($configuration[AOM::PLATFORM_FACEBOOK_ADS]['accounts'] as $accountId => $account) {
