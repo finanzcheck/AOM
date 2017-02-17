@@ -91,7 +91,7 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
             // Add to DataTable
             $table->addRowFromArray([
                 Row::COLUMNS => $this->getColumns($data['campaign'], $data, $idSite),
-                Row::DATATABLE_ASSOCIATED => 'Bing_AdGroups_' . str_replace('C', '', $data['campaignId'][0]),
+                Row::DATATABLE_ASSOCIATED => 'AdWords_AdGroups_' . str_replace('C', '', $data['campaignId'][0]),
             ]);
 
             // Add to summary
