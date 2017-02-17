@@ -259,7 +259,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
 
         // Attention: This is oauth20_token.srf!
         $url = 'https://login.live.com/oauth20_token.srf?client_id=' . $account['clientId']. '&client_secret='
-            . $account['clientSecret'] . '&grant_type=refresh_token&&refresh_token=' . $account['refreshToken']
+            . $account['clientSecret'] . '&grant_type=refresh_token&refresh_token=' . $account['refreshToken']
             . '&redirect_uri=' . urlencode('https://login.live.com/oauth20_desktop.srf');
 
         $response = Bing::urlGetContents($url);
