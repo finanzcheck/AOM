@@ -1,3 +1,4 @@
+.DS_Store
 /tests/System/processed
 report_download.log
 /_layouts
