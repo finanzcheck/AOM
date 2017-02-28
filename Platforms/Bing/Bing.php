@@ -172,6 +172,37 @@ class Bing extends Platform implements PlatformInterface
         }
         return $url_get_contents_data;
     }
+    
+    /**
+     * Retrieves contents from the given URI via POST.
+     *
+     * @param $url
+     * @param $fields
+     * @return bool|mixed|string
+     */
+    public static function urlPostContents($url, $fields)
+    {
+    	$fields = (is_array($fields)) ? http_build_query($fields) : $fields;
+        if (function_exists('curl_exec')) {
+        $headers = array( 
+            "Content-type: application/x-www-form-urlencoded",
+            "Content-length: ".strlen($fields)
+        ); 
+            $conn = curl_init($url);
+            curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($conn, CURLOPT_FRESH_CONNECT, true);
+            curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($conn, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($conn, CURLOPT_POST, 1);
+            curl_setopt($conn, CURLOPT_POSTFIELDS, $fields);
+            $url_post_contents_data = (curl_exec($conn));
+            curl_close($conn);
+        } else {
+        	throw new \Exception('This plugin requires php-curl to be enabled. Please install and restart your web server.');
+            $url_post_contents_data = false;
+        }
+        return $url_post_contents_data;
+    }
 
     /**
      * Activates sub tables for the marketing performance report in the Piwik UI for Criteo.

@@ -103,15 +103,17 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
         }
 
         // The value for the 'redirect_uri' must exactly match the redirect URI used to obtain the authorization code.
-        $url = 'https://login.live.com/oauth20_token.srf?client_id='
+        
+        $postUrl =  'https://login.live.com/oauth20_token.srf';   
+        		
+		$postFields = 'client_id='
             . $configuration[AOM::PLATFORM_BING]['accounts'][$id]['clientId'] . '&client_secret='
             . $configuration[AOM::PLATFORM_BING]['accounts'][$id]['clientSecret'] . '&code=' . $code
             . '&grant_type=authorization_code&redirect_uri=' . urlencode(rtrim(Option::get('piwikUrl'), '/')
             . '?module=AOM&action=platformAction&platform=Bing&method=processAccessTokenCode&id=' . $id);
-
-        $response = Bing::urlGetContents($url);
+            			
+        $response = Bing::urlPostContents($postUrl, $postFields);
         $data = json_decode($response, true);
-
         $configuration[AOM::PLATFORM_BING]['accounts'][$id]['accessToken'] = $data['access_token'];
         $configuration[AOM::PLATFORM_BING]['accounts'][$id]['refreshToken'] = $data['refresh_token'];
         $settings->setConfiguration($configuration);
