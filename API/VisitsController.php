@@ -192,7 +192,7 @@ class VisitsController
                     log_visit.referer_url AS refererUrl,
                     log_visit.aom_platform AS platform,
                     ' . (in_array(
-                'AdvancedCampaignReporting',
+                'MarketingCampaignsReporting',
                 Manager::getInstance()->getInstalledPluginsName())
                 ? 'log_visit.campaign_name AS campaignName,
                            log_visit.campaign_keyword AS campaignKeyword,
