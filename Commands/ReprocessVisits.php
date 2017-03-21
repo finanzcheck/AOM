@@ -60,8 +60,8 @@ class ReprocessVisits extends ConsoleCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if (!in_array('AdvancedCampaignReporting', Manager::getInstance()->getInstalledPluginsName())) {
-            $this->log(Logger::ERROR, 'Plugin "AdvancedCampaignReporting" must be installed and activated.');
+        if (!in_array('MarketingCampaignsReporting', Manager::getInstance()->getInstalledPluginsName())) {
+            $this->log(Logger::ERROR, 'Plugin "MarketingCampaignsReporting" must be installed and activated.');
             exit;
         }
 
