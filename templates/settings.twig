@@ -35,7 +35,6 @@
                     <th>{{ 'AOM_Settings_AdWords_ClientSecret'|translate }}</th>
                     <th>{{ 'AOM_Settings_AdWords_ClientCustomerId'|translate }}</th>
                     <th>{{ 'AOM_Settings_AdWords_DeveloperToken'|translate }}</th>
-                    <th>{{ 'AOM_Settings_AdWords_UserAgent'|translate }}</th>
                     <th>{{ 'AOM_Settings_AdWords_RefreshToken'|translate }}</th>
                     {#<th>{{ 'General_Edit'|translate }}</th>#}
                     <th>{{ 'General_Delete'|translate }}</th>
@@ -50,7 +49,6 @@
                             <td id="clientSecret" class="editable abbreviated" data-full="{{ account.clientSecret }}">{{ account.clientSecret[0:10] }}...</td>
                             <td id="clientCustomerId" class="editable">{{ account.clientCustomerId }}</td>
                             <td id="developerToken" class="editable abbreviated" data-full="{{ account.developerToken }}">{{ account.developerToken[0:14] }}...</td>
-                            <td id="userAgent" class="editable abbreviated" data-full="{{ account.userAgent }}">{{ account.userAgent[0:14] }}...</td>
                             <td id="refreshToken abbreviated" data-full="{{ account.refreshToken }}">
                                 {% if account.refreshToken is not null %}
                                     {{ account.refreshToken[0:15] }}...<br/>

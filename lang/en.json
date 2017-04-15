@@ -37,7 +37,6 @@
         "Settings_AdWords_ClientSecret": "Client-Secret",
         "Settings_AdWords_ClientCustomerId": "Client-Customer-ID",
         "Settings_AdWords_DeveloperToken": "Developer Token",
-        "Settings_AdWords_UserAgent": "User Agent",
         "Settings_AdWords_RefreshToken": "Refresh Token",
         "Settings_AdWords_GetRefreshToken": "Get new token",
         "Settings_Bing": "Bing",

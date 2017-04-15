@@ -69,7 +69,6 @@ $(document).ready(function () {
 				<td><input id="addAdWordsAccount_clientSecret" placeholder="Client-Secret" size="20" /></td>\
 				<td><input id="addAdWordsAccount_clientCustomerId" placeholder="Client-Customer-ID" size="10" /></td>\
 				<td><input id="addAdWordsAccount_developerToken" placeholder="Developer-Token" size="15" /></td>\
-				<td><input id="addAdWordsAccount_userAgent" placeholder="User Agent" size="15" /></td>\
 				<td></td>\
 				<td><input type="submit" class="submit addAdWordsAccount"  value="' + _pk_translate('General_Save') + '" />\
 	  			<span class="cancel">' + sprintf(_pk_translate('General_OrCancel'), "", "") + '</span></td>\
@@ -83,8 +82,7 @@ $(document).ready(function () {
                 clientId: $('tr#' + newRowId).find('input#addAdWordsAccount_clientId').val(),
                 clientSecret: $('tr#' + newRowId).find('input#addAdWordsAccount_clientSecret').val(),
                 clientCustomerId: $('tr#' + newRowId).find('input#addAdWordsAccount_clientCustomerId').val(),
-                developerToken: $('tr#' + newRowId).find('input#addAdWordsAccount_developerToken').val(),
-                userAgent: $('tr#' + newRowId).find('input#addAdWordsAccount_userAgent').val()
+                developerToken: $('tr#' + newRowId).find('input#addAdWordsAccount_developerToken').val()
             });
         });
 
