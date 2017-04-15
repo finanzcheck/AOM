@@ -6,6 +6,8 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
+use Google\Auth\CredentialsLoader;
+use Google\Auth\OAuth2;
 use Piwik\Common;
 use Piwik\Option;
 use Piwik\Piwik;
@@ -21,10 +23,9 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
      * @param string $clientSecret
      * @param string $clientCustomerId
      * @param string $developerToken
-     * @param string $userAgent
      * @return bool
      */
-    public function addAccount($websiteId, $clientId, $clientSecret, $clientCustomerId, $developerToken, $userAgent)
+    public function addAccount($websiteId, $clientId, $clientSecret, $clientCustomerId, $developerToken)
     {
         Piwik::checkUserHasAdminAccess($idSites = [$websiteId]);
 
@@ -37,7 +38,6 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             'clientSecret' => $clientSecret,
             'clientCustomerId' => $clientCustomerId,
             'developerToken' => $developerToken,
-            'userAgent' => $userAgent,
             'refreshToken' => null,
             'active' => true,
         ];
@@ -73,21 +73,24 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             $idSites = [$configuration[AOM::PLATFORM_AD_WORDS]['accounts'][$id]['websiteId']]
         );
 
-        $user = AdWords::getAdWordsUser($configuration[AOM::PLATFORM_AD_WORDS]['accounts'][$id]);
-        $OAuth2Handler = $user->GetOAuth2Handler();
+        $account = $configuration[AOM::PLATFORM_AD_WORDS]['accounts'][$id];
 
         // Get the authorization URL for the OAuth2 token.
         // We must pass our internal AdWords account ID in the "state" param to get it back in Google's redirect.
         // The name of this param must be "state" according to Google OAuth.
-        $url = $OAuth2Handler->GetAuthorizationUrl(
-            $user->GetOAuth2Info(),
-            $this->getRedirectURI(),
-            true,                       // This will provide us a refresh token (that won't expire)
-            [
-                'state' => $id,
-                'prompt' => 'consent',  // This ensures the refresh token is being returned every time!
-            ]
-        );
+        $oauth2 = new OAuth2([
+            'authorizationUri' => 'https://accounts.google.com/o/oauth2/v2/auth',
+            'redirectUri' => $this->getRedirectURI(),
+            'tokenCredentialUri' => CredentialsLoader::TOKEN_CREDENTIAL_URI,
+            'clientId' => $account['clientId'],
+            'clientSecret' => $account['clientSecret'],
+            'scope' => ['https://www.googleapis.com/auth/adwords'],
+            'state' => $id,
+        ]);
+
+        $oauth2->updateToken([]);
+
+        $url = $oauth2->buildFullAuthorizationUri(['prompt' => 'consent',]);
 
         header('Location: ' . $url);
         exit;
@@ -122,14 +125,20 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements Cont
             throw new \Exception('No code in URI.');
         }
 
-        $user = AdWords::getAdWordsUser($configuration[AOM::PLATFORM_AD_WORDS]['accounts'][$id]);
-        $OAuth2Handler = $user->GetOAuth2Handler();
+        $account = $configuration[AOM::PLATFORM_AD_WORDS]['accounts'][$id];
 
-        // Get the access token using the authorization code.
-        // We must use the same redirect URL used when requesting authorization.
-        $user->SetOAuth2Info($OAuth2Handler->GetAccessToken($user->GetOAuth2Info(), $code, $this->getRedirectURI()));
+        $oauth2 = new OAuth2([
+            'authorizationUri' => 'https://accounts.google.com/o/oauth2/v2/auth',
+            'redirectUri' => $this->getRedirectURI(),
+            'tokenCredentialUri' => CredentialsLoader::TOKEN_CREDENTIAL_URI,
+            'clientId' => $account['clientId'],
+            'clientSecret' => $account['clientSecret'],
+            'scope' => ['https://www.googleapis.com/auth/adwords'],
+            'state' => $id,
+        ]);
 
-        $response = $user->GetOAuth2Info();
+        $oauth2->setCode($code);
+        $response = $oauth2->fetchAuthToken();
 
         if (!array_key_exists('refresh_token', $response)) {
             throw new \Exception('No refresh token in response.');

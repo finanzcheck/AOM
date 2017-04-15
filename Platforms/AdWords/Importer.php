@@ -6,7 +6,13 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
-use AdWordsUser;
+use Google\AdsApi\AdWords\AdWordsSession;
+use Google\AdsApi\AdWords\AdWordsSessionBuilder;
+use Google\AdsApi\AdWords\Reporting\v201702\DownloadFormat;
+use Google\AdsApi\AdWords\Reporting\v201702\ReportDownloader;
+use Google\AdsApi\AdWords\ReportSettingsBuilder;
+use Google\AdsApi\Common\Configuration;
+use Google\AdsApi\Common\OAuth2TokenBuilder;
 use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
@@ -14,7 +20,6 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
-use ReportUtils;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
@@ -85,42 +90,62 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // Delete data from "aom_adwords" and "aom_adwords_gclid"
         $this->deleteExistingData(AOM::PLATFORM_AD_WORDS, $accountId, $account, $date);
 
-        $user = AdWords::getAdWordsUser($account);
+        $oauth2Info = [
+            'clientId' => $account['clientId'],
+            'clientSecret' => $account['clientSecret'],
+        ];
 
-        $user->LogAll();
-        $reportUtils = new ReportUtils();
+        if (null != $account['refreshToken']) {
+            $oauth2Info['refreshToken'] = $account['refreshToken'];
+        }
 
-        $this->importCriteriaPerformanceReport($reportUtils, $user, $accountId, $account, $date);
-        $this->importClickPerformanceReport($reportUtils, $user, $accountId, $account, $date);
+        $adWordsSession = (new AdWordsSessionBuilder())
+            ->from(
+                new Configuration([
+                    'ADWORDS' => [
+                        'developerToken' => $account['developerToken'],
+                        'clientCustomerId' => $account['clientCustomerId'],
+                    ],
+                ])
+            )
+            ->withOAuth2Credential((new OAuth2TokenBuilder())
+                ->from(new Configuration([
+                    'OAUTH2' => $oauth2Info,
+                ]))
+                ->build())
+            ->withReportSettings((new ReportSettingsBuilder())
+                ->from(new Configuration([
+                ]))
+                ->includeZeroImpressions(false)
+                ->build())
+            ->withReportDownloaderLogger($this->logger)
+            ->withSoapLogger($this->logger)
+            ->build();
+
+        $this->importCriteriaPerformanceReport($adWordsSession, $accountId, $account, $date);
+        $this->importClickPerformanceReport($adWordsSession, $accountId, $account, $date);
     }
 
     /**
-     * @param ReportUtils $reportUtils
-     * @param AdWordsUser $user
+     * @param AdWordsSession $adWordsSession
      * @param $accountId
      * @param $account
      * @param $date
      */
-    private function importCriteriaPerformanceReport(ReportUtils $reportUtils, AdWordsUser $user, $accountId, $account, $date)
+    private function importCriteriaPerformanceReport(AdWordsSession $adWordsSession, $accountId, $account, $date)
     {
-        $xmlString = $reportUtils->DownloadReportWithAwql(
-            'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZoneId, CampaignId, CampaignName, '
+        $reportQuery = 'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZone, CampaignId, CampaignName, '
             . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, '
             . 'Conversions, QualityScore, CpcBid, Impressions, Clicks, GmailSecondaryClicks, Cost, Date '
             . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
             . str_replace('-', '', $date) . ','
-            . str_replace('-', '', $date),
-            null,
-            $user,
-            'XML',
-            [
-                'version' => 'v201609',
-                'skipReportHeader' => true,
-                'skipColumnHeader' => true,
-                'skipReportSummary' => true,
-            ]
-        );
-        $xml = simplexml_load_string($xmlString);
+            . str_replace('-', '', $date);
+
+        $reportDownloader = new ReportDownloader($adWordsSession);
+        $reportDownloadResult = $reportDownloader->downloadReportWithAwql(
+            $reportQuery, DownloadFormat::XML);
+
+        $xml = simplexml_load_string($reportDownloadResult->getAsString());
 
 
         // Matching placements based on the string in the value track param {placement} did not work successfully.
@@ -241,33 +266,26 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      * Imports the AdWords click performance report into adwords_gclid-table.
      * Tries to fix/update ad params of related visits when they are empty.
      *
-     * @param ReportUtils $reportUtils
-     * @param AdWordsUser $user
+     * @param AdWordsSession $adWordsSession
      * @param $accountId
      * @param $account
      * @param $date
      */
-    private function importClickPerformanceReport(ReportUtils $reportUtils, AdWordsUser $user, $accountId, $account, $date)
+    private function importClickPerformanceReport(AdWordsSession $adWordsSession, $accountId, $account, $date)
     {
-        $xmlString = $reportUtils->DownloadReportWithAwql(
-            'SELECT AccountDescriptiveName, AdFormat, AdGroupId, AdGroupName, AdNetworkType1, AdNetworkType2, '
-            . 'AoiMostSpecificTargetId, CampaignId, CampaignLocationTargetId, CampaignName, '
-            . 'ClickType, CreativeId, CriteriaId, CriteriaParameters, Date, Device, ExternalCustomerId, GclId, '
-            . 'KeywordMatchType, LopMostSpecificTargetId, Page, Slot, UserListId '
+        $reportQuery = 'SELECT AccountDescriptiveName, AdFormat, AdGroupId, AdGroupName, AdNetworkType1, '
+            . 'AdNetworkType2, AoiMostSpecificTargetId, CampaignId, CampaignLocationTargetId, CampaignName, ClickType, '
+            . 'CreativeId, CriteriaId, CriteriaParameters, Date, Device, ExternalCustomerId, GclId, KeywordMatchType, '
+            . 'LopMostSpecificTargetId, Page, Slot, UserListId '
             . 'FROM CLICK_PERFORMANCE_REPORT DURING '
             . str_replace('-', '', $date) . ','
-            . str_replace('-', '', $date),
-            null,
-            $user,
-            'XML',
-            [
-                'version' => 'v201609',
-                'skipReportHeader' => true,
-                'skipColumnHeader' => true,
-                'skipReportSummary' => true,
-            ]
-        );
-        $xml = simplexml_load_string($xmlString);
+            . str_replace('-', '', $date);
+
+        $reportDownloader = new ReportDownloader($adWordsSession);
+        $reportDownloadResult = $reportDownloader->downloadReportWithAwql(
+            $reportQuery, DownloadFormat::XML);
+
+        $xml = simplexml_load_string($reportDownloadResult->getAsString());
 
 
         // Get all visits which ad params we could possibly improve
