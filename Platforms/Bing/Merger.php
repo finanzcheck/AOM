@@ -6,16 +6,8 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Bing;
 
-use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
-use Piwik\Site;
-
-/*
-Query for single keyword
-select count(*), date, campaign_id, ad_group_id, keyword_id from aom_bing group by date, campaign_id, ad_group_id, keyword_id  order by count(*) asc;
- */
-
 
 class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterface
 {

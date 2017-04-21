@@ -5,6 +5,7 @@
         "Platform_VisitDescription_Bing": "<span style=\"font-weight: bold;\">Visit coming from Bing for %1$s<\/span><br\/><nobr>Account: %2$s<\/nobr>, <nobr>Campaign: %3$s<\/nobr>, <nobr>AdGroup: %4$s<\/nobr>",
         "Platform_VisitDescription_Criteo": "<span style=\"font-weight: bold;\">Visit coming from Criteo for %1$s<\/span><br\/><nobr>Campaign: %2$s<\/nobr>",
         "Platform_VisitDescription_FacebookAds": "<span style=\"font-weight: bold;\">Visit coming from Facebook Ads for %1$s<\/span><br\/><nobr>Campaign: %2$s<\/nobr>, <nobr>AdGroup: %3$s<\/nobr>",
+        "Platform_VisitDescription_Taboola": "<span style=\"font-weight: bold;\">Visit coming from Taboola for %1$s<\/span><br\/><nobr>Campaign: %2$s<\/nobr>, <nobr>Site: %3$s<\/nobr>",
         "PluginSettings_Setting_ParamPrefix_Title": "Param-Prefix",
         "PluginSettings_Setting_ParamPrefix_Description": "Prefix of URL-parameter, e.g. \"aom\" for \"aom_campaign_id\"",
         "PluginSettings_Setting_CreateNewVisitWhenCampaignChanges_Title": "Create new visit when campaign changes",
@@ -17,6 +18,7 @@
         "PluginSettings_Setting_EnableBing_Title": "Enable Microsoft Bing",
         "PluginSettings_Setting_EnableCriteo_Title": "Enable Criteo",
         "PluginSettings_Setting_EnableFacebookAds_Title": "Enable Facebook Ads",
+        "PluginSettings_Setting_EnableTaboola_Title": "Enable Taboola",
         "Report_MarketingPerformance": "Marketing Performance",
         "Report_MarketingPerformance_Description": "Online marketing performance KPI are based on \"last cookie wins\".<br\/>We recommend to import Piwik's data into your data warehouse and evaluate alternative approaches to conversion attribution.",
         "Report_MarketingPerformance_PlatformImpressions": "Platform Impressions",
@@ -60,6 +62,11 @@
         "Settings_FacebookAds_AccountId": "Account-ID",
         "Settings_FacebookAds_AccessToken": "Access Token",
         "Settings_FacebookAds_GetAccessToken": "Get new token",
+        "Settings_Taboola": "Taboola",
+        "Settings_Taboola_Introduction": "Manage your Taboola accounts:",
+        "Settings_Taboola_AccountName": "Account-Name",
+        "Settings_Taboola_ClientId": "Client-ID",
+        "Settings_Taboola_ClientSecret": "Client-Secret",
         "BrowserFamilies": "BrowserFamilies"
     }
 }

@@ -6,10 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms;
 
-use Piwik\Common;
-use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
 abstract class Importer

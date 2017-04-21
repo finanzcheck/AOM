@@ -32,6 +32,7 @@ class AOM extends \Piwik\Plugin
     const PLATFORM_BING = 'Bing';
     const PLATFORM_CRITEO = 'Criteo';
     const PLATFORM_FACEBOOK_ADS = 'FacebookAds';
+    const PLATFORM_TABOOLA = 'Taboola';
 
     /**
      * @return array All supported platforms
@@ -43,6 +44,7 @@ class AOM extends \Piwik\Plugin
             self::PLATFORM_BING,
             self::PLATFORM_CRITEO,
             self::PLATFORM_FACEBOOK_ADS,
+            self::PLATFORM_TABOOLA,
         ];
     }
 
@@ -110,7 +112,8 @@ class AOM extends \Piwik\Plugin
         // Use piwik_idvisit as unique key to avoid race conditions (manually created visits would have null here)
         // Manually created visits must create consistent keys from the same raw data
         self::addDatabaseIndex(
-            'CREATE UNIQUE INDEX index_aom_unique_visits ON ' . Common::prefixTable('aom_visits') . ' (unique_hash)'
+            'CREATE UNIQUE INDEX index_aom_unique_visits ON ' . Common::prefixTable('aom_visits')
+            . ' (unique_hash)'
         );
 
         // Optimize for deleting reprocessed data
@@ -391,6 +394,48 @@ class AOM extends \Piwik\Plugin
         }
 
         return $dates;
+    }
+
+    /**
+     * Returns the exchange rate from the base currency to the target currency (for a given date).
+     *
+     * @param string $baseCurrency
+     * @param string $targetCurrency
+     * @param string $date
+     * @return float
+     * @throws \Exception
+     */
+    public static function getExchangeRate($baseCurrency, $targetCurrency, $date = null)
+    {
+        if ($baseCurrency !== $targetCurrency) {
+            $ch = curl_init();
+            curl_setopt(
+                $ch,
+                CURLOPT_URL,
+                'http://api.fixer.io/' . (null === $date ? 'latest' : $date)
+                . '?base=' . $baseCurrency . '&symbols=' . $targetCurrency
+            );
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+            $output = curl_exec($ch);
+            $response = json_decode($output, true);
+            if (!is_array($response) || !array_key_exists('rates', $response)
+                || !is_array($response['rates'])  || !array_key_exists($targetCurrency, $response['rates'])
+            ) {
+                throw new \Exception('Could not retrieve exchange rate.');
+            }
+
+            $error = curl_errno($ch);
+            if ($error > 0) {
+                throw new \Exception('Could not retrieve exchange rate.');
+            }
+            curl_close($ch);
+
+            return $response['rates'][$targetCurrency];
+        }
+
+        return 1.0;
     }
 
     /**

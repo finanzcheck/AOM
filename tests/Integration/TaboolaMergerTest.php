@@ -11,25 +11,25 @@ use Piwik\Db;
 use Piwik\Common;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
-use Piwik\Plugins\AOM\Platforms\FacebookAds\FacebookAds;
+use Piwik\Plugins\AOM\Platforms\Taboola\Taboola;
 use Piwik\Tests\Framework\Fixture;
-use Piwik\Plugins\AOM\Platforms\FacebookAds\Merger;
+use Piwik\Plugins\AOM\Platforms\Taboola\Merger;
 
 /**
  * @group AOM
- * @group AOM_FacebookAdsMergerTest
+ * @group AOM_TaboolaMergerTest
  * @group AOM_Integration
  * @group AOM_Merging
  * @group Plugins
  */
-class FacebookAdsMergerTest extends IntegrationTestCase
+class TaboolaMergerTest extends IntegrationTestCase
 {
     /**
      * @var Fixture
      */
     public static $fixture = null; // initialized below class definition
 
-    private function addVisit($idvisit, $adParams, $platform = 'FacebookAds')
+    private function addVisit($idvisit, $adParams, $platform = 'Taboola')
     {
        Db::query(
             'INSERT INTO ' . Common::prefixTable('log_visit')
@@ -57,26 +57,26 @@ class FacebookAdsMergerTest extends IntegrationTestCase
         $merger = new Merger();
 
         Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
-            . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
-            'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-            [1, date('Y-m-d'), 14111, 'Campaign 1', 333, 'AdSet1', 222, "AdName", 7570, 13, 36.4]
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
+            . ' (idsite, date, campaign_id, campaign, site_id, site, impressions, clicks, cost, conversions) '.
+            'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+            [1, date('Y-m-d'), 141, 'Campaign 1', 'site-id-1', 'Site 1', 7570, 13, 36.4, 1]
         );
 
         Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
-            . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
-            'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-            [1, '2015-12-28', 14113, 'Campaign 2', 334, 'AdSet2', 777, "AdName2", 800, 100, 16.4]
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
+            . ' (idsite, date, campaign_id, campaign, site_id, site, impressions, clicks, cost, conversions) '.
+            'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+            [1, '2015-12-28', 242, 'Campaign 2', 'site-id-2', 'Site 2', 4370, 18, 41.4, 2]
         );
 
 
-        $this->addVisit(1, '{"platform":"FacebookAds","campaignId":"14111","adsetId": "333","adId": "222"}');
-        $this->addVisit(2, '{"platform":"FacebookAds","campaignId":"14113","adsetId": "334","adId": "777"}');
-        $this->addVisit(3, '{"platform":"FacebookAds","campaignId":"9999"}');
+        $this->addVisit(1, '{"platform":"Taboola","campaignId":"141","siteId": "site-id-1"}');
+        $this->addVisit(2, '{"platform":"Taboola","campaignId":"242","siteId": "site-id-2"}');
+        $this->addVisit(3, '{"platform":"Taboola","campaignId":"9999"}');
 
         $merger->setPeriod(date('Y-m-d'), date("Ymd", strtotime("+1 day")));
-        $merger->setPlatform(new FacebookAds());
+        $merger->setPlatform(new Taboola());
         $merger->merge();
     }
 
@@ -90,7 +90,7 @@ class FacebookAdsMergerTest extends IntegrationTestCase
     public function testExactMatch()
     {
         $data = $this->getVisit(1);
-        $this->assertEquals('Campaign 1', $data['campaign_name']);
+        $this->assertEquals('Campaign 1', $data['campaign']);
         $this->assertEquals(36.4, $data['cost']);
     }
 
@@ -98,7 +98,7 @@ class FacebookAdsMergerTest extends IntegrationTestCase
     public function testHistoricalMatch()
     {
         $data = $this->getVisit(2);
-        $this->assertEquals('Campaign 2', $data['campaign_name']);
+        $this->assertEquals('Campaign 2', $data['campaign']);
         $this->assertArrayNotHasKey('cost', $data);
     }
 
@@ -109,4 +109,4 @@ class FacebookAdsMergerTest extends IntegrationTestCase
     }
 }
 
-FacebookAdsMergerTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();
+TaboolaMergerTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();

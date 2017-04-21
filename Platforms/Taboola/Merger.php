@@ -4,7 +4,7 @@
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
-namespace Piwik\Plugins\AOM\Platforms\Criteo;
+namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
@@ -17,7 +17,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
      */
     protected function buildKeyFromAdData(array $adData)
     {
-        return "{$adData['idsite']}-{$adData['date']}-{$adData['campaign_id']}";
+        return implode('-', [$adData['idsite'], $adData['date'], $adData['campaign_id'], $adData['site_id'],]);
     }
 
     /**
@@ -27,13 +27,11 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     protected function getIdsFromVisit(array $visit)
     {
         $date = substr(AOM::convertUTCToLocalDateTime($visit['visit_first_action_time'], $visit['idsite']), 0, 10);
-        $adParams = @json_decode($visit['aom_ad_params']);
-        $campaignId = null;
-        if (isset($adParams->campaignId)) {
-            $campaignId = $adParams->campaignId;
-        }
+        $adParams = @json_decode($visit['aom_ad_params'], true);
+        $campaignId = isset($adParams['campaignId']) ? $adParams['campaignId'] : null;
+        $siteId = isset($adParams['siteId']) ? $adParams['siteId'] : null;
 
-        return [$visit['idsite'], $date, $campaignId];
+        return [$visit['idsite'], $date, $campaignId, $siteId];
     }
 
     /**
@@ -42,17 +40,17 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
      */
     protected function buildKeyFromVisit($visit)
     {
-        list($idsite, $date, $campaignId) = $this->getIdsFromVisit($visit);
-        if (!$campaignId) {
+        list($idsite, $date, $campaignId, $siteId) = $this->getIdsFromVisit($visit);
+        if (!$campaignId || !$siteId) {
             return null;
         }
 
-        return "{$idsite}-{$date}-{$campaignId}";
+        return implode('-', [$idsite, $date, $campaignId, $siteId,]);
     }
 
     public function merge()
     {
-        $this->logger->info('Will merge Criteo now.');
+        $this->logger->info('Will merge Taboola now.');
 
         $adDataMap = $this->getAdData();
 
@@ -71,7 +69,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
             } else {
                 // Search for historical data
                 list($idsite, $date, $campaignId) = $this->getIdsFromVisit($visit);
-                list($rowId, $data) = Criteo::getAdData($idsite, $date, $campaignId);
+                list($rowId, $data) = Taboola::getAdData($idsite, $date, $campaignId);
 
                 if ($data) {
                     $updateMap = [
