@@ -57,6 +57,11 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
      */
     public $platformFacebookAdsIsActive;
 
+    /**
+     * @var SystemSetting
+     */
+    public $platformTaboolaIsActive;
+
     protected function init()
     {
         // Generic settings
@@ -69,6 +74,7 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
         $this->platformBingIsActive = $this->createPlatformBingIsActiveSetting();
         $this->platformCriteoIsActive = $this->createPlatformCriteoIsActiveSetting();
         $this->platformFacebookAdsIsActive = $this->createPlatformFacebookAdsIsActiveSetting();
+        $this->platformTaboolaIsActive = $this->createPlatformTaboolaIsActiveSetting();
     }
 
     private function createParamPrefixSetting()
@@ -173,6 +179,19 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
         );
     }
 
+    private function createPlatformTaboolaIsActiveSetting()
+    {
+        return $this->makeSetting(
+            'platformTaboolaIsActive',
+            $default = false,
+            FieldConfig::TYPE_BOOL,
+            function (FieldConfig $field) {
+                $field->title = Piwik::translate('AOM_PluginSettings_Setting_EnableTaboola_Title');
+                $field->uiControl = FieldConfig::UI_CONTROL_CHECKBOX;
+            }
+        );
+    }
+    
     public function getConfiguration()
     {
         if (!$this->configuration) {

@@ -1,6 +1,6 @@
 {
     "name": "AOM",
-    "version": "0.5.8",
+    "version": "0.6.0",
     "keywords": [
         "Advertising",
         "Google AdWords",
@@ -9,10 +9,11 @@
         "Facebook Ads",
         "Marketing",
         "Online Marketing",
-        "Performance"
+        "Performance",
+        "Taboola"
     ],
     "homepage": "http://www.advanced-online-marketing.com",
-    "description": "Integrate additional data like costs from advertising platforms like AdWords, Bing, Criteo and Facebook into Piwik.",
+    "description": "Integrate additional data like costs from advertising platforms like AdWords, Bing, Criteo, Facebook and Taboola into Piwik.",
     "license": "GPL v3+",
     "authors": [
         {

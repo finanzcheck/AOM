@@ -1,8 +1,8 @@
 # Piwik Advanced Online Marketing Plugin 
 
 With the Piwik AOM plugin you can integrate data like campaign names, ad impressions, costs etc. from advertising 
-platforms such as Google AdWords, Microsoft Bing, Criteo and Facebook Ads into Piwik and combine that data with 
-individual visits. 
+platforms such as Google AdWords, Microsoft Bing, Criteo, Facebook Ads and Taboola into Piwik and combine that data 
+with individual visits. 
 
 Work with this valuable data directly in the Piwik UI or use the AOM plugin's API to export data to your data warehouse. 
 Perform customer journey analysis or evaluate your online marketing's performance when applying different conversion 

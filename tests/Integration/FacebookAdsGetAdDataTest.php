@@ -27,8 +27,8 @@ class FacebookAdsGetAdDataTest extends IntegrationTestCase
      */
     public static $fixture = null; // initialized below class definition
 
-    /** @var
-     * FacebookAds
+    /**
+     * @var FacebookAds
      */
     private $FacebookAds;
 
