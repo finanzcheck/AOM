@@ -68,8 +68,8 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
                 ];
             } else {
                 // Search for historical data
-                list($idsite, $date, $campaignId) = $this->getIdsFromVisit($visit);
-                list($rowId, $data) = Taboola::getAdData($idsite, $date, $campaignId);
+                list($idsite, $date, $campaignId, $siteId) = $this->getIdsFromVisit($visit);
+                list($rowId, $data) = Taboola::getAdData($idsite, $date, $campaignId, $siteId);
 
                 if ($data) {
                     $updateMap = [
