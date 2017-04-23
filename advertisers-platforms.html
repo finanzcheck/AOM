@@ -197,8 +197,8 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 
 <h3>Tracking params</h3>
 
-<p>We use <a href="http://help.bingads.microsoft.com/apex/index/3/en-us/51091">URL tracking</a> to o
-    btain the required data. The following params are supported:</p>
+<p>We use <a href="http://help.bingads.microsoft.com/apex/index/3/en-us/51091">URL tracking</a> to obtain the required
+    data. The following params are supported:</p>
 
 <table><thead>
 <tr>
@@ -375,12 +375,73 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <p>Facebook Ads' data is being imported once a day.</p>
 
 
+<!-- Taboola -->
+<h2 class="sub-title text-center">Taboola</h2>
+
+<h3>Tracking params</h3>
+
+<p>We use <a href="https://www.taboola.com/advertiser-help-center/tracking">Taboola's passback macros</a>, which are
+    dynamic tracking parameters that can be set on campaign level. The following params are supported:</p>
+
+<table><thead>
+<tr>
+    <th>Param</th>
+    <th>Mandatory</th>
+    <th>Contents</th>
+</tr>
+</thead><tbody>
+<tr>
+    <td>{prefix}_platform</td>
+    <td>true</td>
+    <td>Taboola</td>
+</tr>
+<tr>
+    <td>{prefix}_campaign_id</td>
+    <td>true</td>
+    <td>{campaign_id}</td>
+</tr>
+<tr>
+    <td>{prefix}_site_id</td>
+    <td>true</td>
+    <td>{site}</td>
+</tr>
+<tr>
+    <td>{prefix}_campaign_item_id</td>
+    <td>false</td>
+    <td>{campaign_item_id}</td>
+</tr>
+<tr>
+    <td>{prefix}_device</td>
+    <td>false</td>
+    <td>{platform}</td>
+</tr>
+</tbody></table>
+
+<p>A typical link at Taboola (with the prefix "aom") should have the following params:</p>
+<pre><code>&amp;aom_platform=Taboola&amp;aom_campaign_id={campaign_id}&amp;aom_site_id={site}&amp;aom_campaign_item_id={campaign_item_id}&amp;aom_device={platform}</code></pre>
+
+<p>When a Taboola ad is clicked, data like the following can be found in <code>log_visit.aom_ad_params</code>:</p>
+<div class="code-block">
+    <pre><code class="language-php">{
+    "platform":"Taboola",
+    "campaignId":504470,
+    "siteId":"msn-germany-home"
+}</code></pre></div>
+
+
+<!-- Taboola: Importing & merging -->
+<h3>Importing &amp; merging</h3>
+
+<p>For importing and merging you must activate Taboola and provide API credentials within this plugin's settings.</p>
+
+<p>Taboola's data is being imported every few hours.</p>
+
+
 <!-- Other advertising platforms and Piwik's default tracking params -->
 <h2 class="sub-title text-center">Other advertising platforms and Piwik's default tracking params</h2>
 
-<p>You should not use any of the params listed above when the advertising platform you are using is not
-    listed here.</p>
+<p>You should not use any of the params listed above when the advertising platform you are using is not listed here.</p>
 
-<p>Piwik's <a href="http://piwik.org/docs/tracking-campaigns/">default tracking params</a>
-    (<code>pk_kwd</code> and the even more important <code>pk_campaign</code>) should be used for both
-    supported and unsupported advertising platforms.</p>
+<p>Piwik's <a href="http://piwik.org/docs/tracking-campaigns/">default tracking params</a> (<code>pk_kwd</code> and the
+    even more important <code>pk_campaign</code>) should be used for both supported and unsupported advertising
+    platforms.</p>
