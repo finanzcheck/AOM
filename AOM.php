@@ -222,7 +222,8 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Extracts and returns the advertising platform from a given URL or null when no platform is identified.
+     * Extracts and returns the advertising platform name (e.g. "AdWords", "Criteo") from a given URL or null when no
+     * platform is identified or when the platform is not active.
      *
      * @param string $url
      * @return mixed Either the platform or null when no valid platform could be extracted.
@@ -239,12 +240,14 @@ class AOM extends \Piwik\Plugin
             && array_key_exists($paramPrefix . '_platform', $queryParams)
             && in_array($queryParams[$paramPrefix . '_platform'], AOM::getPlatforms())
         ) {
-            return $queryParams[$paramPrefix . '_platform'];
+            $platform = self::getPlatformInstance($queryParams[$paramPrefix . '_platform']);
+            return ($platform->isActive() ? $queryParams[$paramPrefix . '_platform'] : null);
         }
 
-        //When gclid is set then use Adwords
+        // When gclid is set and platform AdWords is active then use Adwords
         if (array_key_exists('gclid', $queryParams)) {
-            return AOM::PLATFORM_AD_WORDS;
+            $platform = self::getPlatformInstance(AOM::PLATFORM_AD_WORDS);
+            return ($platform->isActive() ? AOM::PLATFORM_AD_WORDS : null);
         }
 
         return null;
@@ -287,6 +290,10 @@ class AOM extends \Piwik\Plugin
         return $platform->getAdDataFromAdParams($request->getIdSite(), $params);
     }
 
+    /**
+     * @param Request $request
+     * @return mixed
+     */
     public static function getAdParamsFromRequest(Request $request)
     {
         return self::getAdParamsFromUrl(AOM::getParamsUrl($request));
