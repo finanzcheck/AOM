@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Bing;
 
-use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Metrics\Formatter;
@@ -37,7 +36,6 @@ class Bing extends Platform implements PlatformInterface
                 $paramPrefix . '_ad_group_id',
                 $paramPrefix . '_order_item_id',
                 $paramPrefix . '_target_id',
-                $paramPrefix . '_ad_id',
             ],
             array_keys($queryParams)
         );
@@ -50,14 +48,20 @@ class Bing extends Platform implements PlatformInterface
             return null;
         }
 
-        return [
+        $adParams = [
             'platform' => AOM::PLATFORM_BING,
             'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
             'adGroupId' => $queryParams[$paramPrefix . '_ad_group_id'],
             'orderItemId' => $queryParams[$paramPrefix . '_order_item_id'],
             'targetId' => $queryParams[$paramPrefix . '_target_id'],
-            'adId' => $queryParams[$paramPrefix . '_ad_id'],
         ];
+
+        // Add optional params
+        if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
+            $adParams['adId'] = $queryParams[$paramPrefix . '_ad_id'];
+        }
+
+        return $adParams;
     }
 
     /**
