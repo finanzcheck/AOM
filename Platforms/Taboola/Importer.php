@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
-use Exception;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
@@ -40,12 +39,14 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      * @param string $accountId
      * @param array $account
      * @param string $date
+     * @throws ImportException
      */
     private function importAccount($accountId, $account, $date)
     {
         $this->log(Logger::INFO, 'Will import Taboola account ' . $accountId. ' for date ' . $date . ' now.');
         $this->deleteExistingData(AOM::PLATFORM_TABOOLA, $accountId, $account['websiteId'], $date);
 
+        // The Taboola API is not reliable; we might need some retries
         $accessToken = $this->getAccessToken($account);
 
         // Although stated in the documentation, the "campaign-summary" "campaign_site_day_breakdown" does not export
@@ -59,6 +60,8 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
         // If base and target currency are the same, the exchange rate is 1.0.
         $exchangeRatesCache = [];
 
+        // We'll create a very big INSERT here to improve performance (INSERT INTO a (b,c) VALUES (1,1),(1,2),...)
+        $dataToInsert = [];
         foreach ($reportData as $row) {
 
             $date = substr($row['date'], 0, 10);
@@ -71,67 +74,88 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
             }
             $exchangeRate = $exchangeRatesCache[$exchangeRateKey];
 
-            // TODO: Use MySQL transaction to improve performance!
-            Db::query(
-                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
-                    . ' (id_account_internal, idsite, date, campaign_id, campaign, site_id, site, impressions, clicks, '
-                    . 'cost, conversions, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-                [
-                    $accountId,
-                    $account['websiteId'],
-                    $date,
-                    $row['campaign'],
-                    $campaignIdNameMapping[(string) $row['campaign']],
-                    $row['site'],
-                    $row['site_name'],
-                    $row['impressions'],
-                    $row['clicks'],
-                    ($row['spent'] * $exchangeRate),
-                    $row['cpa_actions_num'],
-                ]
+            array_push(
+                $dataToInsert,
+                $accountId, $account['websiteId'], $date, $row['campaign'],
+                $campaignIdNameMapping[(string) $row['campaign']], $row['site'], $row['site_name'], $row['impressions'],
+                $row['clicks'], ($row['spent'] * $exchangeRate), $row['cpa_actions_num']
             );
         }
 
-        $this->log(Logger::INFO, 'Imported ' . count($reportData) . ' records of Taboola account ' . $accountId . '.');
+        // Setup the placeholders - a fancy way to make the long "(?, ?, ?)..." string
+        $columns = ['id_account_internal', 'idsite', 'date', 'campaign_id', 'campaign', 'site_id', 'site',
+            'impressions', 'clicks', 'cost', 'conversions', 'ts_created'];
+        $rowPlaces = '(' . implode(', ', array_fill(0, count($columns) - 1, '?')) . ', NOW())';
+        $allPlaces = implode(', ', array_fill(0, count($reportData), $rowPlaces));
+
+        $result = Db::query(
+            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
+            . ' (' . implode(', ', $columns) . ') VALUES ' . $allPlaces,
+            $dataToInsert
+        );
+
+        $this->log(
+            Logger::DEBUG,
+            'Inserted ' . $result->rowCount() . ' records of Taboola account ' . $accountId . ' into '
+                . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '.'
+        );
     }
 
     /**
      * @param array $account
      * @return string
-     * @throws Exception
+     * @throws ImportException
      */
     private function getAccessToken(array $account)
     {
-        $ch = curl_init();
-        curl_setopt(
-            $ch,
-            CURLOPT_URL,
-            'https://backstage.taboola.com/backstage/oauth/token?client_id=' . $account['clientId']
-            . '&client_secret=' . $account['clientSecret'] . '&grant_type=client_credentials'
-        );
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded',]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-        curl_setopt($ch, CURLOPT_POST, true);
+        // The Taboola API is not reliable; we might need some retries
+        $attempts = 0;
 
-        $output = curl_exec($ch);
-        $response = json_decode($output, true);
-        if (!is_array($response) || !array_key_exists('access_token', $response)) {
-            $this->logger->error('Taboola API-request to get access token failed (response: "' . $output . '").');
-            throw new \Exception();
-        }
-
-        $error = curl_errno($ch);
-        if ($error > 0) {
-            $this->logger->error(
-                'Taboola API-request to get access token failed (error #' . $error . ': ' . curl_error($ch) . ').'
+        try {
+            $ch = curl_init();
+            curl_setopt(
+                $ch,
+                CURLOPT_URL,
+                'https://backstage.taboola.com/backstage/oauth/token?client_id=' . $account['clientId']
+                . '&client_secret=' . $account['clientSecret'] . '&grant_type=client_credentials'
             );
-            throw new \Exception();
-        }
-        curl_close($ch);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded',]);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+            curl_setopt($ch, CURLOPT_POST, true);
 
-        return $response['access_token'];
+            $output = curl_exec($ch);
+            $response = json_decode($output, true);
+            if (!is_array($response) || !array_key_exists('access_token', $response)) {
+                $this->log(
+                    Logger::WARNING,
+                    'Taboola API-request to get access token failed (response: "' . $output . '").'
+                );
+                throw new ImportException();
+            }
+
+            $error = curl_errno($ch);
+            if ($error > 0) {
+                $this->log(
+                    Logger::WARNING,
+                    'Taboola API-request to get access token failed (error #' . $error . ': ' . curl_error($ch) . ').'
+                );
+                throw new ImportException();
+            }
+            curl_close($ch);
+
+            return $response['access_token'];
+
+        } catch(ImportException $e) {
+
+            $attempts++;
+
+            if ($attempts > 5) {
+                $error = 'Failed to get Taboola access token.';
+                $this->log(Logger::ERROR, $error);
+                throw new ImportException($error);
+            }
+        }
     }
 
     /**
@@ -146,39 +170,59 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function getCampaignNames(array $account, $accessToken, $date)
     {
-        $ch = curl_init();
-        curl_setopt(
-            $ch,
-            CURLOPT_URL,
-            'https://backstage.taboola.com/backstage/api/1.0/' . $account['accountName'] . '/reports/campaign-summary'
-            . '/dimensions/campaign_breakdown?start_date=' . $date . '&end_date=' . $date
-        );
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $accessToken,]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        // The Taboola API is not reliable; we might need some retries
+        $attempts = 0;
 
-        $output = curl_exec($ch);
-        $response = json_decode($output, true);
-        if (!is_array($response) || !array_key_exists('results', $response) || !is_array($response['results']) ) {
-            $this->logger->error('Taboola API-request to get report data failed (response: "' . $output . '").');
-            throw new ImportException();
-        }
-
-        $error = curl_errno($ch);
-        if ($error > 0) {
-            $this->logger->error(
-                'Taboola API-request to get report data failed (error #' . $error . ': ' . curl_error($ch) . ').'
+        try {
+            $ch = curl_init();
+            curl_setopt(
+                $ch,
+                CURLOPT_URL,
+                'https://backstage.taboola.com/backstage/api/1.0/' . $account['accountName']
+                    . '/reports/campaign-summary/dimensions/campaign_breakdown?start_date=' . $date
+                    . '&end_date=' . $date
             );
-            throw new ImportException();
-        }
-        curl_close($ch);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $accessToken,]);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
-        $campaignIdNameMapping = [];
-        foreach ($response['results'] as $row) {
-            $campaignIdNameMapping[(string) $row['campaign']] = $row['campaign_name'];
-        }
+            $output = curl_exec($ch);
+            $response = json_decode($output, true);
+            if (!is_array($response) || !array_key_exists('results', $response) || !is_array($response['results']) ) {
+                $this->log(
+                    Logger::WARNING,
+                    'Taboola API-request to get report data failed (response: "' . $output . '").'
+                );
+                throw new ImportException();
+            }
 
-        return $campaignIdNameMapping;
+            $error = curl_errno($ch);
+            if ($error > 0) {
+                $this->log(
+                    Logger::WARNING,
+                    'Taboola API-request to get report data failed (error #' . $error . ': ' . curl_error($ch) . ').'
+                );
+                throw new ImportException();
+            }
+            curl_close($ch);
+
+            $campaignIdNameMapping = [];
+            foreach ($response['results'] as $row) {
+                $campaignIdNameMapping[(string) $row['campaign']] = $row['campaign_name'];
+            }
+
+            return $campaignIdNameMapping;
+
+        } catch(ImportException $e) {
+
+            $attempts++;
+
+            if ($attempts > 5) {
+                $error = 'Failed to get Taboola campaign names.';
+                $this->log(Logger::ERROR, $error);
+                throw new ImportException($error);
+            }
+        }
     }
 
     /**
@@ -190,34 +234,54 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      */
     private function getReportData(array $account, $accessToken, $date)
     {
-        $ch = curl_init();
-        curl_setopt(
-            $ch,
-            CURLOPT_URL,
-            'https://backstage.taboola.com/backstage/api/1.0/' . $account['accountName'] . '/reports/campaign-summary'
-                . '/dimensions/campaign_site_day_breakdown?start_date=' . $date . '&end_date=' . $date
-        );
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $accessToken,]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 180);
+        // The Taboola API is not reliable; we might need some retries
+        $attempts = 0;
 
-        $output = curl_exec($ch);
-        $response = json_decode($output, true);
-        if (!is_array($response) || !array_key_exists('results', $response) || !is_array($response['results']) ) {
-            $this->logger->error('Taboola API-request to get report data failed (response: "' . $output . '").');
-            throw new ImportException();
-        }
-
-        $error = curl_errno($ch);
-        if ($error > 0) {
-            $this->logger->error(
-                'Taboola API-request to get report data failed (error #' . $error . ': ' . curl_error($ch) . ').'
+        try {
+            $ch = curl_init();
+            curl_setopt(
+                $ch,
+                CURLOPT_URL,
+                'https://backstage.taboola.com/backstage/api/1.0/' . $account['accountName'] . '/reports'
+                    . '/campaign-summary/dimensions/campaign_site_day_breakdown?start_date=' . $date
+                    . '&end_date=' . $date
             );
-            throw new ImportException();
-        }
-        curl_close($ch);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $accessToken,]);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 180);
 
-        return $response['results'];
+            $output = curl_exec($ch);
+            $response = json_decode($output, true);
+            if (!is_array($response) || !array_key_exists('results', $response) || !is_array($response['results']) ) {
+                $this->log(
+                    Logger::WARNING,
+                    'Taboola API-request to get report data failed (response: "' . $output . '").'
+                );
+                throw new ImportException();
+            }
+
+            $error = curl_errno($ch);
+            if ($error > 0) {
+                $this->log(
+                    Logger::WARNING,
+                    'Taboola API-request to get report data failed (error #' . $error . ': ' . curl_error($ch) . ').'
+                );
+                throw new ImportException();
+            }
+            curl_close($ch);
+
+            return $response['results'];
+
+        } catch(ImportException $e) {
+
+            $attempts++;
+
+            if ($attempts > 5) {
+                $error = 'Failed to get Taboola report data.';
+                $this->log(Logger::ERROR, $error);
+                throw new ImportException($error);
+            }
+        }
     }
 
     /**
