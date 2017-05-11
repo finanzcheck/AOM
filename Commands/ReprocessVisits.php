@@ -32,6 +32,13 @@ class ReprocessVisits extends ConsoleCommand
     private $logger;
 
     /**
+     * Holds a stack of all visits that should be written to the database.
+     * 
+     * @var array
+     */
+    private $visits = [];
+
+    /**
      * @param string|null $name
      * @param LoggerInterface|null $logger
      */
@@ -40,22 +47,6 @@ class ReprocessVisits extends ConsoleCommand
         $this->logger = AOM::getTasksLogger();
 
         parent::__construct($name);
-    }
-
-    /**
-     * Convenience function for shorter logging statements
-     *
-     * @param string $logLevel
-     * @param string $message
-     * @param array $additionalContext
-     */
-    protected function log($logLevel, $message, $additionalContext = [])
-    {
-        $this->logger->log(
-            $logLevel,
-            $message,
-            array_merge(['task' => 'reprocess-visits'], $additionalContext)
-        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -77,7 +68,7 @@ class ReprocessVisits extends ConsoleCommand
             ->addOption('startDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->addOption('endDate', null, InputOption::VALUE_REQUIRED, 'YYYY-MM-DD')
             ->setDescription(
-                'Allocates platform costs to Piwik visits and stores them in aom_visits for further processing.'
+                'Allocates all costs to Piwik visits and stores them in aom_visits for further processing.'
             );
     }
 
@@ -100,9 +91,8 @@ class ReprocessVisits extends ConsoleCommand
 
 
         // Process every platform
+        $validations = [];
         foreach (AOM::getPlatforms() as $platformName) {
-
-            $this->log(Logger::DEBUG, 'Processing ' . $platformName . '...');
 
             $platform = AOM::getPlatformInstance($platformName);
 
@@ -183,60 +173,20 @@ class ReprocessVisits extends ConsoleCommand
                 $clicksAccordingToPlatform += $cost['clicks'];
                 $totalCosts += $cost['cost'];
             }
-
-
-            // Platform stats
-            $this->log(
-                Logger::DEBUG,
-                sprintf(
-                    '%d Piwik %s visits (based on aom_platform) resulted in %d %s visits.',
-                    count($platformVisits),
-                    $platformName,
-                    ($totalMatchingVisits + $totalCreatedVisits),
-                    $platformName
-                )
-            );
-            $this->log(
-                Logger::DEBUG,
-                sprintf(
-                    '%s reported %d records (with at least 1 click or cost > 0) with %d clicks.',
-                    $platformName,
-                    count($costs),
-                    $clicksAccordingToPlatform
-                )
-            );
-            $this->log(
-                Logger::DEBUG,
-                sprintf(
-                    '%d Piwik visits matched (based on aom_platform_row_id), but %d visits had to be created for %d unmerged clicks.',
-                    $totalMatchingVisits,
-                    $totalCreatedVisits,
-                    $clicksAccordingToPlatformUnmerged
-                )
-            );
-            $this->log(
-                Logger::DEBUG,
-                sprintf(
-                    'Total costs reported vs. total costs of all resulting visits are %f vs. %f.',
-                    $totalCosts,
-                    Db::fetchOne(
-                        'SELECT SUM(cost) FROM ' . Common::prefixTable('aom_visits')
-                        . ' WHERE date_website_timezone = ? AND channel = ?',
-                        [
-                            $date,
-                            $platformName,
-                        ]
-                    )
-                )
-            );
+            
+            $validations[] = [
+                'platformName' => $platformName,
+                'platformVisits' => $platformVisits,
+                'totalMatchingVisits' => $totalMatchingVisits,
+                'totalCreatedVisits' => $totalCreatedVisits,
+                'costs' => count($costs),
+                'clicksAccordingToPlatform' => $clicksAccordingToPlatform,
+                'clicksAccordingToPlatformUnmerged' => $clicksAccordingToPlatformUnmerged,
+                'totalCosts' => $totalCosts,
+            ];
         }
 
-        // Add remaining Piwik visits (visits without aom_platform_row_id) to aom_visits.
-        $this->log(
-            Logger::DEBUG,
-            'Will add ' . count($visits) . ' remaining visits now (Piwik visits without aom_platform_row_id).'
-        );
-
+        // Add remaining visits (without aom_platform_row_id)
         foreach ($visits as $visit) {
             $this->addVisit(
                 [
@@ -252,6 +202,66 @@ class ReprocessVisits extends ConsoleCommand
                 ]
             );
         }
+
+        // We'll create a very big INSERT here to improve performance (INSERT INTO a (b,c) VALUES (1,1),(1,2),...)
+        $this->bulkInsertVisits();
+
+        // Platform stats
+        foreach ($validations as $validation) {
+            $this->log(
+                Logger::DEBUG,
+                sprintf(
+                    '%d Piwik %s visits (based on aom_platform) resulted in %d %s visits.',
+                    count($validation['platformVisits']),
+                    $validation['platformName'],
+                    ($validation['totalMatchingVisits'] + $validation['totalCreatedVisits']),
+                    $validation['platformName']
+                )
+            );
+            $this->log(
+                Logger::DEBUG,
+                sprintf(
+                    '%s reported %d records (with at least 1 click or cost > 0) with %d clicks.',
+                    $validation['platformName'],
+                    $validation['costs'],
+                    $validation['clicksAccordingToPlatform']
+                )
+            );
+            $this->log(
+                Logger::DEBUG,
+                sprintf(
+                    '%d Piwik visits matched (based on aom_platform_row_id), but %d visits had to be created for %d unmerged clicks.',
+                    $validation['totalMatchingVisits'],
+                    $validation['totalCreatedVisits'],
+                    $validation['clicksAccordingToPlatformUnmerged']
+                )
+            );
+
+            // Cost validation
+            $costOfResultingVisits = Db::fetchOne(
+                'SELECT SUM(cost) FROM ' . Common::prefixTable('aom_visits')
+                . ' WHERE date_website_timezone = ? AND channel = ?',
+                [
+                    $date,
+                    $validation['platformName'],
+                ]
+            );
+            if ($validation['totalCosts'] != $costOfResultingVisits) {
+                $this->log(
+                    Logger::WARNING,
+                    sprintf(
+                        'Total cost reported vs. total cost of all resulting visits are %f vs. %f.',
+                        $validation['totalCosts'],
+                        $costOfResultingVisits
+                    )
+                );
+            }
+        }
+
+        $this->log(
+            Logger::DEBUG,
+            'Added ' . count($visits) . ' Piwik visits without aom_platform_row_id.'
+        );
 
         // Final stats
         $totalResultingVisits = Db::fetchOne(
@@ -303,9 +313,7 @@ class ReprocessVisits extends ConsoleCommand
     }
 
     /**
-     * Stores a visit with allocated costs and various platform data in aom_visits.
-     *
-     * TODO: Collect queries and perform multiple queries at once to improve performance.
+     * Adds a visit with allocated costs and various platform data to our stack which we will insert into aom_visits.
      *
      * @param array $visit The following information about the visit:
      *   string $visitId Piwik visit ID / Manually created visits must create consistent keys from the same raw data
@@ -335,30 +343,46 @@ class ReprocessVisits extends ConsoleCommand
             : $visit['dateWebsiteTimezone'] . '-' . $channel . '-' . hash('md5', $platformData);
 
         // Allow adding additional data to campaign_data
+        // TODO: Remove this or implement in another way!
         if (is_file(PIWIK_DOCUMENT_ROOT . '/plugins/AOM/custom.php')) {
             include PIWIK_DOCUMENT_ROOT . '/plugins/AOM/custom.php';
         }
 
-        Db::query(
-            'INSERT INTO ' . Common::prefixTable('aom_visits')
-                . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, date_website_timezone,  
-                     channel, campaign_data, platform_data, cost, conversions, revenue, ts_created) '
-                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-            [
-                $visit['siteId'],
-                array_key_exists('visitId', $visit) ? $visit['visitId'] : null,
-                $visitorId,
-                $uniqueHash,
-                $visit['firstActionTimeUTC'],
-                $visit['dateWebsiteTimezone'],
-                $channel,
-                array_key_exists('campaignData', $visit) ? json_encode($visit['campaignData']) : null,
-                $platformData,
-                array_key_exists('cost', $visit) ? $visit['cost'] : null,
-                array_key_exists('conversions', $visit) ? $visit['conversions'] : null,
-                array_key_exists('revenue', $visit) ? $visit['revenue'] : null,
-            ]
-        );
+        $this->visits[] = [
+            $visit['siteId'],
+            array_key_exists('visitId', $visit) ? $visit['visitId'] : null,
+            $visitorId,
+            $uniqueHash,
+            $visit['firstActionTimeUTC'],
+            $visit['dateWebsiteTimezone'],
+            $channel,
+            array_key_exists('campaignData', $visit) ? json_encode($visit['campaignData']) : null,
+            $platformData,
+            array_key_exists('cost', $visit) ? $visit['cost'] : null,
+            array_key_exists('conversions', $visit) ? $visit['conversions'] : null,
+            array_key_exists('revenue', $visit) ? $visit['revenue'] : null,
+        ];
+
+//        Db::query(
+//            'INSERT INTO ' . Common::prefixTable('aom_visits')
+//                . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, date_website_timezone,
+//                     channel, campaign_data, platform_data, cost, conversions, revenue, ts_created) '
+//                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+//            [
+//                $visit['siteId'],
+//                array_key_exists('visitId', $visit) ? $visit['visitId'] : null,
+//                $visitorId,
+//                $uniqueHash,
+//                $visit['firstActionTimeUTC'],
+//                $visit['dateWebsiteTimezone'],
+//                $channel,
+//                array_key_exists('campaignData', $visit) ? json_encode($visit['campaignData']) : null,
+//                $platformData,
+//                array_key_exists('cost', $visit) ? $visit['cost'] : null,
+//                array_key_exists('conversions', $visit) ? $visit['conversions'] : null,
+//                array_key_exists('revenue', $visit) ? $visit['revenue'] : null,
+//            ]
+//        );
     }
 
     /**
@@ -452,5 +476,44 @@ class ReprocessVisits extends ConsoleCommand
         );
 
         return $visits;
+    }
+
+    private function bulkInsertVisits()
+    {
+        $dataToInsert = [];
+        foreach ($this->visits as $row => $data) {
+            foreach ($data as $val) {
+                $dataToInsert[] = $val;
+            }
+        }
+
+        // Setup the placeholders - a fancy way to make the long "(?, ?, ?)..." string
+        $columns = ['idsite', 'piwik_idvisit', 'piwik_idvisitor', 'unique_hash', 'first_action_time_utc',
+            'date_website_timezone', 'channel', 'campaign_data', 'platform_data', 'cost', 'conversions', 'revenue',
+            'ts_created'];
+        $rowPlaces = '(' . implode(', ', array_fill(0, count($columns) - 1, '?')) . ', NOW())';
+        $allPlaces = implode(', ', array_fill(0, count($this->visits), $rowPlaces));
+
+        Db::query(
+            'INSERT INTO ' . Common::prefixTable('aom_visits')
+            . ' (' . implode(', ', $columns) . ') VALUES ' . $allPlaces,
+            $dataToInsert
+        );
+    }
+
+    /**
+     * Convenience function for shorter logging statements.
+     *
+     * @param string $logLevel
+     * @param string $message
+     * @param array $additionalContext
+     */
+    protected function log($logLevel, $message, $additionalContext = [])
+    {
+        $this->logger->log(
+            $logLevel,
+            $message,
+            array_merge(['task' => 'reprocess-visits'], $additionalContext)
+        );
     }
 }

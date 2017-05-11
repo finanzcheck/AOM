@@ -6,20 +6,16 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
-use Google\AdsApi\AdWords\AdWordsSession;
 use Google\AdsApi\AdWords\AdWordsSessionBuilder;
-use Google\AdsApi\AdWords\Reporting\v201702\DownloadFormat;
-use Google\AdsApi\AdWords\Reporting\v201702\ReportDownloader;
 use Google\AdsApi\AdWords\ReportSettingsBuilder;
 use Google\AdsApi\Common\Configuration;
 use Google\AdsApi\Common\OAuth2TokenBuilder;
 use Monolog\Logger;
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\SystemSettings;
-use Piwik\Site;
+use Psr\Log\NullLogger;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
 {
@@ -118,292 +114,15 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
                 ]))
                 ->includeZeroImpressions(false)
                 ->build())
-            ->withReportDownloaderLogger($this->logger)
-            ->withSoapLogger($this->logger)
+            ->withReportDownloaderLogger(new NullLogger())
+            ->withSoapLogger(new NullLogger())
             ->build();
 
-        $this->importCriteriaPerformanceReport($adWordsSession, $accountId, $account, $date);
-        $this->importClickPerformanceReport($adWordsSession, $accountId, $account, $date);
-    }
+        $criteriaPerformanceImporter = new ImporterCriteriaPerformance($this->logger);
+        $criteriaPerformanceImporter->import($adWordsSession, $accountId, $account, $date);
 
-    /**
-     * @param AdWordsSession $adWordsSession
-     * @param $accountId
-     * @param $account
-     * @param $date
-     */
-    private function importCriteriaPerformanceReport(AdWordsSession $adWordsSession, $accountId, $account, $date)
-    {
-        $reportQuery = 'SELECT AccountDescriptiveName, AccountCurrencyCode, AccountTimeZone, CampaignId, CampaignName, '
-            . 'AdGroupId, AdGroupName, Id, Criteria, CriteriaType, AdNetworkType1, AdNetworkType2, AveragePosition, '
-            . 'Conversions, QualityScore, CpcBid, Impressions, Clicks, GmailSecondaryClicks, Cost, Date '
-            . 'FROM CRITERIA_PERFORMANCE_REPORT WHERE Impressions > 0 DURING '
-            . str_replace('-', '', $date) . ','
-            . str_replace('-', '', $date);
-
-        $reportDownloader = new ReportDownloader($adWordsSession);
-        $reportDownloadResult = $reportDownloader->downloadReportWithAwql(
-            $reportQuery, DownloadFormat::XML);
-
-        $xml = simplexml_load_string($reportDownloadResult->getAsString());
-
-
-        // Matching placements based on the string in the value track param {placement} did not work successfully.
-        // This is why we aggregate up all placements of an ad group and merge on that level.
-        // TODO: This might be no longer necessary since we can match based on gclid?!
-        $consolidatedData = [];
-        foreach ($xml->table->row as $row) {
-            // Clicks of Google Sponsored Promotions (GSP) are more like more engaged ad views than real visits,
-            // i.e. we have to reassign clicks (and therewith recalculate CpC)
-            // (see http://marketingland.com/gmail-sponsored-promotions-everything-need-know-succeed-direct-response-gsp-part-1-120938)
-            if ($row['gmailClicksToWebsite'] > 0) {
-                $this->log(Logger::DEBUG, 'Mapping GSP "' . $row['adGroup'] . '" "gmailClicksToWebsite" to clicks.');
-                $row['clicks'] = $row['gmailClicksToWebsite'];
-            }
-
-            // TODO: Validate currency and timezone?!
-            // TODO: qualityScore, maxCPC, avgPosition?!
-            // TODO: Find correct place to log warning, errors, etc. and monitor them!
-
-            // Validation
-            if (!in_array(strtolower((string) $row['criteriaType']), AdWords::$criteriaTypes)) {
-                var_dump('Criteria type "' . (string) $row['criteriaType'] . '" not supported.');
-                continue;
-            } else {
-                $criteriaType = strtolower((string) $row['criteriaType']);
-            }
-
-            if (!in_array((string) $row['networkWithSearchPartners'], array_keys(AdWords::$networks))) {
-                var_dump('Network "' . (string) $row['networkWithSearchPartners'] . '" not supported.');
-                continue;
-            } else {
-                $network = AdWords::$networks[(string) $row['networkWithSearchPartners']];
-            }
-
-            // Construct the key for aggregation (see AdWords/Merger->buildKeyFromAdData())
-            $key = ('d' === $network)
-                ? implode('-', [$network, $row['campaignID'], $row['adGroupID']])
-                : implode('-', [$network, $row['campaignID'], $row['adGroupID'], $row['keywordID']]);
-
-            if (!array_key_exists($key, $consolidatedData)) {
-                $consolidatedData[$key] = [
-                    'date' => $row['day'],
-                    'account' => $row['account'],
-                    'campaignId' => $row['campaignID'],
-                    'campaign' => $row['campaign'],
-                    'adGroupId' => $row['adGroupID'],
-                    'adGroup' => $row['adGroup'],
-                    'keywordId' => $row['keywordID'],
-                    'keywordPlacement' => $row['keywordPlacement'],
-                    'criteriaType' => $criteriaType,
-                    'network' => $network,
-                    'impressions' => $row['impressions'],
-                    'clicks' => $row['clicks'],
-                    'cost' => ($row['cost'] / 1000000),
-                    'conversions' => $row['conversions'],
-                ];
-            } else {
-
-                // We must aggregate up all placements of an ad group and merge on that level.
-
-                // These values might be no longer unique.
-                if ($consolidatedData[$key]['keywordId'] != $row['keywordID']) {
-                    $consolidatedData[$key]['keywordId'] = null;
-                }
-                if ($consolidatedData[$key]['keywordPlacement'] != $row['keywordPlacement']) {
-                    $consolidatedData[$key]['keywordPlacement'] = null;
-                }
-                if ($consolidatedData[$key]['criteriaType'] != $criteriaType) {
-                    $consolidatedData[$key]['criteriaType'] = null;
-                }
-
-                // Aggregate
-                $consolidatedData[$key]['impressions'] = $consolidatedData[$key]['impressions'] + $row['impressions'];
-                $consolidatedData[$key]['clicks'] = $consolidatedData[$key]['clicks'] + $row['clicks'];
-                $consolidatedData[$key]['cost'] =  $consolidatedData[$key]['cost'] + ($row['cost'] / 1000000);
-                $consolidatedData[$key]['conversions'] = $consolidatedData[$key]['conversions'] + $row['conversions'];
-            }
-        }
-
-        // Write consolidated data to Piwik's database
-        // TODO: Use MySQL transaction to improve performance!
-        foreach ($consolidatedData as $data) {
-
-            $uniqueHash = $account['websiteId'] . '-' . $data['date'] . '-'
-                . hash('md5', $data['account'] . $data['campaignId'] . $data['adGroupId'] . $data['keywordId']
-                    . $data['keywordPlacement'] . $data['criteriaType'] . $data['network']);
-
-            Db::query(
-                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
-                . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-                . 'keyword_id, keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, '
-                . 'unique_hash, ts_created) '
-                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-                [
-                    $accountId,
-                    $account['websiteId'],
-                    $data['date'],
-                    $data['account'],
-                    $data['campaignId'],
-                    $data['campaign'],
-                    $data['adGroupId'],
-                    $data['adGroup'],
-                    $data['keywordId'],
-                    $data['keywordPlacement'],
-                    $data['criteriaType'],
-                    $data['network'],
-                    $data['impressions'],
-                    $data['clicks'],
-                    $data['cost'],
-                    $data['conversions'],
-                    $uniqueHash,
-                ]
-            );
-        }
-    }
-
-    /**
-     * Imports the AdWords click performance report into adwords_gclid-table.
-     * Tries to fix/update ad params of related visits when they are empty.
-     *
-     * @param AdWordsSession $adWordsSession
-     * @param $accountId
-     * @param $account
-     * @param $date
-     */
-    private function importClickPerformanceReport(AdWordsSession $adWordsSession, $accountId, $account, $date)
-    {
-        $reportQuery = 'SELECT AccountDescriptiveName, AdFormat, AdGroupId, AdGroupName, AdNetworkType1, '
-            . 'AdNetworkType2, AoiMostSpecificTargetId, CampaignId, CampaignLocationTargetId, CampaignName, ClickType, '
-            . 'CreativeId, CriteriaId, CriteriaParameters, Date, Device, ExternalCustomerId, GclId, KeywordMatchType, '
-            . 'LopMostSpecificTargetId, Page, Slot, UserListId '
-            . 'FROM CLICK_PERFORMANCE_REPORT DURING '
-            . str_replace('-', '', $date) . ','
-            . str_replace('-', '', $date);
-
-        $reportDownloader = new ReportDownloader($adWordsSession);
-        $reportDownloadResult = $reportDownloader->downloadReportWithAwql(
-            $reportQuery, DownloadFormat::XML);
-
-        $xml = simplexml_load_string($reportDownloadResult->getAsString());
-
-
-        // Get all visits which ad params we could possibly improve
-
-        // Leave one hour tolerance for visits that arrive late
-        $endDate = new \DateTime($date . ' 23:59:59', new \DateTimeZone(Site::getTimezoneFor($account['websiteId'])));
-        $endDate->add(new \DateInterval('PT1H'));
-        $endDate->setTimezone(new \DateTimeZone('UTC'));
-        $endDate = $endDate->format('Y-m-d H:i:s');
-
-        // We cannot use gclid as key as multiple visits might have the same gclid!
-        $visits = Db::fetchAssoc(
-            'SELECT idvisit, 
-                  SUBSTRING_INDEX(SUBSTR(aom_ad_params, LOCATE(\'gclid\', aom_ad_params)+CHAR_LENGTH(\'gclid\')+3),\'"\',1) AS gclid, 
-                  aom_ad_params
-                FROM ' . Common::prefixTable('log_visit') . '
-                WHERE idsite = ? AND aom_platform = ? AND visit_first_action_time >= ?
-                     AND visit_first_action_time <= ?',
-            [
-                $account['websiteId'],
-                AOM::PLATFORM_AD_WORDS,
-                AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($account['websiteId'])),
-                $endDate,
-            ]
-        );
-        foreach ($visits as &$visit) {
-            $visit['adParams'] = @json_decode($visit['aom_ad_params'], true);
-            if (!is_array($visit['adParams'])) {
-                $visit['adParams'] = [];
-            }
-        }
-
-        // Persist data in aom_adwords_gclid and build up a lookup table based on gclids
-        $gclids = [];
-        foreach ($xml->table->row as $row) {
-
-            // Map some values
-            if (!in_array((string) $row['networkWithSearchPartners'], array_keys(AdWords::$networks))) {
-                var_dump('Network "' . (string) $row['networkWithSearchPartners'] . '" not supported.');
-                continue;
-            } else {
-                $network = AdWords::$networks[(string) $row['networkWithSearchPartners']];
-            }
-
-            $gclids[(string) $row['googleClickID']] = [
-                'campaignId' => (string) $row['campaignID'],
-                'adGroupId' => (string) $row['adGroupID'],
-                'targetId' => 'kwd-' . (string) $row['keywordID'],
-                'placement' => (string) $row['keywordPlacement'],
-                'creative' => (string) $row['adID'],
-                'network' => $network,
-                'matchType' => (string) $row['matchType'],
-            ];
-
-            // Write to database
-            // TODO: Use MySQL transaction to improve performance!
-            Db::query(
-                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid'
-                    . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, '
-                    . 'keyword_id, keyword_placement, match_type, ad_id, ad_type, network, device, gclid, ts_created) '
-                    . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-                [
-                    $accountId,
-                    $account['websiteId'],
-                    $row['day'],
-                    $row['account'],
-                    $row['campaignID'],
-                    $row['campaign'],
-                    $row['adGroupID'],
-                    $row['adGroup'],
-                    $row['keywordID'],
-                    $row['keywordPlacement'],
-                    $row['matchType'],
-                    $row['adID'],
-                    $row['adType'],
-                    $network,
-                    $row['device'],
-                    (string) $row['googleClickID'],
-                ]
-            );
-        }
-
-        // Improve ad params
-        foreach ($visits as $visit) {
-            if (array_key_exists($visit['gclid'], $gclids)
-                && (!array_key_exists('campaignId', $visit['adParams'])
-                    || $visit['adParams']['campaignId'] != $gclids[$visit['gclid']]['campaignId']
-                    || !array_key_exists('adGroupId', $visit['adParams'])
-                    || $visit['adParams']['adGroupId'] != $gclids[$visit['gclid']]['adGroupId']
-                    || !array_key_exists('targetId', $visit['adParams'])
-                    || !array_key_exists('network', $visit['adParams'])
-                    || $visit['adParams']['network'] != $gclids[$visit['gclid']]['network']
-                    || !array_key_exists('matchType', $visit['adParams'])
-                    || $visit['adParams']['matchType'] != $gclids[$visit['gclid']]['matchType'])
-            ) {
-                $visit['adParams']['campaignId'] = $gclids[$visit['gclid']]['campaignId'];
-                $visit['adParams']['adGroupId'] = $gclids[$visit['gclid']]['adGroupId'];
-                $visit['adParams']['targetId'] = $gclids[$visit['gclid']]['targetId'];
-                $visit['adParams']['placement'] = $gclids[$visit['gclid']]['placement'];
-                $visit['adParams']['creative'] = $gclids[$visit['gclid']]['creative'];
-                $visit['adParams']['network'] = $gclids[$visit['gclid']]['network'];
-                $visit['adParams']['matchType'] = $gclids[$visit['gclid']]['matchType'];
-
-                Db::exec("UPDATE " . Common::prefixTable('log_visit')
-                    . " SET aom_ad_params = '" . json_encode($visit['adParams']) . "'"
-                    . " WHERE idvisit = " . $visit['idvisit']);
-
-                $this->log(
-                    Logger::DEBUG,
-                    'Improved ad params of visit ' . $visit['idvisit'] . ' via gclid-matching.'
-                );
-            }
-
-            // TODO:
-            // There are often visits with gclid that belongs to previous days,
-            // i.e. this visit should not be assigned to AdWords!
-        }
-
+        $clickPerformanceImporter = new ImporterClickPerformance($this->logger);
+        $clickPerformanceImporter->import($adWordsSession, $accountId, $account, $date);
     }
 
     /**
@@ -411,7 +130,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements Importer
      *
      * @param string $platformName
      * @param string $accountId
-     * @param string $account
+     * @param array $account
      * @param int $date
      */
     public function deleteExistingData($platformName, $accountId, $account, $date)
