@@ -51,7 +51,7 @@ class PlatformImport extends ConsoleCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         // We might need a little more RAM
-        ini_set('memory_limit','512M');
+        ini_set('memory_limit','2048M');
 
         if (!in_array($input->getOption('platform'), AOM::getPlatforms())) {
             $this->logger->warning('Platform "' . $input->getOption('platform') . '" is not supported.');

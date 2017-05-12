@@ -49,18 +49,6 @@ class ReprocessVisits extends ConsoleCommand
         parent::__construct($name);
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
-    {
-        if (!in_array('MarketingCampaignsReporting', Manager::getInstance()->getInstalledPluginsName())) {
-            $this->log(Logger::ERROR, 'Plugin "MarketingCampaignsReporting" must be installed and activated.');
-            exit;
-        }
-
-        foreach (AOM::getPeriodAsArrayOfDates($input->getOption('startDate'), $input->getOption('endDate')) as $date) {
-            $this->processDate($date);
-        }
-    }
-
     protected function configure()
     {
         $this
@@ -70,6 +58,21 @@ class ReprocessVisits extends ConsoleCommand
             ->setDescription(
                 'Allocates all costs to Piwik visits and stores them in aom_visits for further processing.'
             );
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        // We might need a little more RAM
+        ini_set('memory_limit','2048M');
+
+        if (!in_array('MarketingCampaignsReporting', Manager::getInstance()->getInstalledPluginsName())) {
+            $this->log(Logger::ERROR, 'Plugin "MarketingCampaignsReporting" must be installed and activated.');
+            exit;
+        }
+
+        foreach (AOM::getPeriodAsArrayOfDates($input->getOption('startDate'), $input->getOption('endDate')) as $date) {
+            $this->processDate($date);
+        }
     }
 
     /**
