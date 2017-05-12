@@ -71,7 +71,7 @@ class TaboolaGetAdDataTest extends IntegrationTestCase
 
     public function testExactMatch()
     {
-        list($rowId, $data) = $this->taboola->getAdDataFromAdParams(1, ['campaignId' => 141, 'siteId' => 'site-id-2',]);
+        list($rowId, $data) = $this->taboola->getAdDataFromAdParams(1, ['campaignId' => 141, 'siteId' => 'site-id-1',]);
 
         $this->assertEquals('Campaign 1', $data['campaign']);
         $this->assertEquals(36.4, $data['cost']);
