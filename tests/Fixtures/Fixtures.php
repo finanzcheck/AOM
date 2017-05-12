@@ -120,12 +120,12 @@ class Fixtures extends BasicFixtures
             'http://example.com/?aom_platform=FacebookAds&aom_campaign_id=4160286035775&aom_adset_id=6028603577541'
             . '&aom_ad_id=5760286037541'
         );
-        self::checkResponse($t->doTrackPageView('Visit from Bing'));
+        self::checkResponse($t->doTrackPageView('Visit from FacebookAds'));
 
         // Taboola
         $t->setUserId('taa1fb309ff42919c1aed279d27951b0');
         $this->moveTimeForward($t, 0.3, $dateTime);
         $t->setUrl('http://example.com/?aom_platform=Taboola&aom_campaign_id=527486&aom_site_id=stroeer-smb-gamona');
-        self::checkResponse($t->doTrackPageView('Visit from Bing'));
+        self::checkResponse($t->doTrackPageView('Visit from Taboola'));
     }
 }
