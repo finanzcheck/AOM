@@ -249,7 +249,7 @@ class ReprocessVisits extends ConsoleCommand
                     $validation['platformName'],
                 ]
             );
-            if ($validation['totalCosts'] != $costOfResultingVisits) {
+            if (round($validation['totalCosts']) != round($costOfResultingVisits)) {
                 $this->log(
                     Logger::WARNING,
                     sprintf(
@@ -261,10 +261,7 @@ class ReprocessVisits extends ConsoleCommand
             }
         }
 
-        $this->log(
-            Logger::DEBUG,
-            'Added ' . count($visits) . ' Piwik visits without aom_platform_row_id.'
-        );
+        $this->log(Logger::DEBUG, 'Added ' . count($visits) . ' Piwik visits without aom_platform_row_id.');
 
         // Final stats
         $totalResultingVisits = Db::fetchOne(
@@ -365,27 +362,6 @@ class ReprocessVisits extends ConsoleCommand
             array_key_exists('conversions', $visit) ? $visit['conversions'] : null,
             array_key_exists('revenue', $visit) ? $visit['revenue'] : null,
         ];
-
-//        Db::query(
-//            'INSERT INTO ' . Common::prefixTable('aom_visits')
-//                . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, date_website_timezone,
-//                     channel, campaign_data, platform_data, cost, conversions, revenue, ts_created) '
-//                . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-//            [
-//                $visit['siteId'],
-//                array_key_exists('visitId', $visit) ? $visit['visitId'] : null,
-//                $visitorId,
-//                $uniqueHash,
-//                $visit['firstActionTimeUTC'],
-//                $visit['dateWebsiteTimezone'],
-//                $channel,
-//                array_key_exists('campaignData', $visit) ? json_encode($visit['campaignData']) : null,
-//                $platformData,
-//                array_key_exists('cost', $visit) ? $visit['cost'] : null,
-//                array_key_exists('conversions', $visit) ? $visit['conversions'] : null,
-//                array_key_exists('revenue', $visit) ? $visit['revenue'] : null,
-//            ]
-//        );
     }
 
     /**

@@ -68,12 +68,14 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
     {
         $this->logger->info('Will merge Bing now.');
 
+        $visits = $this->getVisits();
+
         $adDataMap = $this->getAdData();
 
         // Update visits
         $updateStatements = [];
         $nonMatchedVisits = [];
-        foreach ($this->getVisits() as $visit) {
+        foreach ($visits as $visit) {
             $data = null;
             $key = $this->buildKeyFromVisit($visit);
             if (isset($adDataMap[$key])) {
@@ -113,7 +115,7 @@ class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterf
         $this->updateVisits($updateStatements);
 
         $this->logger->info(
-            'Merged data (' . count($nonMatchedVisits) . ' without direct match out of ' . count($this->getVisits()) . ')'
+            'Merged data (' . count($nonMatchedVisits) . ' without direct match out of ' . count($visits) . ')'
         );
     }
 }

@@ -164,48 +164,44 @@ class Bing extends Platform implements PlatformInterface
             curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
             curl_setopt($conn, CURLOPT_FRESH_CONNECT, true);
             curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
-            $url_get_contents_data = (curl_exec($conn));
+            $urlGetContentsData = (curl_exec($conn));
             curl_close($conn);
         } elseif (function_exists('file_get_contents')) {
-            $url_get_contents_data = file_get_contents($url);
+            $urlGetContentsData = file_get_contents($url);
         } elseif (function_exists('fopen') && function_exists('stream_get_contents')) {
             $handle = fopen($url, "r");
-            $url_get_contents_data = stream_get_contents($handle);
+            $urlGetContentsData = stream_get_contents($handle);
         } else {
-            $url_get_contents_data = false;
+            $urlGetContentsData = false;
         }
-        return $url_get_contents_data;
+        return $urlGetContentsData;
     }
-    
+
     /**
      * Retrieves contents from the given URI via POST.
      *
-     * @param $url
+     * @param string $url
      * @param $fields
-     * @return bool|mixed|string
+     * @return mixed
      */
     public static function urlPostContents($url, $fields)
     {
     	$fields = (is_array($fields)) ? http_build_query($fields) : $fields;
-        if (function_exists('curl_exec')) {
-        $headers = array( 
-            "Content-type: application/x-www-form-urlencoded",
-            "Content-length: ".strlen($fields)
-        ); 
-            $conn = curl_init($url);
-            curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($conn, CURLOPT_FRESH_CONNECT, true);
-            curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($conn, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($conn, CURLOPT_POST, 1);
-            curl_setopt($conn, CURLOPT_POSTFIELDS, $fields);
-            $url_post_contents_data = (curl_exec($conn));
-            curl_close($conn);
-        } else {
-        	throw new \Exception('This plugin requires php-curl to be enabled. Please install and restart your web server.');
-            $url_post_contents_data = false;
-        }
-        return $url_post_contents_data;
+
+        $conn = curl_init($url);
+        curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($conn, CURLOPT_FRESH_CONNECT, true);
+        curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($conn, CURLOPT_HTTPHEADER, [
+            'Content-type: application/x-www-form-urlencoded',
+            'Content-length: ' . strlen($fields)
+        ]);
+        curl_setopt($conn, CURLOPT_POST, 1);
+        curl_setopt($conn, CURLOPT_POSTFIELDS, $fields);
+        $urlPostContentsData = (curl_exec($conn));
+        curl_close($conn);
+
+        return $urlPostContentsData;
     }
 
     /**
@@ -217,7 +213,6 @@ class Bing extends Platform implements PlatformInterface
     {
         return new MarketingPerformanceSubTables();
     }
-
     
     /**
      * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
