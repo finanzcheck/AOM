@@ -30,7 +30,7 @@ class Tasks extends \Piwik\Plugin\Tasks
     {
         foreach (AOM::getPlatforms() as $platformName) {
 
-            $platform = AOM::getPlatformInstance($platformName);
+            $platform = AOM::getPlatformInstance($platformName, 'Importer');
 
             if ($platform->isActive()) {
 

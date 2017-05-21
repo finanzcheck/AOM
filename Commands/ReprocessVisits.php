@@ -261,10 +261,7 @@ class ReprocessVisits extends ConsoleCommand
             }
         }
 
-        $this->log(
-            Logger::DEBUG,
-            'Added ' . count($visits) . ' Piwik visits without aom_platform_row_id.'
-        );
+        $this->log(Logger::DEBUG, 'Added ' . count($visits) . ' Piwik visits without aom_platform_row_id.');
 
         // Final stats
         $totalResultingVisits = Db::fetchOne(
