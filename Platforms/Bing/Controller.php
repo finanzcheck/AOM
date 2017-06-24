@@ -10,10 +10,9 @@ use Piwik\Common;
 use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\ControllerInterface;
 use Piwik\Plugins\AOM\SystemSettings;
 
-class Controller extends \Piwik\Plugins\AOM\Platforms\Controller implements ControllerInterface
+class Controller extends \Piwik\Plugins\AOM\Platforms\Controller
 {
     /**
      * @param int $websiteId

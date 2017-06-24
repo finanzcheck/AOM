@@ -75,6 +75,13 @@ abstract class Importer
     }
 
     /**
+     * Imports platform data.
+     *
+     * @return mixed
+     */
+    abstract public function import();
+
+    /**
      * Deletes all imported data for the given combination of platform account, website and date.
      * Updates aom_ad_data and aom_platform_row_id to NULL of all visits who lost their related platform cost records.
      * Removes all reprocessed visits for the combination of website and date!

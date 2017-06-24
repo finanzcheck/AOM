@@ -60,6 +60,11 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
     /**
      * @var SystemSetting
      */
+    public $platformIndividualCampaignsIsActive;
+
+    /**
+     * @var SystemSetting
+     */
     public $platformTaboolaIsActive;
 
     protected function init()
@@ -74,6 +79,9 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
         $this->platformBingIsActive = $this->createPlatformBingIsActiveSetting();
         $this->platformCriteoIsActive = $this->createPlatformCriteoIsActiveSetting();
         $this->platformFacebookAdsIsActive = $this->createPlatformFacebookAdsIsActiveSetting();
+
+        // TODO: Activate this when other development is complete.
+//        $this->platformIndividualCampaignsIsActive = $this->createPlatformIndividualCampaignsIsActiveSetting();
         $this->platformTaboolaIsActive = $this->createPlatformTaboolaIsActiveSetting();
     }
 
@@ -174,6 +182,19 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
             FieldConfig::TYPE_BOOL,
             function (FieldConfig $field) {
                 $field->title = Piwik::translate('AOM_PluginSettings_Setting_EnableFacebookAds_Title');
+                $field->uiControl = FieldConfig::UI_CONTROL_CHECKBOX;
+            }
+        );
+    }
+
+    private function createPlatformIndividualCampaignsIsActiveSetting()
+    {
+        return $this->makeSetting(
+            'platformIndividualCampaignsIsActive',
+            $default = false,
+            FieldConfig::TYPE_BOOL,
+            function (FieldConfig $field) {
+                $field->title = Piwik::translate('AOM_PluginSettings_Setting_EnableIndividualCampaigns_Title');
                 $field->uiControl = FieldConfig::UI_CONTROL_CHECKBOX;
             }
         );

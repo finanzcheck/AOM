@@ -6,10 +6,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 
-use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\MergerInterface;
-use Piwik\Site;
 
 /*
 Query for single keyword
@@ -17,7 +14,7 @@ select count(*), date, campaign_id, adset_id, ad_id from aom_facebookads group b
  */
 
 
-class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterface
+class Merger extends \Piwik\Plugins\AOM\Platforms\Merger
 {
     /**
      * @param array $adData

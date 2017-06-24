@@ -12,7 +12,7 @@ use Piwik\Db;
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugin\Manager;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Plugins\AOM\Platforms\Platform;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
@@ -176,7 +176,32 @@ class ReprocessVisits extends ConsoleCommand
                 $clicksAccordingToPlatform += $cost['clicks'];
                 $totalCosts += $cost['cost'];
             }
-            
+
+            // Add remaining visits (without platform_row_id) of this platform
+            // TODO: These visits are coming from specific platforms but we don't know from which campaign, costs etc.!
+            // TODO: Handle these cases in MarketingPerformanceController.php.
+            foreach ($visits as $visit) {
+                if ($visit['aom_platform'] == $platformName) {
+                    $this->addVisit(
+                        [
+                            'siteId' => $visit['idsite'],
+                            'visitId' => $visit['idvisit'],
+                            'visitorId' => $visit['idvisitor'],
+                            'firstActionTimeUTC' => $visit['visit_first_action_time'],
+                            'dateWebsiteTimezone' => $date,
+                            'channel' => $this->determineChannel($platformName, $visit['referer_type'], $visit['campaign_name']),
+                            'campaignData' => $visit['campaign_data'],
+                            'conversions' => $visit['conversions'],
+                            'revenue' => $visit['revenue'],
+                        ]
+                    );
+                }
+            }
+            $visits = array_filter($visits, function($visit) use ($platformName) {
+                return ($visit['aom_platform'] != $platformName);
+            });
+
+
             $validations[] = [
                 'platformName' => $platformName,
                 'platformVisits' => $platformVisits,
@@ -189,7 +214,7 @@ class ReprocessVisits extends ConsoleCommand
             ];
         }
 
-        // Add remaining visits (without aom_platform_row_id)
+        // Add remaining visits (which have not  aom_platform_row_id)
         foreach ($visits as $visit) {
             $this->addVisit(
                 [
@@ -278,19 +303,21 @@ class ReprocessVisits extends ConsoleCommand
     /**
      * Returns the platform's costs for the given date.
      *
-     * @param PlatformInterface $platform
+     * @param Platform $platform
      * @param string $date YYYY-MM-DD
      * @return array
      */
-    private function getPlatformCosts(PlatformInterface $platform, $date)
+    private function getPlatformCosts(Platform $platform, $date)
     {
-        return Db::fetchAll(
-            'SELECT * FROM ' . $platform->getDataTableName()
-                . ' WHERE date = ? AND (clicks > 0 OR cost > 0)',   // Some platform's might create irrelevant rows!
-            [
-                $date,
-            ]
-        );
+        // Some platform's might create irrelevant rows!
+        $sql = 'SELECT * FROM ' . $platform->getDataTableName() . ' WHERE date = ? AND (clicks > 0 OR cost > 0)';
+
+        // Some platforms do not have clicks (e.g. individual campaigns)
+        if (!in_array('clicks', array_keys(Db::fetchAssoc('SHOW COLUMNS FROM ' . $platform->getDataTableName())))) {
+            $sql = 'SELECT *, 0 as clicks FROM ' . $platform->getDataTableName() . ' WHERE date = ? AND cost > 0';
+        }
+
+        return Db::fetchAll($sql, [$date,]);
     }
 
     /**
@@ -341,12 +368,6 @@ class ReprocessVisits extends ConsoleCommand
         $uniqueHash = array_key_exists('visitId', $visit)
             ? 'piwik-visit-' . $visit['visitId']
             : $visit['dateWebsiteTimezone'] . '-' . $channel . '-' . hash('md5', $platformData);
-
-        // Allow adding additional data to campaign_data
-        // TODO: Remove this or implement in another way!
-        if (is_file(PIWIK_DOCUMENT_ROOT . '/plugins/AOM/custom.php')) {
-            include PIWIK_DOCUMENT_ROOT . '/plugins/AOM/custom.php';
-        }
 
         $this->visits[] = [
             $visit['siteId'],
@@ -459,6 +480,10 @@ class ReprocessVisits extends ConsoleCommand
 
     private function bulkInsertVisits()
     {
+        if (0 === count($this->visits)) {
+            return;
+        }
+
         $dataToInsert = [];
         foreach ($this->visits as $row => $data) {
             foreach ($data as $val) {

@@ -13,6 +13,7 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
+use Piwik\Tracker\Request;
 
 abstract class Platform
 {
@@ -57,7 +58,7 @@ abstract class Platform
     /**
      * Whether or not this platform has been activated in the plugin's configuration.
      *
-     * @return mixed
+     * @return bool
      */
     public function isActive()
     {
@@ -83,6 +84,102 @@ abstract class Platform
     {
         $this->getInstaller()->uninstallPlugin();
     }
+
+    /**
+     * Returns true if the visit is coming from this platform. False otherwise.
+     *
+     * TODO: Check if we should use $action->getActionUrl() instead of or in addition to $request->getParams()['url'].
+     *
+     * @param Request $request
+     * @return bool
+     */
+    public function isVisitComingFromPlatform(Request $request)
+    {
+        // Check current URL first before referrer URL
+        $urlsToCheck = [];
+        if (isset($request->getParams()['url'])) {
+            $urlsToCheck[] = $request->getParams()['url'];
+        }
+        if (isset($request->getParams()['urlref'])) {
+            $urlsToCheck[] = $request->getParams()['urlref'];
+        }
+
+        foreach ($urlsToCheck as $urlToCheck) {
+            if ($this->isPlatformParamForThisPlatformInUrl($urlToCheck)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Extracts advertisement platform specific data from the request (referrer, query params) and returns it as an
+     * associative array.
+     *
+     * TODO: Check if we should use $action->getActionUrl() instead of or in addition to $request->getParams()['url'].
+     *
+     * @param Request $request
+     * @return null|array
+     */
+    public function getAdParamsFromRequest(Request $request)
+    {
+        $paramPrefix = $this->getSettings()->paramPrefix->getValue();
+
+        // Check current URL before referrer URL
+        $urlsToCheck = [];
+        if (isset($request->getParams()['url'])) {
+            $urlsToCheck[] = $request->getParams()['url'];
+        }
+        if (isset($request->getParams()['urlref'])) {
+            $urlsToCheck[] = $request->getParams()['urlref'];
+        }
+
+        foreach ($urlsToCheck as $urlToCheck) {
+
+            // TODO: Should we combine the results of all the different checks instead of simpy return the first match?
+
+            // Try to get adParams from referrer
+            // TODO: Rename adParams into something which also works for data extracted from the referrer?
+
+            // Try to get adParams from
+            $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
+            parse_str($queryString, $queryParams);
+
+            $platform = AOM::getPlatformInstance($this->getUnqualifiedClassName());
+            $adParams = $platform->getAdParamsFromUrl($urlToCheck, $queryParams, $paramPrefix, $request);
+            if (is_array($adParams) && count($adParams) > 0) {
+                return $adParams;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extracts and returns advertisement platform specific data from an URL.
+     * $queryParams and $paramPrefix are only passed as params for convenience reasons.
+     *
+     * @param string $url
+     * @param array $queryParams
+     * @param string $paramPrefix
+     * @param Request $request
+     * @return array|null
+     */
+    abstract protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request);
+
+    /**
+     * Extracts advertisement data from the ad params and stores it in log_visit.aom_ad_data.
+     * At this point it is likely that there is no actual ad data available. In this case historical data is used to
+     * add some basic information.
+     * The implementation of this method must ensure a consistently ordered JSON.
+     *
+     * @param string $idSite
+     * @param array $adParams
+     * @param string $date
+     * @return mixed
+     */
+    abstract public function getAdDataFromAdParams($idSite, array $adParams, $date = null);
 
     /**
      * Instantiates and returns the platform specific installer.
@@ -116,7 +213,7 @@ abstract class Platform
             return;
         }
 
-        /** @var ImporterInterface $importer */
+        /** @var Importer $importer */
         $importer = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Importer');
         $importer->setPeriod($startDate, $endDate);
         $importer->import();
@@ -150,7 +247,7 @@ abstract class Platform
             return;
         }
 
-        /** @var MergerInterface $merger */
+        /** @var Merger $merger */
         $merger = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Merger');
         $merger->setPeriod($startDate, $endDate);
         $merger->setPlatform($this);
@@ -277,10 +374,7 @@ abstract class Platform
      *
      * @return MarketingPerformanceSubTablesInterface|false
      */
-    public function getMarketingPerformanceSubTables()
-    {
-        return false;
-    }
+    abstract public function getMarketingPerformanceSubTables();
 
     /**
      * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no
@@ -304,5 +398,25 @@ abstract class Platform
         }
 
         return false;
+    }
+
+    /**
+     * Returns true if the platform param exists in the given URL and if its value is the current's platform's name.
+     * False otherwise.
+     *
+     * @param string $url
+     * @return bool
+     */
+    protected function isPlatformParamForThisPlatformInUrl($url)
+    {
+        $paramPrefix = $this->getSettings()->paramPrefix->getValue();
+
+        $queryString = parse_url($url, PHP_URL_QUERY);
+        parse_str($queryString, $queryParams);
+
+        return (is_array($queryParams)
+            && array_key_exists($paramPrefix . '_platform', $queryParams)
+            && $this->getName() === $queryParams[$paramPrefix . '_platform']
+        );
     }
 }

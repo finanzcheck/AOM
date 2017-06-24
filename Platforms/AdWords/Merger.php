@@ -8,9 +8,8 @@ namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use Monolog\Logger;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\MergerInterface;
 
-class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterface
+class Merger extends \Piwik\Plugins\AOM\Platforms\Merger
 {
     /**
      * Build a unique key from the platform's ad data.

@@ -69,6 +69,13 @@ abstract class Merger
     }
 
     /**
+     * Merges platform data.
+     *
+     * @return mixed
+     */
+    abstract public function merge();
+
+    /**
      * Returns all relevant visits.
      * During merging website and date scopes are being considered.
      *

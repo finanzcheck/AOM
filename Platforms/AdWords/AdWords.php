@@ -12,9 +12,9 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Tracker\Request;
 
-class AdWords extends Platform implements PlatformInterface
+class AdWords extends Platform
 {
     /**
      * AdWords can either track and merge via gclid (auto-tagging) or via regular-params but not both at the same time!
@@ -100,16 +100,57 @@ class AdWords extends Platform implements PlatformInterface
     }
 
     /**
-     * Extracts advertisement platform specific data from the query params based on the configured tracking variant
-     * (either gclid or regular parameters) and validates it:
+     * Returns true if the visit is coming from this platform. False otherwise.
+     *
+     * @param Request $request
+     * @return bool
+     */
+    public function isVisitComingFromPlatform(Request $request)
+    {
+        if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
+
+            // Check current URL first before referrer URL
+            $urlsToCheck = [];
+            if (isset($request->getParams()['url'])) {
+                $urlsToCheck[] = $request->getParams()['url'];
+            }
+            if (isset($request->getParams()['urlref'])) {
+                $urlsToCheck[] = $request->getParams()['urlref'];
+            }
+
+            foreach ($urlsToCheck as $urlToCheck) {
+                $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
+                parse_str($queryString, $queryParams);
+
+                if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
+                    return true;
+                }
+            }
+
+        } elseif (self::TRACKING_VARIANT_REGULAR_PARAMS === $this->getTrackingVariant()) {
+            if (parent::isVisitComingFromPlatform($request)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Extracts and returns advertisement platform specific data from an URL.
+     * $queryParams and $paramPrefix are only passed as params for convenience reasons.
+     *
+     * In AdWords the extraction is based on the configured tracking variant (either gclid or regular parameters):
      *  - When "gclid" is configured, then all other params are being ignored
      *  - When "regular-params" are configured, then gclid is ignored but a lot of ValueTrack params are required
      *
-     * @param string $paramPrefix
+     * @param string $url
      * @param array $queryParams
-     * @return mixed
+     * @param string $paramPrefix
+     * @param Request $request
+     * @return array|null
      */
-    public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
+    protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
         if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
 

@@ -12,8 +12,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Tracker\Request;
+use Piwik\Plugins\AOM\Platforms\Platform;
 use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
@@ -31,6 +30,7 @@ class AOM extends \Piwik\Plugin
     const PLATFORM_AD_WORDS = 'AdWords';
     const PLATFORM_BING = 'Bing';
     const PLATFORM_CRITEO = 'Criteo';
+    const PLATFORM_INDIVIDUAL_CAMPAIGNS = 'IndividualCampaigns';
     const PLATFORM_FACEBOOK_ADS = 'FacebookAds';
     const PLATFORM_TABOOLA = 'Taboola';
 
@@ -43,6 +43,7 @@ class AOM extends \Piwik\Plugin
             self::PLATFORM_AD_WORDS,
             self::PLATFORM_BING,
             self::PLATFORM_CRITEO,
+//            self::PLATFORM_INDIVIDUAL_CAMPAIGNS,  // TODO: Activate when development is done.
             self::PLATFORM_FACEBOOK_ADS,
             self::PLATFORM_TABOOLA,
         ];
@@ -200,7 +201,7 @@ class AOM extends \Piwik\Plugin
      *
      * @param string $platform
      * @param null|string $class
-     * @return PlatformInterface
+     * @return Platform
      * @throws \Exception
      */
     public static function getPlatformInstance($platform, $class = null)
@@ -219,122 +220,6 @@ class AOM extends \Piwik\Plugin
         $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . (null === $class ? $platform : $class);
 
         return new $className($logger);
-    }
-
-    /**
-     * Extracts and returns the advertising platform name (e.g. "AdWords", "Criteo") from a given URL or null when no
-     * platform is identified or when the platform is not active.
-     *
-     * @param string $url
-     * @return mixed Either the platform or null when no valid platform could be extracted.
-     */
-    public static function getPlatformFromUrl($url)
-    {
-        $settings = new SystemSettings();
-        $paramPrefix = $settings->paramPrefix->getValue();
-
-        $queryString = parse_url($url, PHP_URL_QUERY);
-        parse_str($queryString, $queryParams);
-
-        if (is_array($queryParams)
-            && array_key_exists($paramPrefix . '_platform', $queryParams)
-            && in_array($queryParams[$paramPrefix . '_platform'], AOM::getPlatforms())
-        ) {
-            $platform = self::getPlatformInstance($queryParams[$paramPrefix . '_platform']);
-            return ($platform->isActive() ? $queryParams[$paramPrefix . '_platform'] : null);
-        }
-
-        // When gclid is set and platform AdWords is active then use Adwords
-        if (array_key_exists('gclid', $queryParams)) {
-            $platform = self::getPlatformInstance(AOM::PLATFORM_AD_WORDS);
-            return ($platform->isActive() ? AOM::PLATFORM_AD_WORDS : null);
-        }
-
-        return null;
-    }
-
-    /**
-     * Normally the url contains all important params information. In some cases this information is stored in urlRef.
-     *
-     * @param Request $request
-     * @return string|null url when available
-     */
-    public static function getParamsUrl(Request $request)
-    {
-        if(isset($request->getParams()['url']) && AOM::getPlatformFromUrl($request->getParams()['url'])){
-            return $request->getParams()['url'];
-        }
-
-        if(isset($request->getParams()['urlref'])) {
-            return $request->getParams()['urlref'];
-        }
-
-        return null;
-    }
-
-    /**
-     * Tries to find some ad data for this visit.
-     *
-     * @param Request $request
-     * @return mixed
-     * @throws \Piwik\Exception\UnexpectedWebsiteFoundException
-     */
-    public static function getAdData(Request $request)
-    {
-        $params = self::getAdParamsFromRequest($request);
-        if (!$params) {
-            return [null, null];
-        }
-
-        $platform = self::getPlatformInstance($params['platform']);
-        return $platform->getAdDataFromAdParams($request->getIdSite(), $params);
-    }
-
-    /**
-     * @param Request $request
-     * @return mixed
-     */
-    public static function getAdParamsFromRequest(Request $request)
-    {
-        return self::getAdParamsFromUrl(AOM::getParamsUrl($request));
-    }
-
-    /**
-     * Extracts and returns the contents of this plugin's params from a given URL or null when no params are found.
-     *
-     * @param string $url
-     * @return mixed Either the contents of this plugin's params or null when no params are found.
-     */
-    public static function getAdParamsFromUrl($url)
-    {
-        $settings = new SystemSettings();
-        $paramPrefix = $settings->paramPrefix->getValue();
-
-        $queryString = parse_url($url, PHP_URL_QUERY);
-
-        parse_str($queryString, $queryParams);
-
-        // gclid is a special param used by Google AdWords
-        if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
-            $queryParams[$paramPrefix . '_platform'] = AOM::PLATFORM_AD_WORDS;
-        }
-
-        if (is_array($queryParams)
-            && array_key_exists($paramPrefix . '_platform', $queryParams)
-            && in_array($queryParams[$paramPrefix . '_platform'], AOM::getPlatforms())
-        ) {
-
-            $platform = self::getPlatformInstance($queryParams[$paramPrefix . '_platform']);
-
-            $adParams = ($platform->isActive()
-                ? $platform->getAdParamsFromQueryParams($paramPrefix, $queryParams)
-                : null
-            );
-
-            return $adParams;
-        }
-
-        return null;
     }
 
     /**

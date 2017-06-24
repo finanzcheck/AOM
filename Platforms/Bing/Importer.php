@@ -23,7 +23,6 @@ use Exception;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\SystemSettings;
 use SoapFault;
 
@@ -32,7 +31,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . getcwd() . '/plugins/AOM/
 include 'ReportingClasses.php';
 include 'ClientProxy.php';
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
+class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
 {
     /**
      * Imports all active accounts day by day

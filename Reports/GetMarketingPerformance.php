@@ -20,6 +20,7 @@ class GetMarketingPerformance extends Report
     {
         $this->name = Piwik::translate('AOM_Report_MarketingPerformance');
 
+        $this->categoryId = 'Referrers_Referrers';
         $this->dimension = new Referrer();
         $this->documentation = Piwik::translate('AOM_Report_MarketingPerformance_Description');
 

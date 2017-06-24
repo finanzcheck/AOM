@@ -104,12 +104,15 @@ class MarketingPerformanceController
             ? $formatter->getPrettyMoney($summaryRow['platform_cost'] / $summaryRow['nb_conversions'], $idSite)
             : 0;
         $summaryRow['return_on_ad_spend'] = $summaryRow['revenue'] > 0 && $summaryRow['platform_cost'] > 0
-            ? $formatter->getPrettyMoney($summaryRow['revenue'] / $summaryRow['platform_cost'], $idSite)
+            ? ($summaryRow['revenue'] / $summaryRow['platform_cost'])
             : 0;
+
 
         // Summary formatting (must happen after calculations!)
         $summaryRow['platform_cost'] = $formatter->getPrettyMoney($summaryRow['platform_cost'], $idSite);
-        $summaryRow['revenue'] = $formatter->getPrettyMoney($summaryRow['revenue'], $idSite);
+
+        // TODO: Fix
+//        $summaryRow['revenue'] = $formatter->getPrettyMoney($summaryRow['revenue'], $idSite);
         $summaryRow['return_on_ad_spend'] = $formatter->getPrettyPercentFromQuotient($summaryRow['return_on_ad_spend']);
 
         $table->addSummaryRow(new Row([Row::COLUMNS => $summaryRow]));
@@ -134,9 +137,13 @@ class MarketingPerformanceController
 
             $platform = AOM::getPlatformInstance($platformName);
 
-            // Imported data (data like impressions is not available in aom_visits table!)
+            // Imported data (data like cost is not available in aom_visits table!)
+            // Some platforms do not have clicks and impressions (e.g. individual campaigns)
+            $columns = array_keys(Db::fetchAssoc('SHOW COLUMNS FROM ' . $platform->getDataTableName()));
             $platformData = Db::fetchRow(
-                'SELECT ROUND(sum(cost), 2) as cost, sum(clicks) as clicks, sum(impressions) as impressions '
+                'SELECT ROUND(sum(cost), 2) as cost, '
+                    . (in_array('clicks', $columns) ? 'sum(clicks)' : '0') . ' as clicks, '
+                    . (in_array('impressions', $columns) ? 'sum(impressions)' : '0') . ' as impressions '
                     . ' FROM ' . $platform->getDataTableName() . ' AS platform '
                     . ' WHERE idsite = ? AND date >= ? AND date <= ?',
                 [
@@ -177,8 +184,10 @@ class MarketingPerformanceController
                     'nb_conversions' => $reprocessedVisitsData['conversions'],
                     'cost_per_conversion' => ($platformData['cost'] > 0 && $reprocessedVisitsData['conversions'] > 0)
                         ? $formatter->getPrettyMoney($platformData['cost'] / $reprocessedVisitsData['conversions'], $idSite) : null,
-                    'revenue' => ($reprocessedVisitsData['revenue'] > 0)
-                        ? $formatter->getPrettyMoney($reprocessedVisitsData['revenue'], $idSite) : null,
+
+                    // TODO: Fix
+//                    'revenue' => ($reprocessedVisitsData['revenue'] > 0)
+//                        ? $formatter->getPrettyMoney($reprocessedVisitsData['revenue'], $idSite) : null,
                     'return_on_ad_spend' => ($reprocessedVisitsData['revenue'] > 0 && $platformData['cost'] > 0)
                         ? $formatter->getPrettyPercentFromQuotient($reprocessedVisitsData['revenue'] / $platformData['cost']) : null,
                 ],
@@ -198,7 +207,9 @@ class MarketingPerformanceController
             $summaryRow['nb_visits'] += $reprocessedVisitsData['visits'];
             $summaryRow['nb_uniq_visitors'] += (int) $reprocessedVisitsData['unique_visitors'];
             $summaryRow['nb_conversions'] += $reprocessedVisitsData['conversions'];
-            $summaryRow['revenue'] += $reprocessedVisitsData['revenue'];
+
+            // TODO: Fix
+//            $summaryRow['revenue'] += $reprocessedVisitsData['revenue'];
 
         }
 
@@ -242,7 +253,9 @@ class MarketingPerformanceController
                     'nb_uniq_visitors' => $row['unique_visitors'],
                     'conversion_rate' => $formatter->getPrettyPercentFromQuotient($row['conversions'] / $row['visits']),
                     'nb_conversions' => $row['conversions'],
-                    'revenue' => $formatter->getPrettyMoney($row['revenue'], $idSite),
+
+// TODO: Fix
+//                    'revenue' => $formatter->getPrettyMoney($row['revenue'], $idSite),
                 ]
             ]);
 
@@ -250,7 +263,9 @@ class MarketingPerformanceController
             $summaryRow['nb_visits'] += $row['visits'];
             $summaryRow['nb_uniq_visitors'] += (int) $row['unique_visitors'];
             $summaryRow['nb_conversions'] += $row['conversions'];
-            $summaryRow['revenue'] += $row['revenue'];
+
+            // TODO: Fix
+//            $summaryRow['revenue'] += $row['revenue'];
         }
 
         return [$table, $summaryRow];
