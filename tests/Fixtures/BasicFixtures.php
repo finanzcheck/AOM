@@ -36,6 +36,8 @@ class BasicFixtures extends Fixture
         $settings->platformBingIsActive->setValue(true);
         $settings->platformCriteoIsActive->setValue(true);
         $settings->platformFacebookAdsIsActive->setValue(true);
+        $settings->platformIndividualCampaignsIsActive->setValue(true);
+        $settings->platformTaboolaIsActive->setValue(true);
         $settings->save();
     }
 

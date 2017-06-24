@@ -9,12 +9,11 @@ namespace Piwik\Plugins\AOM\Platforms\Taboola;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Platforms\ImportException;
 use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer implements ImporterInterface
+class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
 {
     /**
      * Imports all active accounts day by day

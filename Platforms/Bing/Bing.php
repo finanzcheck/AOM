@@ -12,22 +12,25 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\Platform;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Tracker\Request;
 
-class Bing extends Platform implements PlatformInterface
+class Bing extends Platform
 {
     const AD_CAMPAIGN_ID = 1;
     const AD_AD_GROUP_ID = 2;
     const AD_KEYWORD_ID = 3;
 
     /**
-     * Extracts advertisement platform specific data from the query params and validates it.
+     * Extracts and returns advertisement platform specific data from an URL.
+     * $queryParams and $paramPrefix are only passed as params for convenience reasons.
      *
-     * @param string $paramPrefix
+     * @param string $url
      * @param array $queryParams
-     * @return mixed
+     * @param string $paramPrefix
+     * @param Request $request
+     * @return array|null
      */
-    public function getAdParamsFromQueryParams($paramPrefix, array $queryParams)
+    protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
         // Validate required params
         $missingParams = array_diff(

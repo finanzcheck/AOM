@@ -89,10 +89,17 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
         // Merge data based on campaignId
         foreach (array_merge_recursive($campaignData, $reprocessVisitsData) as $data) {
 
+            // We might have visits that we identified as coming from this platform but that we could not merge
+            if (!isset($data['campaign'])) {
+                $data['campaign'] = 'unknown (Bing identified but not merged)';  // TODO: Add translation
+            }
+
             // Add to DataTable
             $table->addRowFromArray([
                 Row::COLUMNS => $this->getColumns($data['campaign'], $data, $idSite),
-                Row::DATATABLE_ASSOCIATED => 'Bing_AdGroups_' . str_replace('C', '', $data['campaignId'][0]),
+                Row::DATATABLE_ASSOCIATED => (isset($data['campaignId'])
+                    ? 'Bing_AdGroups_' . str_replace('C', '', $data['campaignId'][0])
+                    : null),
             ]);
 
             // Add to summary

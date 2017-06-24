@@ -6,8 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Columns;
 
-use Piwik\Db;
-use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugin\Dimension\VisitDimension;
 use Piwik\Tracker\Action;
 use Piwik\Tracker\Request;
@@ -34,7 +32,7 @@ class PlatformRowId extends VisitDimension
     }
 
     /**
-     * The onNewVisit method is triggered when a new visitor is detected.
+     * The onNewVisit method is triggered when a new visit is detected.
      *
      * @param Request $request
      * @param Visitor $visitor
@@ -43,12 +41,7 @@ class PlatformRowId extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
-        // There might be no action (e.g. when we track a conversion)
-        if (null === $action) {
-            return false;
-        }
-
-        list($rowId, $data) = AOM::getAdData($request);
+        list($rowId, $data) = AdData::getAdData($request);
 
         return $rowId ? $rowId : false;
     }

@@ -4,9 +4,12 @@
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
  */
+
 namespace Piwik\Plugins\AOM\tests\Fixtures;
 
 use Piwik;
+use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 
 class Fixtures extends BasicFixtures
 {

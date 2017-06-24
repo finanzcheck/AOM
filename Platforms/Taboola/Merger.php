@@ -7,9 +7,8 @@
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\MergerInterface;
 
-class Merger extends \Piwik\Plugins\AOM\Platforms\Merger implements MergerInterface
+class Merger extends \Piwik\Plugins\AOM\Platforms\Merger
 {
     /**
      * @param array $adData

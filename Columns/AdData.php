@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Columns;
 
-use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugin\Dimension\VisitDimension;
 use Piwik\Tracker\Action;
@@ -19,7 +18,7 @@ class AdData extends VisitDimension
     protected $columnType = 'VARCHAR(1024) NULL';
 
     /**
-     * The onNewVisit method is triggered when a new visitor is detected.
+     * The onNewVisit method is triggered when a new visit is detected.
      *
      * @param Request $request
      * @param Visitor $visitor
@@ -28,13 +27,32 @@ class AdData extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
-        // There might be no action (e.g. when we track a conversion)
-        if (null === $action) {
-            return false;
-        }
-
-        list($rowId, $data) = AOM::getAdData($request);
+        list($rowId, $data) = $this->getAdData($request);
 
         return json_encode($data);
+    }
+
+    /**
+     * Tries to find some ad data for this visit.
+     *
+     * @param Request $request
+     * @return mixed
+     * @throws \Piwik\Exception\UnexpectedWebsiteFoundException
+     */
+    public static function getAdData(Request $request)
+    {
+        $adParams = AdParams::getAdParamsFromRequest($request);
+        if (!$adParams) {
+            return [null, null];
+        }
+
+        $platformName = Platform::identifyPlatformFromRequest($request);
+        if ($platformName) {
+            $platform = AOM::getPlatformInstance($platformName);
+
+            return $platform->getAdDataFromAdParams($request->getIdSite(), $adParams);
+        }
+
+        return [null, null];
     }
 }

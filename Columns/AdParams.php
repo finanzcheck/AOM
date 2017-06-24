@@ -21,7 +21,7 @@ class AdParams extends VisitDimension
     protected $columnType = 'VARCHAR(1024) NULL';
 
     /**
-     * The onNewVisit method is triggered when a new visitor is detected.
+     * The onNewVisit method is triggered when a new visit is detected.
      *
      * @param Request $request
      * @param Visitor $visitor
@@ -30,11 +30,10 @@ class AdParams extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
-        // There might be no action (e.g. when we track a conversion)
-        if (null === $action) {
-            return null;
-        }
-        return json_encode(AOM::getAdParamsFromRequest($request));
+        // TODO: Remove
+//        file_put_contents('/srv/www/piwik/X.log', $request->getParam('url') . PHP_EOL, FILE_APPEND);
+
+        return json_encode($this->getAdParamsFromRequest($request));
     }
 
     /**
@@ -55,14 +54,9 @@ class AdParams extends VisitDimension
             return false;
         }
 
-        // There might be no action (e.g. when we track a conversion)
-        if (null === $action) {
-            return false;
-        }
+        $adParams = $this->getAdParamsFromRequest($request);
 
-        $adParams = AOM::getAdParamsFromUrl($action->getActionUrl());
-
-        // Keep Piwik's default behaviour when we do not have any ad data
+        // Keep Piwik's default behaviour when we do not have any ad params
         if (!is_array($adParams) || 0 === count($adParams)) {
             return false;
         }
@@ -91,5 +85,24 @@ class AdParams extends VisitDimension
 
         return (count(array_diff_assoc($lastVisitAdParams, $adParams)) > 0
             || count(array_diff_assoc($adParams, $lastVisitAdParams)) > 0);
+    }
+
+    /**
+     * @param Request $request
+     * @return array|null
+     */
+    public static function getAdParamsFromRequest(Request $request)
+    {
+        $platformName = Platform::identifyPlatformFromRequest($request);
+
+        // TODO: Remove
+//        file_put_contents('/srv/www/piwik/X.log', 'identified: ' . $platformName . PHP_EOL, FILE_APPEND);
+
+        if ($platformName) {
+            $platform = AOM::getPlatformInstance($platformName);
+            return $platform->getAdParamsFromRequest($request);
+        }
+
+        return null;
     }
 }
