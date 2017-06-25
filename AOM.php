@@ -211,7 +211,7 @@ class AOM extends \Piwik\Plugin
             throw new \Exception('Platform "' . $platform . '" not supported.');
         }
         if (!in_array($class, [null, 'Importer', 'Merger'])) {
-            throw new \Exception('Class "' . $class . '" not supported. Must be either "Importer" or "Merger".');
+            throw new \Exception('Class "' . $class . '" not supported. Must be either null, "Importer" or "Merger".');
         }
 
         // Find the right logger for the job
