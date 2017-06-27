@@ -162,10 +162,6 @@ abstract class Merger
                     $sql .= ', ';
                 }
                 $sql .= $key.' = \''. $val.'\'';
-
-                if ('aom_ad_data' === $key) {
-                    Piwik::postEvent('AOM.updateVisitAdData', ['idvisit' => $idvisit, 'adData' => $val]);
-                }
             }
 
             $sql .= ' WHERE idvisit = ' . $idvisit;

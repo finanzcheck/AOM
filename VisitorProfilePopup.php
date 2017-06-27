@@ -8,7 +8,7 @@ namespace Piwik\Plugins\AOM;
 
 use DOMDocument;
 use DOMXPath;
-use Piwik\Db;
+
 use Piwik\Plugins\AOM\Platforms\Platform;
 
 class VisitorProfilePopup
