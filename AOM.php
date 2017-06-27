@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM;
 
@@ -13,6 +14,7 @@ use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Services\PiwikVisitService;
 use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
@@ -148,10 +150,14 @@ class AOM extends \Piwik\Plugin
      */
     public function registerEvents()
     {
-        return array(
+        return [
             'AssetManager.getJavaScriptFiles' => 'getJsFiles',
             'Controller.Live.getVisitorProfilePopup.end' => 'enrichVisitorProfilePopup',
-        );
+            'Tracker.end' => [
+                'after' => true,
+                'function' => 'checkForNewVisit',
+            ],
+        ];
     }
 
     /**
@@ -165,7 +171,9 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Modifies the visitor profile popup's HTML
+     * Modifies the visitor profile popup's HTML.
+     *
+     * TODO: Check if this still works (for all platforms, including individual campaigns).
      *
      * @param $result
      * @param $parameters
@@ -174,6 +182,14 @@ class AOM extends \Piwik\Plugin
     public function enrichVisitorProfilePopup(&$result, $parameters)
     {
         VisitorProfilePopup::enrich($result);
+    }
+
+    /**
+     * Checks if a new visit has been created. If so, add this visit to aom_visits table.
+     */
+    public function checkForNewVisit()
+    {
+        PiwikVisitService::checkForNewVisit();
     }
 
     /**
@@ -340,7 +356,7 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Adds a database table unless it already exists
+     * Adds a database table unless it already exists.
      *
      * @param $sql
      * @throws \Exception
@@ -358,12 +374,11 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Adds an index to the database unless it already exists
+     * Adds an index to the database unless it already exists.
      *
      * @param $sql
      * @throws \Exception
      */
-
     public static function addDatabaseIndex($sql)
     {
         try {
