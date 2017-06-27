@@ -13,7 +13,7 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Plugins\AOM\Platforms\Criteo\Criteo;
 use Piwik\Tests\Framework\Fixture;
-use Piwik\Plugins\AOM\Platforms\Criteo\Merger;
+use Piwik\Plugins\AOM\Platforms\Criteo\OldMerger;
 
 /**
  * @group AOM
@@ -53,7 +53,7 @@ class CriteoMergerTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        $merger = new Merger();
+        $merger = new OldMerger();
 
         Db::query(
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)

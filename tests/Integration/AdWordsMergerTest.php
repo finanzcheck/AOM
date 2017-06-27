@@ -13,7 +13,7 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Plugins\AOM\Platforms\AdWords\AdWords;
 use Piwik\Tests\Framework\Fixture;
-use Piwik\Plugins\AOM\Platforms\AdWords\Merger;
+use Piwik\Plugins\AOM\Platforms\AdWords\OldMerger;
 
 /**
  * @group AOM
@@ -61,7 +61,7 @@ class AdWordsMergerTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        $merger = new Merger();
+        $merger = new OldMerger();
 
         Db::query(
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)

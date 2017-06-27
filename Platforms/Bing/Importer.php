@@ -31,7 +31,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . getcwd() . '/plugins/AOM/
 include 'ReportingClasses.php';
 include 'ClientProxy.php';
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
+class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
 {
     /**
      * Imports all active accounts day by day

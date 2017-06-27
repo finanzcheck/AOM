@@ -16,7 +16,7 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\SystemSettings;
 use Psr\Log\NullLogger;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
+class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
 {
     /**
      * When no period is provided, AdWords (re)imports the last 3 days unless they have been (re)imported today.

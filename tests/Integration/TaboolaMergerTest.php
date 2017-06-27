@@ -13,7 +13,7 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Plugins\AOM\Platforms\Taboola\Taboola;
 use Piwik\Tests\Framework\Fixture;
-use Piwik\Plugins\AOM\Platforms\Taboola\Merger;
+use Piwik\Plugins\AOM\Platforms\Taboola\OldMerger;
 
 /**
  * @group AOM
@@ -54,7 +54,7 @@ class TaboolaMergerTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        $merger = new Merger();
+        $merger = new OldMerger();
 
         Db::query(
             'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)

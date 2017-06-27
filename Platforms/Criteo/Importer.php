@@ -15,7 +15,7 @@ use SoapClient;
 use SoapFault;
 use SoapHeader;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
+class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
 {
     /**
      * Imports all active accounts day by day

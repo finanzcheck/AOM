@@ -12,10 +12,10 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MarketingPerformanceSubTables;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Tracker\Request;
 
-class FacebookAds extends Platform
+class FacebookAds extends AbstractPlatform
 {
     /**
      * Extracts and returns advertisement platform specific data from an URL.

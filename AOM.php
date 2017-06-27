@@ -13,7 +13,10 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractImporter;
+use Piwik\Plugins\AOM\Platforms\Merger;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\MergerInterface;
 use Piwik\Plugins\AOM\Services\PiwikVisitService;
 use Psr\Log\LoggerInterface;
 
@@ -100,6 +103,7 @@ class AOM extends \Piwik\Plugin
                 idsite INTEGER NOT NULL,
                 piwik_idvisit INTEGER,
                 piwik_idvisitor VARCHAR(100) NOT NULL,
+                unique_hash VARCHAR(100) NOT NULL,
                 first_action_time_utc DATETIME NOT NULL,
                 date_website_timezone DATE NOT NULL,
                 channel VARCHAR(100),
@@ -108,8 +112,8 @@ class AOM extends \Piwik\Plugin
                 cost FLOAT,
                 conversions INTEGER,
                 revenue FLOAT,
-                unique_hash VARCHAR(100) NOT NULL,
-                ts_created TIMESTAMP
+                ts_created TIMESTAMP,
+                ts_last_update TIMESTAMP
             )  DEFAULT CHARSET=utf8');
 
         // Use piwik_idvisit as unique key to avoid race conditions (manually created visits would have null here)
@@ -155,7 +159,7 @@ class AOM extends \Piwik\Plugin
             'Controller.Live.getVisitorProfilePopup.end' => 'enrichVisitorProfilePopup',
             'Tracker.end' => [
                 'after' => true,
-                'function' => 'checkForNewVisit',
+                'function' => 'checkForNewVisitAndConversion',
             ],
         ];
     }
@@ -186,10 +190,12 @@ class AOM extends \Piwik\Plugin
 
     /**
      * Checks if a new visit has been created. If so, add this visit to aom_visits table.
+     * Also checks if a new conversion has been created. If so, increment conversion counter and add revenue of visit.
      */
-    public function checkForNewVisit()
+    public function checkForNewVisitAndConversion()
     {
         PiwikVisitService::checkForNewVisit();
+        PiwikVisitService::checkForNewConversion();
     }
 
     /**
@@ -217,7 +223,7 @@ class AOM extends \Piwik\Plugin
      *
      * @param string $platform
      * @param null|string $class
-     * @return Platform
+     * @return AbstractPlatform|AbstractImporter|MergerInterface    // TODO: Return interfaces instead of abstract
      * @throws \Exception
      */
     public static function getPlatformInstance($platform, $class = null)

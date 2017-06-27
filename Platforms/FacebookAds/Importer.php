@@ -15,7 +15,7 @@ use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\SystemSettings;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
+class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
 {
     /**
      * Imports all active accounts day by day

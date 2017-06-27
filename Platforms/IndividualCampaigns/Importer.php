@@ -7,7 +7,7 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\IndividualCampaigns;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
+class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
 {
     /**
      * As this data is being maintained manually, no import is needed.

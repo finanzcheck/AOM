@@ -9,7 +9,7 @@ namespace Piwik\Plugins\AOM;
 use DOMDocument;
 use DOMXPath;
 
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 
 class VisitorProfilePopup
 {
@@ -36,7 +36,7 @@ class VisitorProfilePopup
             foreach ($visitsNodes as $visitNode) {
                 $visitId = $visitNode->value;
                 if ($visitId  > 0) {
-                    $additionalDescription = Platform::getHumanReadableDescriptionForVisit($visitId);
+                    $additionalDescription = AbstractPlatform::getHumanReadableDescriptionForVisit($visitId);
                     if ($additionalDescription) {
 
                         $el = $doc->createElement('div');

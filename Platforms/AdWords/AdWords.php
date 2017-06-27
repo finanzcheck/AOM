@@ -11,25 +11,11 @@ use Piwik\Db;
 use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Tracker\Request;
 
-class AdWords extends Platform
+class AdWords extends AbstractPlatform
 {
-    /**
-     * AdWords can either track and merge via gclid (auto-tagging) or via regular-params but not both at the same time!
-     */
-    const TRACKING_VARIANT_GCLID = 'gclid';
-    const TRACKING_VARIANT_REGULAR_PARAMS = 'regular-params';
-
-    /**
-     * @var array All supported tracking variants
-     */
-    public static $trackingVariants = [
-        self::TRACKING_VARIANT_GCLID,
-        self::TRACKING_VARIANT_REGULAR_PARAMS,
-    ];
-
     const CRITERIA_TYPE_AGE = 'age';
     const CRITERIA_TYPE_GENDER = 'gender';
     const CRITERIA_TYPE_KEYWORD = 'keyword';
@@ -88,18 +74,6 @@ class AdWords extends Platform
     ];
 
     /**
-     * Whether or not this platform has been activated in the plugin's configuration.
-     *
-     * @return string
-     */
-    public function getTrackingVariant()
-    {
-        $trackingVariant = $this->getSettings()->{'platformAdWordsTrackingVariant'}->getValue();
-
-        return in_array($trackingVariant, self::$trackingVariants) ? $trackingVariant : self::TRACKING_VARIANT_GCLID;
-    }
-
-    /**
      * Returns true if the visit is coming from this platform. False otherwise.
      *
      * @param Request $request
@@ -107,28 +81,20 @@ class AdWords extends Platform
      */
     public function isVisitComingFromPlatform(Request $request)
     {
-        if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
+        // Check current URL first before referrer URL
+        $urlsToCheck = [];
+        if (isset($request->getParams()['url'])) {
+            $urlsToCheck[] = $request->getParams()['url'];
+        }
+        if (isset($request->getParams()['urlref'])) {
+            $urlsToCheck[] = $request->getParams()['urlref'];
+        }
 
-            // Check current URL first before referrer URL
-            $urlsToCheck = [];
-            if (isset($request->getParams()['url'])) {
-                $urlsToCheck[] = $request->getParams()['url'];
-            }
-            if (isset($request->getParams()['urlref'])) {
-                $urlsToCheck[] = $request->getParams()['urlref'];
-            }
+        foreach ($urlsToCheck as $urlToCheck) {
+            $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
+            parse_str($queryString, $queryParams);
 
-            foreach ($urlsToCheck as $urlToCheck) {
-                $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
-                parse_str($queryString, $queryParams);
-
-                if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
-                    return true;
-                }
-            }
-
-        } elseif (self::TRACKING_VARIANT_REGULAR_PARAMS === $this->getTrackingVariant()) {
-            if (parent::isVisitComingFromPlatform($request)) {
+            if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
                 return true;
             }
         }
@@ -140,9 +106,7 @@ class AdWords extends Platform
      * Extracts and returns advertisement platform specific data from an URL.
      * $queryParams and $paramPrefix are only passed as params for convenience reasons.
      *
-     * In AdWords the extraction is based on the configured tracking variant (either gclid or regular parameters):
-     *  - When "gclid" is configured, then all other params are being ignored
-     *  - When "regular-params" are configured, then gclid is ignored but a lot of ValueTrack params are required
+     * Since AOM 1.0.0 AdWords only works with gclid.
      *
      * @param string $url
      * @param array $queryParams
@@ -152,82 +116,12 @@ class AdWords extends Platform
      */
     protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
-        if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
-
-            // No validation possible, as there either is a gclid or not (the _platform param won't be set!)
-            return array_key_exists('gclid', $queryParams)
-                ? [
-                    'platform' => AOM::PLATFORM_AD_WORDS,
-                    'gclid' => $queryParams['gclid'],
-                ] : null;
-
-        } elseif (self::TRACKING_VARIANT_REGULAR_PARAMS === $this->getTrackingVariant()) {
-
-            // Validate required params
-            $missingParams = array_diff(
-                [
-                    $paramPrefix . '_campaign_id',
-                    $paramPrefix . '_ad_group_id',
-                    $paramPrefix . '_feed_item_id',
-                    $paramPrefix . '_target_id',
-                    $paramPrefix . '_creative',
-                    $paramPrefix . '_placement',
-                    $paramPrefix . '_target',
-                    $paramPrefix . '_network',
-                ],
-                array_keys($queryParams)
-            );
-            if (count($missingParams)) {
-                $this->getLogger()->warning(
-                    'Visit with platform ' . AOM::PLATFORM_AD_WORDS
-                    . ' without required param' . (count($missingParams) > 0 ? 's' : '') . ': '
-                    . implode(', ', $missingParams)
-                );
-
-                return null;
-            }
-        }
-
-        $adParams = [
-            'platform' => AOM::PLATFORM_AD_WORDS,
-        ];
-
-        // Add params
-        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
-        }
-        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
-            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
-        }
-        if (array_key_exists($paramPrefix . '_feed_item_id', $queryParams)) {
-            $adParams['feedItemId'] = $queryParams[$paramPrefix . '_feed_item_id'];
-        }
-        if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
-            $adParams['targetId'] = $queryParams[$paramPrefix . '_target_id'];
-        }
-        if (array_key_exists($paramPrefix . '_creative', $queryParams)) {
-            $adParams['creative'] = $queryParams[$paramPrefix . '_creative'];
-        }
-        if (array_key_exists($paramPrefix . '_placement', $queryParams)) {
-            $adParams['placement'] = $queryParams[$paramPrefix . '_placement'];
-        }
-        if (array_key_exists($paramPrefix . '_target', $queryParams)) {
-            $adParams['target'] = $queryParams[$paramPrefix . '_target'];
-        }
-        if (array_key_exists($paramPrefix . '_network', $queryParams)) {
-            $adParams['network'] = $queryParams[$paramPrefix . '_network'];
-        }
-        if (array_key_exists($paramPrefix . '_ad_position', $queryParams)) {
-            $adParams['adPosition'] = $queryParams[$paramPrefix . '_ad_position'];
-        }
-        if (array_key_exists($paramPrefix . '_loc_physical', $queryParams)) {
-            $adParams['locPhysical'] = $queryParams[$paramPrefix . '_loc_physical'];
-        }
-        if (array_key_exists($paramPrefix . '_loc_Interest', $queryParams)) {
-            $adParams['locInterest'] = $queryParams[$paramPrefix . '_loc_Interest'];
-        }
-
-        return $adParams;
+        // No validation possible, as there either is a gclid or not (the _platform param won't be set!)
+        return array_key_exists('gclid', $queryParams)
+            ? [
+                'platform' => AOM::PLATFORM_AD_WORDS,
+                'gclid' => $queryParams['gclid'],
+            ] : null;
     }
 
     /**

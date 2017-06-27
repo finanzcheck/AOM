@@ -29,10 +29,6 @@ class BasicFixtures extends Fixture
         $settings->paramPrefix->setValue('aom');
         $settings->createNewVisitWhenCampaignChanges->setValue(true);
         $settings->platformAdWordsIsActive->setValue(true);
-
-        // TODO: Add tests for tracking variant "gclid"!
-        $settings->platformAdWordsTrackingVariant
-            ->setValue(Piwik\Plugins\AOM\Platforms\AdWords\AdWords::TRACKING_VARIANT_REGULAR_PARAMS);
         $settings->platformBingIsActive->setValue(true);
         $settings->platformCriteoIsActive->setValue(true);
         $settings->platformFacebookAdsIsActive->setValue(true);

@@ -12,7 +12,7 @@ use Piwik\Db;
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugin\Manager;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
@@ -303,11 +303,11 @@ class ReprocessVisits extends ConsoleCommand
     /**
      * Returns the platform's costs for the given date.
      *
-     * @param Platform $platform
+     * @param AbstractPlatform $platform
      * @param string $date YYYY-MM-DD
      * @return array
      */
-    private function getPlatformCosts(Platform $platform, $date)
+    private function getPlatformCosts(AbstractPlatform $platform, $date)
     {
         // Some platform's might create irrelevant rows!
         $sql = 'SELECT * FROM ' . $platform->getDataTableName() . ' WHERE date = ? AND (clicks > 0 OR cost > 0)';
@@ -495,7 +495,7 @@ class ReprocessVisits extends ConsoleCommand
         $columns = ['idsite', 'piwik_idvisit', 'piwik_idvisitor', 'unique_hash', 'first_action_time_utc',
             'date_website_timezone', 'channel', 'campaign_data', 'platform_data', 'cost', 'conversions', 'revenue',
             'ts_created'];
-        $rowPlaces = '(' . implode(', ', array_fill(0, count($columns) - 1, '?')) . ', NOW())';
+            $rowPlaces = '(' . implode(', ', array_fill(0, count($columns) - 1, '?')) . ', NOW())';
         $allPlaces = implode(', ', array_fill(0, count($this->visits), $rowPlaces));
 
         Db::query(

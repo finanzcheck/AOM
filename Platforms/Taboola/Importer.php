@@ -13,7 +13,7 @@ use Piwik\Plugins\AOM\Platforms\ImportException;
 use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\Importer
+class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
 {
     /**
      * Imports all active accounts day by day
