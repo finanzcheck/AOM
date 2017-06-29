@@ -12,7 +12,7 @@ use Piwik\Db;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
-use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
+use Piwik\Tracker;
 use Psr\Log\LoggerInterface;
 
 class PiwikVisitService
@@ -48,7 +48,15 @@ class PiwikVisitService
 
     public function checkForNewConversion()
     {
-        // TODO: Compare latest conversion against internally stored value
+        foreach ($GLOBALS as $key => $value) {
+            var_dump($key);
+        }
+
+        Db::
+
+        die();
+
+        // TODO: Find out which conversions have not yet been processed (how, when there is no foreign key?)
         // TODO: For every single conversion: Increment visit's conversion count and add revenue
     }
 
@@ -69,30 +77,34 @@ class PiwikVisitService
         // When the visit is coming from a platform (including individual campaigns), check if it has an exact match.
         // An exact match is a match with cost data, i.e. the costs of that match need to be redistributed (again).
         $mergerPlatformDataOfVisit = ($visit['aom_platform'] && $visit['aom_ad_params'])
-            ? $platformMerger->getPlatformDataOfVisit($idsite, $date, @json_decode($visit['aom_ad_params'], true))
+            ? $platformMerger->getPlatformDataOfVisit(
+                $idsite,
+                $date,
+                is_array(@json_decode($visit['aom_ad_params'], true)) ? json_decode($visit['aom_ad_params'], true) : []
+            )
             : null;
 
         // TODO: Temporarily disables so that we can use the same test data multiple times
-//        Db::query(
-//            'INSERT INTO ' . Common::prefixTable('aom_visits')
-//                . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, '
-//                . ' date_website_timezone, channel, campaign_data, platform_data, platform_key, ts_created, '
-//                . ' ts_last_update) '
-//                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-//            [
-//                $idsite,
-//                $visit['idvisit'],
-//                $visit['idvisitor'],
-//                'piwik-visit-' . $visit['idvisit'],
-//                $visit['visit_first_action_time'],
-//                $date,
-//                self::determineChannel($visit['aom_platform'], $visit['referer_type']),
-//                json_encode(self::getCampaignData($visit)),
-//                ($mergerPlatformDataOfVisit ? json_encode($mergerPlatformDataOfVisit->getPlatformData()) : null),
-//                ($mergerPlatformDataOfVisit ? $mergerPlatformDataOfVisit->getPlatformKey() : null),
-//            ]
-//        );
-//        $this->logger->debug('Added Piwik visit to aom_visit table.');
+        Db::query(
+            'INSERT INTO ' . Common::prefixTable('aom_visits')
+                . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, '
+                . ' date_website_timezone, channel, campaign_data, platform_data, platform_key, ts_created, '
+                . ' ts_last_update) '
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+            [
+                $idsite,
+                $visit['idvisit'],
+                $visit['idvisitor'],
+                'piwik-visit-' . $visit['idvisit'],
+                $visit['visit_first_action_time'],
+                $date,
+                self::determineChannel($visit['aom_platform'], $visit['referer_type']),
+                json_encode(self::getCampaignData($visit)),
+                ($mergerPlatformDataOfVisit ? json_encode($mergerPlatformDataOfVisit->getPlatformData()) : null),
+                ($mergerPlatformDataOfVisit ? $mergerPlatformDataOfVisit->getPlatformKey() : null),
+            ]
+        );
+        $this->logger->debug('Added Piwik visit to aom_visit table.');
 
         // As this new visit could be directly matched with provided cost, we need to redistribute these cost.
         if ($mergerPlatformDataOfVisit && $mergerPlatformDataOfVisit->getPlatformRowId()) {
