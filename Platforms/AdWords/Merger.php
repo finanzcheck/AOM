@@ -9,70 +9,139 @@ namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractMerger;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
+use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
 
 class Merger extends AbstractMerger implements MergerInterface
 {
+    public function getPlatformDataOfVisit($idsite, $date, array $aomAdParams)
+    {
+        $mergerPlatformDataOfVisit = new MergerPlatformDataOfVisit(AOM::PLATFORM_AD_WORDS);
+
+        // To get more platform data, we need at least the gclid
+        if (!array_key_exists('gclid', $aomAdParams) || !$aomAdParams['gclid']) {
+            $this->logger->warning(
+                'Could not find gclid in ad params although platform has been identified as AdWords.'
+            );
+            return $mergerPlatformDataOfVisit;
+        }
+
+        // Find Google click based on gclid
+        // (a match will only be possible if AdWords is already imported but tracking event processing is delayed)
+        $gclid = $aomAdParams['gclid'];
+        $click = $this->findGoogleClickBasedOnGclid($idsite, $date, $gclid);
+
+        // When there is not click, we'll not be able to retrieve any more information
+        if (!$click) {
+            return $mergerPlatformDataOfVisit->setPlatformData(['gclid' => $gclid]);
+        }
+
+        $mergerPlatformDataOfVisit->setPlatformKey(
+            $this->getPlatformKey($click['network'], $click['campaignId'], $click['adGroupId'], $click['keywordId'])
+        );
+
+        // Get the ID of the exactly matching platform row
+        $platformRowId = $this->getExactMatchPlatformRowId(
+            $idsite, $date, $click['network'], $click['campaignId'], $click['adGroupId'], $click['keywordId']
+        );
+        if (!$platformRowId) {
+
+            // For AdWords we do not need to search for a historical match, as all relevant information is already
+            // part of the Google click record.
+            return $mergerPlatformDataOfVisit->setPlatformData($click);
+        }
+
+        // Exact match
+        return $mergerPlatformDataOfVisit->setPlatformData($click)->setPlatformRowId($platformRowId);
+    }
+
     /**
-     * Returns an array of all platform data and information about whether the visit has been merged.
+     * Tries to find and return a Google click with the given gclid on the day of the visit ($date) or one day before.
      *
+     * @param int $idsite
+     * @param string $date
+     * @param string $gclid
      * @return array
      */
-    public function getPlatformDataOfVisit(array $visit)
+    private function findGoogleClickBasedOnGclid($idsite, $date, $gclid)
     {
-        return [['IMPLEMENT ME (AdWords)', false]];
+        // TODO: Do we have an index for this query?
+        $result = Db::fetchRow(
+            'SELECT account, campaign_id AS campaignId, campaign, ad_group_id AS adGroupId, ad_group AS adGroup, '
+                . ' keyword_id AS keywordId, keyword_placement AS keywordPlacement, match_type AS matchType, '
+                . ' ad_id AS adId, network, device'
+                . ' FROM ' . Common::prefixTable('aom_adwords_gclid')
+                . ' WHERE date BETWEEN DATE(?) - INTERVAL 1 DAY AND DATE(?) AND idsite = ? AND gclid = ?',
+            [$date, $date, $idsite, $gclid,]
+        );
 
-
-        // TODO: Validate gclid is available (log warning otherwise)
-        $gclid = 123; // TODO$visit
-
-        $gclidRow = Db::fetchOne('SELECT * FROM ' . Common::prefixTable('aom_adwords_gclid') . ' WHERE gclid = "' . $gclid . '"');
-
-        if (!$gclidRow) {
-            return [['TODO', false]]; // TODO: Fill with ad params as platform data?!
+        // When there is not click, we'll not be able to retrieve any more information
+        if ($result) {
+            $this->logger->debug('Found Google click for gclid "' . $gclid . '".');
+        } else {
+            $this->logger->debug('Could not find Google click for gclid "' . $gclid . '" (perhaps not yet imported).');
         }
 
-        // Now we also need some costs
-        $costs = Db::fetchOne('SELECT * FROM ' . Common::prefixTable('aom_adwords') . ' WHERE gclid = "' . $gclid . '"');
+        return $result;
+    }
 
+    /**
+     * Returns the ID of the platform row when a match of Google click and platform data including cost is found.
+     * False otherwise.
+     *
+     * TODO: Imported data should also create platform_key which would make querying easier.
+     *
+     * @param int $idsite
+     * @param string $date
+     * @param string $network
+     * @param string $campaignId
+     * @param string $adGroupId
+     * @param string|null $keywordId
+     * @return int|bool
+     */
+    private function getExactMatchPlatformRowId($idsite, $date, $network, $campaignId, $adGroupId, $keywordId = null)
+    {
+        // Display network cost are on ad group instead of keyword level
+        $query = 'SELECT id FROM ' . Common::prefixTable('aom_adwords')
+            . ' WHERE idsite = ? AND date = ? AND network = ? AND campaign_id = ? AND ad_group_id = ? ';
 
-        // TODO: 1. Check if we have a match imported; if so: $platformData + $isMerged = true
+        $params = [$idsite, $date, $network, $campaignId, $adGroupId,];
 
-        // TODO: Look for gclid
-        // If found, update ad params for merging
-
-        // Look based on ad params
-
-
-        if ($ids['network'] == 'd') {
-            return implode('-', [
-                $ids['network'],
-                $ids['idsite'],
-                $ids['date'],
-                $ids['campaign_id'],
-                $ids['ad_group_id']
-            ]);
+        if ('d' !== $network) {
+            $query .= ' AND keyword_id = ?';
+            $params[] = $keywordId;
         }
 
-        return implode('-', [
-            $ids['network'],
-            $ids['idsite'],
-            $ids['date'],
-            $ids['campaign_id'],
-            $ids['ad_group_id'],
-            $ids['keyword_id'],
-        ]);
+        $result = Db::fetchOne($query, $params);
 
-        // TODO: Should we also look for a match in the past to get campaign names etc. without costs?
+        if ($result) {
+            $this->logger->debug(
+                'Found exact match platform row ID ' . $result . ' in imported AdWords data for Google visit.'
+            );
+        } else {
+            $this->logger->debug('Could not find exact match in imported AdWords data for Google click.');
+        }
 
+        return $result;
+    }
 
+    /**
+     * @param string $network
+     * @param string $campaignId
+     * @param string $adGroupId
+     * @param string|null $keywordId
+     * @return string
+     */
+    private function getPlatformKey($network, $campaignId, $adGroupId, $keywordId = null)
+    {
+        $key = $network . '-' . $campaignId . '-' . $adGroupId;
 
-        // TODO: Implement getPlatformDataForVisit() method.
+        if ('d' !== $network) {
+            $key .= '-' . $keywordId;
+        }
 
-
-
-        // TODO: Return correct values
-        return [$platformData, $isMerged];
+        return $key;
     }
 }

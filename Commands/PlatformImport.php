@@ -32,7 +32,7 @@ class PlatformImport extends ConsoleCommand
      */
     public function __construct($name = null, LoggerInterface $logger = null)
     {
-        $this->logger = AOM::getTasksLogger();
+        $this->logger = AOM::getLogger();
 
         parent::__construct($name);
     }

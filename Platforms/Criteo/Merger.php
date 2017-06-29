@@ -7,18 +7,107 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Criteo;
 
+use Piwik\Common;
+use Piwik\Db;
+use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractMerger;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
+use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
 
 class Merger extends AbstractMerger implements MergerInterface
 {
-    /**
-     * Returns an array of all platform data and information about whether the visit has been merged.
-     *
-     * @return array
-     */
-    public function getPlatformDataOfVisit(array $visit)
+    public function getPlatformDataOfVisit($idsite, $date, array $aomAdParams)
     {
-        return [['IMPLEMENT ME (CRITEO)', false]];
+        $mergerPlatformDataOfVisit = new MergerPlatformDataOfVisit(AOM::PLATFORM_CRITEO);
+
+        // We need a campaignId for Criteo
+        if (!array_key_exists('campaignId', $aomAdParams)) {
+            $this->logger->warning(
+                'Could not find campaignId in ad params although platform has been identified as Criteo.'
+            );
+            return $mergerPlatformDataOfVisit;
+        }
+
+        $mergerPlatformDataOfVisit->setPlatformKey($aomAdParams['campaignId']);
+
+        // Get the exactly matching platform row
+        $platformRow = $this->getExactMatchPlatformRow($idsite, $date, $aomAdParams['campaignId']);
+        if (!$platformRow) {
+
+            $platformRow = $this->getHistoricalMatchPlatformRow($idsite, $aomAdParams['campaignId']);
+
+            // Neither exact nor historical match with platform data found
+            if (!$platformRow) {
+                return $mergerPlatformDataOfVisit->setPlatformData(['campaignId' => $aomAdParams['campaignId']]);
+            }
+
+            // Historical match only
+            return $mergerPlatformDataOfVisit->setPlatformData(array_merge(
+                ['campaignId' => $aomAdParams['campaignId']],
+                $platformRow
+            ));
+        }
+
+        // Exact match
+        return $mergerPlatformDataOfVisit
+            ->setPlatformData(array_merge(
+                ['campaignId' => $aomAdParams['campaignId']],
+                ['campaign' => $platformRow['campaign']]
+            ))
+            ->setPlatformRowId($platformRow['platformRowId']);
+    }
+
+    /**
+     * Returns platform data when a match of Criteo click and platform data including cost is found. False otherwise.
+     *
+     * TODO: Imported data should also create platform_key which would make querying easier.
+     *
+     * @param int $idsite
+     * @param string $date
+     * @param string $campaignId
+     * @return array|bool
+     */
+    private function getExactMatchPlatformRow($idsite, $date, $campaignId)
+    {
+        $result = Db::fetchRow(
+            'SELECT id AS platformRowId, campaign FROM ' . Common::prefixTable('aom_criteo')
+                . ' WHERE idsite = ? AND date = ? AND campaign_id = ?',
+            [$idsite, $date, $campaignId,]
+        );
+
+        if ($result) {
+            $this->logger->debug(
+                'Found exact match platform row ID ' . $result['platformRowId'] . ' in imported Criteo data for visit.'
+            );
+        } else {
+            $this->logger->debug('Could not find exact match in imported Criteo data for Criteo visit.');
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns platform data when a historical match of Criteo click and platform data is found. False otherwise.
+     *
+     * TODO: Imported data should also create platform_key which would make querying easier.
+     *
+     * @param int $idsite
+     * @param string $campaignId
+     * @return array|bool
+     */
+    private function getHistoricalMatchPlatformRow($idsite, $campaignId)
+    {
+        $result = Db::fetchRow(
+            'SELECT campaign FROM ' . Common::prefixTable('aom_criteo') . ' WHERE idsite = ? AND campaign_id = ?',
+            [$idsite, $campaignId,]
+        );
+
+        if ($result) {
+            $this->logger->debug('Found historical match in imported Criteo data for visit.');
+        } else {
+            $this->logger->debug('Could not find historical match in imported Criteo data for Criteo visit.');
+        }
+
+        return $result;
     }
 }

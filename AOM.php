@@ -14,7 +14,6 @@ use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\AbstractImporter;
-use Piwik\Plugins\AOM\Platforms\Merger;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
 use Piwik\Plugins\AOM\Services\PiwikVisitService;
@@ -25,12 +24,7 @@ class AOM extends \Piwik\Plugin
     /**
      * @var LoggerInterface
      */
-    private static $defaultLogger;
-
-    /**
-     * @var LoggerInterface
-     */
-    private static $tasksLogger;
+    private static $logger;
 
     const PLATFORM_AD_WORDS = 'AdWords';
     const PLATFORM_BING = 'Bing';
@@ -68,18 +62,13 @@ class AOM extends \Piwik\Plugin
         // TODO: Allow to configure path and log-level (for every logger)?!
         $format = '%level_name% [%datetime%]: %message% %context% %extra%';
 
-        self::$defaultLogger = new Logger('aom');
-        $defaultLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG);
-        $defaultLoggerFileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
-        self::$defaultLogger->pushHandler($defaultLoggerFileStreamHandler);
-
-        self::$tasksLogger = new Logger('aom-tasks');
-        $tasksLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom-tasks.log', Logger::DEBUG);
-        $tasksLoggerFileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
-        self::$tasksLogger->pushHandler($tasksLoggerFileStreamHandler);
-        $tasksLoggerConsoleStreamHandler = new StreamHandler('php://stdout', Logger::DEBUG);
-        $tasksLoggerConsoleStreamHandler->setFormatter(new ColoredLineFormatter(null, $format, null, true, true));
-        self::$tasksLogger->pushHandler($tasksLoggerConsoleStreamHandler);
+        self::$logger = new Logger('aom');
+        $fileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG);
+        $fileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
+        self::$logger->pushHandler($fileStreamHandler);
+        $consoleStreamHandler = new StreamHandler('php://stdout', Logger::DEBUG);
+        $consoleStreamHandler->setFormatter(new ColoredLineFormatter(null, $format, null, true, true));
+        self::$logger->pushHandler($consoleStreamHandler);
 
         parent::__construct($pluginName);
     }
@@ -102,12 +91,13 @@ class AOM extends \Piwik\Plugin
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 idsite INTEGER NOT NULL,
                 piwik_idvisit INTEGER,
-                piwik_idvisitor VARCHAR(100) NOT NULL,
+                piwik_idvisitor VARCHAR(100),
                 unique_hash VARCHAR(100) NOT NULL,
                 first_action_time_utc DATETIME NOT NULL,
                 date_website_timezone DATE NOT NULL,
                 channel VARCHAR(100),
                 campaign_data TEXT,
+                platform_key VARCHAR(255),
                 platform_data TEXT,
                 cost FLOAT,
                 conversions INTEGER,
@@ -123,14 +113,14 @@ class AOM extends \Piwik\Plugin
             . ' (unique_hash)'
         );
 
-        // Optimize for deleting reprocessed data
+        // Optimize for queries from Merger
         self::addDatabaseIndex(
-            'CREATE INDEX index_aom_visits_site_date ON ' . Common::prefixTable('aom_visits')
-            . ' (idsite, date_website_timezone)');
+            'CREATE INDEX index_aom_visits_site_date_channel ON ' . Common::prefixTable('aom_visits')
+            . ' (idsite, date_website_timezone, channel)');
 
-        // Optimize for queries from MarketingPerformanceController.php
+        // Optimize for queries from MarketingPerformanceController
         self::addDatabaseIndex(
-            'CREATE INDEX index_aom_visits ON ' . Common::prefixTable('aom_visits')
+            'CREATE INDEX index_aom_visits_marketing_performance ON ' . Common::prefixTable('aom_visits')
             . ' (idsite, channel, date_website_timezone)');
 
         $this->getLogger()->debug('Installed AOM.');
@@ -194,28 +184,19 @@ class AOM extends \Piwik\Plugin
      */
     public function checkForNewVisitAndConversion()
     {
-        PiwikVisitService::checkForNewVisit();
-        PiwikVisitService::checkForNewConversion();
+        $piwikVisitService = new PiwikVisitService(self::getLogger());
+        $piwikVisitService->checkForNewVisit();
+        $piwikVisitService->checkForNewConversion();
     }
 
     /**
-     * This logger writes to aom.log only.
+     * This logger writes to aom.log and to the console.
      *
      * @return LoggerInterface
      */
     public static function getLogger()
     {
-        return self::$defaultLogger;
-    }
-
-    /**
-     * This logger writes to the console and to aom-tasks.log.
-     *
-     * @return LoggerInterface
-     */
-    public static function getTasksLogger()
-    {
-        return self::$tasksLogger;
+        return self::$logger;
     }
 
     /**
@@ -236,12 +217,9 @@ class AOM extends \Piwik\Plugin
             throw new \Exception('Class "' . $class . '" not supported. Must be either null, "Importer" or "Merger".');
         }
 
-        // Find the right logger for the job
-        $logger = (in_array($class, ['Importer', 'Merger']) ? self::$tasksLogger : self::$defaultLogger);
-
         $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . (null === $class ? $platform : $class);
 
-        return new $className($logger);
+        return new $className(self::$logger);
     }
 
     /**

@@ -45,7 +45,7 @@ abstract class Merger
      */
     public function __construct(LoggerInterface $logger = null)
     {
-        $this->logger = (null === $logger ? AOM::getTasksLogger() : $logger);
+        $this->logger = (null === $logger ? AOM::getLogger() : $logger);
     }
 
     /**
