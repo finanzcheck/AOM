@@ -40,14 +40,14 @@ class FacebookAdsGetAdDataTest extends IntegrationTestCase
 
         // set up your test here if needed
         Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
+            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
             . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
             'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
             [1, date('Y-m-d'), 14111, 'Campaign 1', 333, 'AdSet1', 222, "AdName", 7570, 13, 36.4]
         );
 
         Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
+            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
             . ' (idsite, date, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost) '.
             'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
             [1, '2015-12-28', 14113, 'Campaign 2', 334, 'AdSet2', 777, "AdName2", 800, 100, 16.4]

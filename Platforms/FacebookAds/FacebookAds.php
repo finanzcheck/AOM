@@ -13,6 +13,7 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MarketingPerformanceSubTables;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class FacebookAds extends AbstractPlatform
@@ -77,7 +78,7 @@ class FacebookAds extends AbstractPlatform
     public static function getAdData($idsite, $date, $adParams)
     {
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
                 WHERE idsite = ? AND date = ? AND campaign_id = ? AND adset_id = ? AND ad_id = ?',
             [
                 $idsite,
@@ -111,7 +112,7 @@ class FacebookAds extends AbstractPlatform
     public static function getHistoricalAdData($idsite, $campaignId, $adsetId)
     {
         $result = Db::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
                 WHERE idsite = ? AND campaign_id = ? AND adset_id = ?',
             [
                 $idsite,

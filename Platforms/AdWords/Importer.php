@@ -13,6 +13,7 @@ use Google\AdsApi\Common\OAuth2TokenBuilder;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
 use Psr\Log\NullLogger;
 
@@ -37,7 +38,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
             for ($i = -3; $i <= -1; $i++) {
                 if (Db::fetchOne(
                         'SELECT DATE(MAX(ts_created)) FROM '
-                        . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
+                        . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
                         . ' WHERE date = "' . date('Y-m-d', strtotime($i . ' day', time())) . '"'
                     ) != date('Y-m-d')
                 ) {
@@ -138,7 +139,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
 
         // We also need to delete data from "aom_adwords_gclid"
         $deleted = Db::deleteAllRows(
-            AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid',
+            DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid',
             'WHERE id_account_internal = ? AND idsite = ? AND date = ?',
             'date',
             100000,

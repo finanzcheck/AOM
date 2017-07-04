@@ -10,6 +10,7 @@ namespace Piwik\Plugins\AOM\tests\Integration;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Columns\AdParams;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Action;
 use Piwik\Tracker\Request;
 use Piwik\Tracker\Visit\VisitProperties;
@@ -68,7 +69,7 @@ class IndividualCampaignsAdParamsAndReferrerTest extends IntegrationTestCase
                  ] as $individualCampaign
         ) {
             Db::query(
-                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+                'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
                 . ' (id_account_internal, idsite, date, campaign, date_campaign_group, params_substring, '
                 . 'referrer_substring, cost, created_by, ts_created) '
                 . 'VALUES (\'...\', 1, ?, ?, ?, ?, ?, ?, 1, NOW())',

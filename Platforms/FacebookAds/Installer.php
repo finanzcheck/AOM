@@ -9,13 +9,14 @@ namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 
 class Installer implements InstallerInterface
 {
     public function installPlugin()
     {
-        AOM::addDatabaseTable(
-            'CREATE TABLE ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . ' (
+        DatabaseHelperService::addTable(
+            'CREATE TABLE ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 id_account_internal VARCHAR(50) NOT NULL,
                 idsite INTEGER NOT NULL,
@@ -35,20 +36,20 @@ class Installer implements InstallerInterface
             )  DEFAULT CHARSET=utf8');
 
         // Avoid issues from parallel imports
-        AOM::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE UNIQUE INDEX index_aom_facebook_unique ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
+            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
             . ' (idsite, date, account_id, campaign_id, adset_id, ad_id)'
         );
 
         // Optimize for queries from MarketingPerformanceController.php
-        AOM::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE INDEX index_aom_facebook ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . ' (idsite, date)');
+            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . ' (idsite, date)');
     }
 
     public function uninstallPlugin()
     {
-        Db::dropTables(AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS));
+        Db::dropTables(DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS));
     }
 }

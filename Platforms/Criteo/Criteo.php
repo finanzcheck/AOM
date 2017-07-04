@@ -13,6 +13,7 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class Criteo extends AbstractPlatform
@@ -68,7 +69,7 @@ class Criteo extends AbstractPlatform
     {
         // Exact match
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . '
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO) . '
                 WHERE idsite = ? AND date = ? AND campaign_id = ?',
             [
                 $idsite,
@@ -84,7 +85,7 @@ class Criteo extends AbstractPlatform
 
         // No exact match found; search for historic data
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO)
                 . ' WHERE idsite = ? AND campaign_id = ? ORDER BY date DESC LIMIT 1',
             [
                 $idsite,

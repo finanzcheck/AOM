@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
@@ -12,6 +13,7 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class AdWords extends AbstractPlatform
@@ -169,7 +171,7 @@ class AdWords extends AbstractPlatform
 
         if ($adParams['network'] == 'd') {
 
-            $query = 'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+            $query = 'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
                 WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "d"
                 AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
                 AND keyword_placement = "' . $adParams['placement'] . '"';
@@ -181,7 +183,7 @@ class AdWords extends AbstractPlatform
                 $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
             }
 
-            $query = 'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+            $query = 'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
                 WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "' . $adParams['network'] . '"
                 AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
                 AND keyword_id = "' . $targetId . '"';
@@ -216,7 +218,7 @@ class AdWords extends AbstractPlatform
         }
 
         $result = Db::fetchRow(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
                 WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? ORDER BY date DESC LIMIT 1',
             [
                 $idsite,

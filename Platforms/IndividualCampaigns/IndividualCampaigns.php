@@ -15,6 +15,7 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MarketingPerformanceSubTables;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class IndividualCampaigns extends AbstractPlatform
@@ -57,12 +58,12 @@ class IndividualCampaigns extends AbstractPlatform
 //        file_put_contents('/srv/www/piwik/X.log', 'IndividualCampaigns->getAdParamsFromUrl date ' . date('Y-m-d', $request->getCurrentTimestamp()) . PHP_EOL, FILE_APPEND);
 //        file_put_contents('/srv/www/piwik/X.log', json_encode(Db::fetchAll(
 //                'SELECT id, campaign, params_substring, referrer_substring '
-//                . ' FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS))) . PHP_EOL, FILE_APPEND);
+//                . ' FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS))) . PHP_EOL, FILE_APPEND);
 
         // TODO: Support more than simple substring matching
         $matches = Db::fetchAll(
             'SELECT id, campaign, params_substring, referrer_substring '
-            . ' FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+            . ' FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
             . ' WHERE idsite = ? AND date = ? AND '
             . ' ((params_substring <> \'\' AND ? LIKE CONCAT("%",params_substring,"%")) '
             . ' OR (referrer_substring <> \'\' AND ? LIKE CONCAT("%",referrer_substring,"%")))',
@@ -130,7 +131,7 @@ class IndividualCampaigns extends AbstractPlatform
     {
 //        // Exact match
 //        $result = DB::fetchAll(
-//            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '
+//            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '
 //                WHERE idsite = ? AND date = ? AND campaign_id = ? AND site_id = ?',
 //            [
 //                $idsite,
@@ -148,7 +149,7 @@ class IndividualCampaigns extends AbstractPlatform
 //        // No exact match found; search for historic data
 //        // TODO: Besser nicht, da wir nur exakte Matches innerhalb der jeweiligen Periode haben wollen!
 ////        $result = DB::fetchAll(
-////            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
+////            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
 ////                . ' WHERE idsite = ? AND campaign_id = ? AND site_id = ? ORDER BY date DESC LIMIT 1',
 ////            [
 ////                $idsite,

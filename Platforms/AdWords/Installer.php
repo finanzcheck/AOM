@@ -3,20 +3,24 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 
 class Installer implements InstallerInterface
 {
     public function installPlugin()
     {
         // aom_adwords
-        AOM::addDatabaseTable(
-            'CREATE TABLE ' .  AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . ' (
+        $tableName = DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS);
+
+        DatabaseHelperService::addTable(
+            'CREATE TABLE ' . $tableName . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 id_account_internal VARCHAR(50) NOT NULL,
                 idsite INTEGER NOT NULL,
@@ -39,20 +43,18 @@ class Installer implements InstallerInterface
             )  DEFAULT CHARSET=utf8');
 
         // Avoid issues from parallel imports
-        AOM::addDatabaseIndex(
-            'CREATE UNIQUE INDEX index_aom_adwords_unique ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . ' (unique_hash)'
+        DatabaseHelperService::addIndex(
+            'CREATE UNIQUE INDEX index_aom_adwords_unique ON ' . $tableName . ' (unique_hash)'
         );
 
         // Optimize for queries from MarketingPerformanceController.php
-        AOM::addDatabaseIndex(
-            'CREATE INDEX index_aom_adwords ON ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
-            . ' (idsite, date)'
+        DatabaseHelperService::addIndex(
+            'CREATE INDEX index_aom_adwords ON ' . $tableName . ' (idsite, date)'
         );
 
         // aom_adwords_gclid
-        AOM::addDatabaseTable(
-            'CREATE TABLE ' .  AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid (
+        DatabaseHelperService::addTable(
+            'CREATE TABLE ' .  $tableName . '_gclid (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 id_account_internal VARCHAR(50) NOT NULL,
                 idsite INTEGER NOT NULL,
@@ -74,14 +76,17 @@ class Installer implements InstallerInterface
             )  DEFAULT CHARSET=utf8');
 
         // Avoid issues from parallel imports and ensure faster queries
-        AOM::addDatabaseIndex(
-            'CREATE UNIQUE INDEX index_aom_adwords_gclid ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid (idsite, date, gclid)'
+        DatabaseHelperService::addIndex(
+            'CREATE UNIQUE INDEX index_aom_adwords_gclid ON ' . $tableName . '_gclid (idsite, date, gclid)'
         );
     }
 
     public function uninstallPlugin()
     {
-        Db::dropTables(AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS));
+        // aom_adwords
+        $tableName = DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS);
+
+        Db::dropTables($tableName);
+        Db::dropTables($tableName . '_gclid');
     }
 }

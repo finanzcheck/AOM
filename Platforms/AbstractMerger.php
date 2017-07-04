@@ -10,6 +10,7 @@ namespace Piwik\Plugins\AOM\Platforms;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
@@ -32,7 +33,7 @@ class AbstractMerger
     {
         // Get cost according to platform
         $platformRow = Db::fetchRow(
-            'SELECT idsite, date, cost FROM ' . AOM::getPlatformDataTableNameByPlatformName($platformName)
+            'SELECT idsite, date, cost FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName)
                 . ' WHERE id = ?',
             [$platformRowId,]
         );

@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms;
 
@@ -10,8 +11,8 @@ use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
-use Piwik\Site;
 use Psr\Log\LoggerInterface;
 use Piwik\Tracker\Request;
 
@@ -267,7 +268,7 @@ abstract class AbstractPlatform
     {
         $timeStart = microtime(true);
         $deletedImportedDataRecords = Db::deleteAllRows(
-            AOM::getPlatformDataTableNameByPlatformName($platformName),
+            DatabaseHelperService::getTableNameByPlatformName($platformName),
             'WHERE id_account_internal = ? AND idsite = ? AND date = ?',
             'date',
             100000,
@@ -280,62 +281,6 @@ abstract class AbstractPlatform
         $timeToDeleteImportedData = microtime(true) - $timeStart;
 
         return [$deletedImportedDataRecords, $timeToDeleteImportedData];
-    }
-
-    /**
-     * Updates aom_ad_data and aom_platform_row_id to NULL of all visits that match the given combination of platform,
-     * website and date.
-     *
-     * @param string $platformName
-     * @param int $websiteId
-     * @param string $date
-     * @return array
-     */
-    public static function deleteMergedData($platformName, $websiteId, $date)
-    {
-        $timeStart = microtime(true);
-        $unsetMergedDataRecords = Db::query(
-            'UPDATE ' . Common::prefixTable('log_visit') . ' AS v
-                LEFT OUTER JOIN ' . AOM::getPlatformDataTableNameByPlatformName($platformName) . ' AS p
-                ON (p.id = v.aom_platform_row_id)
-                SET v.aom_ad_data = NULL, v.aom_platform_row_id = NULL
-                WHERE v.idsite = ? AND v.aom_platform = ? AND p.id IS NULL
-                    AND visit_first_action_time >= ? AND visit_first_action_time <= ?',
-            [
-                $websiteId,
-                $platformName,
-                AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($websiteId)),
-                AOM::convertLocalDateTimeToUTC($date . ' 23:59:59', Site::getTimezoneFor($websiteId)),
-            ]
-        );
-        $timeToUnsetMergedData = microtime(true) - $timeStart;
-
-        return [$unsetMergedDataRecords, $timeToUnsetMergedData];
-    }
-
-    /**
-     * Removes all reprocessed visits for the combination of website and date.
-     *
-     * @param int $websiteId
-     * @param string $date
-     * @return array
-     */
-    public static function deleteReprocessedData($websiteId, $date)
-    {
-        $timeStart = microtime(true);
-        $deletedReprocessedVisitsRecords = Db::deleteAllRows(
-            Common::prefixTable('aom_visits'),
-            'WHERE idsite = ? AND date_website_timezone = ?',
-            'date_website_timezone',
-            100000,
-            [
-                $websiteId,
-                $date,
-            ]
-        );
-        $timeToDeleteReprocessedVisits = microtime(true) - $timeStart;
-
-        return [$deletedReprocessedVisitsRecords, $timeToDeleteReprocessedVisits];
     }
 
     /**

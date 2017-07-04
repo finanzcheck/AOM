@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\API;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 
 class StatusController
 {
@@ -54,7 +55,7 @@ class StatusController
             foreach (AOM::getPlatforms() as $platformName) {
 
                 $platform = AOM::getPlatformInstance($platformName);
-                $tableName = AOM::getPlatformDataTableNameByPlatformName($platformName);
+                $tableName = DatabaseHelperService::getTableNameByPlatformName($platformName);
 
                 $status['platforms'][$platformName] = [
                     'daysSinceLastImportWithResults' =>

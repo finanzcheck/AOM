@@ -16,6 +16,7 @@ use Piwik\Db;
 use Piwik\Plugins\AOM\Platforms\AbstractImporter;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\Services\PiwikVisitService;
 use Psr\Log\LoggerInterface;
 
@@ -86,7 +87,14 @@ class AOM extends \Piwik\Plugin
             $platform->installPlugin();
         }
 
-        self::addDatabaseTable(
+        // We need an auto incrementing key on this table to have a pointer on which conversions we already processed
+        DatabaseHelperService::addColumn(
+            'ALTER TABLE ' . Common::prefixTable('log_conversion')
+                . ' ADD COLUMN `idconversion` INT(10) NOT NULL AUTO_INCREMENT UNIQUE FIRST'
+        );
+
+        // This table holds all visits (Piwik visits and artificial visits)
+        DatabaseHelperService::addTable(
             'CREATE TABLE ' . Common::prefixTable('aom_visits') . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 idsite INTEGER NOT NULL,
@@ -108,20 +116,20 @@ class AOM extends \Piwik\Plugin
 
         // Use piwik_idvisit as unique key to avoid race conditions (manually created visits would have null here)
         // Manually created visits must create consistent keys from the same raw data
-        self::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE UNIQUE INDEX index_aom_unique_visits ON ' . Common::prefixTable('aom_visits')
-            . ' (unique_hash)'
+                . ' (unique_hash)'
         );
 
         // Optimize for queries from Merger
-        self::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE INDEX index_aom_visits_site_date_channel ON ' . Common::prefixTable('aom_visits')
-            . ' (idsite, date_website_timezone, channel)');
+                . ' (idsite, date_website_timezone, channel)');
 
         // Optimize for queries from MarketingPerformanceController
-        self::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE INDEX index_aom_visits_marketing_performance ON ' . Common::prefixTable('aom_visits')
-            . ' (idsite, channel, date_website_timezone)');
+                . ' (idsite, channel, date_website_timezone)');
 
         $this->getLogger()->debug('Installed AOM.');
     }
@@ -286,92 +294,5 @@ class AOM extends \Piwik\Plugin
         }
 
         return $dates;
-    }
-
-    /**
-     * Returns the exchange rate from the base currency to the target currency (for a given date).
-     *
-     * @param string $baseCurrency
-     * @param string $targetCurrency
-     * @param string $date
-     * @return float
-     * @throws \Exception
-     */
-    public static function getExchangeRate($baseCurrency, $targetCurrency, $date = null)
-    {
-        if ($baseCurrency !== $targetCurrency) {
-            $ch = curl_init();
-            curl_setopt(
-                $ch,
-                CURLOPT_URL,
-                'http://api.fixer.io/' . (null === $date ? 'latest' : $date)
-                . '?base=' . $baseCurrency . '&symbols=' . $targetCurrency
-            );
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-            $output = curl_exec($ch);
-            $response = json_decode($output, true);
-            if (!is_array($response) || !array_key_exists('rates', $response)
-                || !is_array($response['rates'])  || !array_key_exists($targetCurrency, $response['rates'])
-            ) {
-                throw new \Exception('Could not retrieve exchange rate.');
-            }
-
-            $error = curl_errno($ch);
-            if ($error > 0) {
-                throw new \Exception('Could not retrieve exchange rate.');
-            }
-            curl_close($ch);
-
-            return $response['rates'][$targetCurrency];
-        }
-
-        return 1.0;
-    }
-
-    /**
-     * @param string $platformName
-     * @return string
-     */
-    public static function getPlatformDataTableNameByPlatformName($platformName)
-    {
-        return Common::prefixTable('aom_' . strtolower($platformName));
-    }
-
-    /**
-     * Adds a database table unless it already exists.
-     *
-     * @param $sql
-     * @throws \Exception
-     */
-    public static function addDatabaseTable($sql)
-    {
-        try {
-            Db::exec($sql);
-        } catch (\Exception $e) {
-            // ignore error if table already exists (1050 code is for 'table already exists')
-            if (!Db::get()->isErrNo($e, '1050')) {
-                throw $e;
-            }
-        }
-    }
-
-    /**
-     * Adds an index to the database unless it already exists.
-     *
-     * @param $sql
-     * @throws \Exception
-     */
-    public static function addDatabaseIndex($sql)
-    {
-        try {
-            Db::exec($sql);
-        } catch (\Exception $e) {
-            // ignore error if index already exists (1061)
-            if (!Db::get()->isErrNo($e, '1061')) {
-                throw $e;
-            }
-        }
     }
 }

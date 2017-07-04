@@ -13,6 +13,7 @@ use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
@@ -188,7 +189,7 @@ class ImporterClickPerformance
 
         // In rare cases duplicate keys occur
         $result = Db::query(
-            'INSERT IGNORE INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid'
+            'INSERT IGNORE INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid'
             . ' (' . implode(', ', $columns) . ') VALUES ' . $allPlaces,
             $dataToInsert
         );
@@ -197,20 +198,20 @@ class ImporterClickPerformance
             $this->log(
                 Logger::WARNING,
                 'Got ' . $duplicates . ' duplicate key' . (1 == $duplicates ? '' : 's') . ' when inserting into '
-                . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid.'
+                . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid.'
             );
         }
         if ($duplicates > 10) {
             throw new \Exception(
                 'Too many duplicate key errors (' . $duplicates . ') when inserting into '
-                . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid.'
+                . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid.'
             );
         }
 
         $this->log(
             Logger::DEBUG,
             'Inserted ' . $result->rowCount() . ' records into '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid.'
+            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '_gclid.'
         );
     }
 

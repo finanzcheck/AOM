@@ -13,6 +13,7 @@ use FacebookAds\Object\Values\InsightsLevels;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
 
 class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
@@ -77,7 +78,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
         // TODO: Use MySQL transaction to improve performance!
         foreach ($insights as $insight) {
             Db::query(
-                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
+                'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS)
                     . ' (id_account_internal, idsite, date, account_id, account_name, campaign_id, campaign_name, '
                     . 'adset_id, adset_name, ad_id, ad_name, impressions, clicks, cost, ts_created) '
                     . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',

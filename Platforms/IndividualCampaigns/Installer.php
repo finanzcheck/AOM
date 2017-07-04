@@ -11,6 +11,7 @@ use Exception;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 
 class Installer implements InstallerInterface
 {
@@ -23,8 +24,8 @@ class Installer implements InstallerInterface
     {
         // TODO: Do we really need id_account_internal?!
 
-        AOM::addDatabaseTable(
-            'CREATE TABLE ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . ' (
+        DatabaseHelperService::addTable(
+            'CREATE TABLE ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 id_account_internal VARCHAR(50) NOT NULL,
                 idsite INTEGER NOT NULL,
@@ -39,9 +40,9 @@ class Installer implements InstallerInterface
             )  DEFAULT CHARSET=utf8');
 
         // Optimize for queries from MarketingPerformanceController.php
-        AOM::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE INDEX index_aom_individiual_campaigns ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . ' (idsite, date)');
+            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . ' (idsite, date)');
     }
 
     /**
@@ -51,6 +52,6 @@ class Installer implements InstallerInterface
      */
     public function uninstallPlugin()
     {
-        Db::dropTables(AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS));
+        Db::dropTables(DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS));
     }
 }

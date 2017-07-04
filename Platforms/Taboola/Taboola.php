@@ -13,6 +13,7 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class Taboola extends AbstractPlatform
@@ -74,7 +75,7 @@ class Taboola extends AbstractPlatform
     {
         // Exact match
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '
                 WHERE idsite = ? AND date = ? AND campaign_id = ? AND site_id = ?',
             [
                 $idsite,
@@ -91,7 +92,7 @@ class Taboola extends AbstractPlatform
 
         // No exact match found; search for historic data
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
                 . ' WHERE idsite = ? AND campaign_id = ? AND site_id = ? ORDER BY date DESC LIMIT 1',
             [
                 $idsite,

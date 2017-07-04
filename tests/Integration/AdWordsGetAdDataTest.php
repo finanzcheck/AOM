@@ -9,6 +9,7 @@ namespace Piwik\Plugins\AOM\tests\Integration;
 use Piwik;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Plugins\AOM\Platforms\AdWords\AdWords;
 use Piwik\Tests\Framework\Fixture;
@@ -39,7 +40,7 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
         $this->adwords = new AdWords();
 
         Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
+            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
             . 'keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, unique_hash, '
             . 'ts_created) '
@@ -66,7 +67,7 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
         );
 
         Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
+            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
             . 'keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, unique_hash, '
             . 'ts_created) '
@@ -93,7 +94,7 @@ class AdWordsGetAdDataTest extends IntegrationTestCase
         );
 
         Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
+            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (id_account_internal, idsite, date, account, campaign_id, campaign, ad_group_id, ad_group, keyword_id, '
             . 'keyword_placement, criteria_type, network, impressions, clicks, cost, conversions, unique_hash, '
             . 'ts_created) '

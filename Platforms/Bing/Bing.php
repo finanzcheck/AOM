@@ -12,6 +12,7 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class Bing extends AbstractPlatform
@@ -100,7 +101,7 @@ class Bing extends AbstractPlatform
         }
 
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_BING) . '
                 WHERE idsite = ? AND date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
             [
                 $idsite,
@@ -132,7 +133,7 @@ class Bing extends AbstractPlatform
     public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
     {
         $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_BING) . '
                 WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
             [
                 $idsite,

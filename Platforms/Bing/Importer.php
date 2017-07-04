@@ -23,6 +23,7 @@ use Exception;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
 use SoapFault;
 
@@ -75,7 +76,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
                     . $row->AdGroupId->attributes()['value'] . $row->KeywordId->attributes()['value']);
 
             Db::query(
-                'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING)
+                'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_BING)
                     . ' (id_account_internal, idsite, date, account_id, account, campaign_id, campaign, ad_group_id, '
                     . 'ad_group, keyword_id, keyword, impressions, clicks, cost, conversions, unique_hash, ts_created) '
                     . 'VALUE (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',

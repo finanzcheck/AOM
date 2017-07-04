@@ -10,6 +10,7 @@ use Exception;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
 use SoapClient;
 use SoapFault;
@@ -118,7 +119,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
             // TODO: Use MySQL transaction to improve performance!
             foreach ($xml->table->rows->row as $row) {
                  Db::query(
-                    'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO)
+                    'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO)
                         . ' (id_account_internal, idsite, date, campaign_id, campaign, impressions, clicks, cost, '
                         . 'conversions, conversions_value, conversions_post_view, conversions_post_view_value, '
                         . 'ts_created) '

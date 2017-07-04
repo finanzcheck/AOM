@@ -3,17 +3,21 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Platforms\AbstractImporter;
 use Piwik\Plugins\AOM\Platforms\ImportException;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
+use Piwik\Plugins\AOM\Services\ExchangeRateService;
 use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
+class Importer extends AbstractImporter
 {
     /**
      * Imports all active accounts day by day
@@ -70,7 +74,11 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
             $exchangeRateKey = $date . '-' . $row['currency'] . '' . Site::getCurrencyFor($account['websiteId']);
             if (!array_key_exists($exchangeRateKey, $exchangeRatesCache)) {
                 $exchangeRatesCache[$exchangeRateKey] =
-                    AOM::getExchangeRate($row['currency'], Site::getCurrencyFor($account['websiteId']), $date);
+                    ExchangeRateService::getExchangeRate(
+                        $row['currency'],
+                        Site::getCurrencyFor($account['websiteId']),
+                        $date
+                    );
             }
             $exchangeRate = $exchangeRatesCache[$exchangeRateKey];
 
@@ -89,7 +97,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
         $allPlaces = implode(', ', array_fill(0, count($reportData), $rowPlaces));
 
         $result = Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
+            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
             . ' (' . implode(', ', $columns) . ') VALUES ' . $allPlaces,
             $dataToInsert
         );
@@ -97,7 +105,7 @@ class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
         $this->log(
             Logger::DEBUG,
             'Inserted ' . $result->rowCount() . ' records of Taboola account ' . $accountId . ' into '
-                . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '.'
+                . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '.'
         );
     }
 

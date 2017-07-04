@@ -9,10 +9,10 @@ namespace Piwik\Plugins\AOM\Services;
 
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
-use Piwik\Tracker;
 use Psr\Log\LoggerInterface;
 
 class PiwikVisitService
@@ -46,18 +46,50 @@ class PiwikVisitService
         }
     }
 
+    /**
+     * This method is called by the Tracker.end event.
+     * It detects if a new conversion has been created by the Tracker. If so, it adds the conversion-related information
+     * to the aom_visits table.
+     *
+     * TODO: Only consider e-commerce conversions?
+     */
     public function checkForNewConversion()
     {
-        foreach ($GLOBALS as $key => $value) {
-            var_dump($key);
+        $latestProcessedConversion = Option::get('Plugin_AOM_LatestProcessedConversion');
+        if (false === $latestProcessedConversion) {
+            $latestProcessedConversion = 0;
         }
 
-        Db::
+        foreach (Db::query('SELECT idconversion, idvisit, idsite, idorder, revenue '
+            . ' FROM ' . Common::prefixTable('log_conversion') . ' WHERE idconversion > ' . $latestProcessedConversion
+            . ' ORDER BY idconversion ASC LIMIT 10') // Limit to distribute work (if it has queued up)
+                 as $conversion)
+        {
+            // For every single conversion: Increment visit's conversion count and add revenue
+            $result = Db::query(
+                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET '
+                    . ' conversions = conversions + 1, revenue = revenue + ?, ts_last_update = NOW() '
+                    . ' WHERE idsite = ? AND piwik_idvisit = ?',
+                [
+                    $conversion['revenue'],
+                    $conversion['idsite'],
+                    $conversion['idvisit'],
+                ]
+            );
+            if (1 === $result->rowCount()) {
+                $this->logger->debug(
+                    'Added conversion ' . $conversion['idconversion'] . ' (' . $conversion['idorder'] . ') to visit '
+                        . $conversion['idvisit'] . ' in aom_visits table.'
+                );
+            } else {
+                $this->logger->error(
+                    'Could not add conversion ' . $conversion['idconversion'] . ' (' . $conversion['idorder'] . ') as '
+                        . 'visit ' . $conversion['idvisit'] . ' was not found in aom_visits table.'
+                );
+            }
 
-        die();
-
-        // TODO: Find out which conversions have not yet been processed (how, when there is no foreign key?)
-        // TODO: For every single conversion: Increment visit's conversion count and add revenue
+            Option::set('Plugin_AOM_LatestProcessedConversion', $conversion['idconversion'], 1);
+        }
     }
 
     /**
