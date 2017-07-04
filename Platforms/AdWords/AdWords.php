@@ -13,10 +13,11 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
-class AdWords extends AbstractPlatform
+class AdWords extends AbstractPlatform implements PlatformInterface
 {
     const CRITERIA_TYPE_AGE = 'age';
     const CRITERIA_TYPE_GENDER = 'gender';

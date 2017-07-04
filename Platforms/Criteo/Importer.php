@@ -10,13 +10,15 @@ use Exception;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Platforms\AbstractImporter;
+use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
 use SoapClient;
 use SoapFault;
 use SoapHeader;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
+class Importer extends AbstractImporter implements ImporterInterface
 {
     /**
      * Imports all active accounts day by day

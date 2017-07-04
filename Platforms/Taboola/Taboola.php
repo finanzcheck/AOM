@@ -13,10 +13,11 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
-class Taboola extends AbstractPlatform
+class Taboola extends AbstractPlatform implements PlatformInterface
 {
     /**
      * Extracts and returns advertisement platform specific data from an URL.

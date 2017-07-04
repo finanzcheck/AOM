@@ -16,14 +16,57 @@ use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
 
 class Merger extends AbstractMerger implements MergerInterface
 {
-    public function getPlatformDataOfVisit($idsite, $date, array $aomAdParams)
+    public function merge()
+    {
+        foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
+            foreach ($this->getPlatformRows(AOM::PLATFORM_AD_WORDS, $date) as $platformRow) {
+
+                $platformKey = $this->getPlatformKey(
+                    $platformRow['network'],
+                    $platformRow['campaignId'],
+                    $platformRow['adGroupId'],
+                    $platformRow['keywordId']
+                );
+
+                $platformData = [
+                    'account' => $platformRow['account'],
+                    'campaignId' => $platformRow['campaign_id'],
+                    'campaign' => $platformRow['campaign'],
+                    'adGroupId' => $platformRow['ad_group_id'],
+                    'adGroup' => $platformRow['ad_group'],
+                    'keywordId' => $platformRow['keyword_id'],
+                    'keywordPlacement' => $platformRow['keyword_placement'],
+                    'network' => $platformRow['network'],
+                ];
+
+                // Update visit's platform data (including historic records)
+                $affectedRows = Db::query(
+                    'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
+                    . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
+                    [json_encode($platformData), $platformRow['idsite'], $platformKey, json_encode($platformData),]
+                )->rowCount();
+                if ($affectedRows > 0) {
+                    $this->logger->debug(
+                        'Updated platform data of ' . $affectedRows . ' record/s in aom_visits table.'
+                    );
+                }
+
+                $this->allocateCostOfPlatformRow(AOM::PLATFORM_AD_WORDS, $platformRow, $platformKey, $platformData);
+            }
+
+            $this->validateMergeResults(AOM::PLATFORM_AD_WORDS, $date);
+        }
+    }
+
+    public function getPlatformDataOfVisit($idsite, $date, $idvisit, array $aomAdParams)
     {
         $mergerPlatformDataOfVisit = new MergerPlatformDataOfVisit(AOM::PLATFORM_AD_WORDS);
 
         // To get more platform data, we need at least the gclid
         if (!array_key_exists('gclid', $aomAdParams) || !$aomAdParams['gclid']) {
             $this->logger->warning(
-                'Could not find gclid in ad params although platform has been identified as AdWords.'
+                'Could not find gclid in ad params of visit ' . $idvisit
+                    . ' although platform has been identified as AdWords.'
             );
             return $mergerPlatformDataOfVisit;
         }

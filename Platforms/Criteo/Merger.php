@@ -16,14 +16,45 @@ use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
 
 class Merger extends AbstractMerger implements MergerInterface
 {
-    public function getPlatformDataOfVisit($idsite, $date, array $aomAdParams)
+    public function merge()
+    {
+        foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
+            foreach ($this->getPlatformRows(AOM::PLATFORM_CRITEO, $date) as $platformRow) {
+
+                $platformKey = $platformRow['campaign_id'];
+                $platformData = [
+                    'campaignId' => $platformRow['campaign_id'],
+                    'campaign' => $platformRow['campaign'],
+                ];
+
+                // Update visit's platform data (including historic records)
+                $affectedRows = Db::query(
+                    'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
+                    . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
+                    [json_encode($platformData), $platformRow['idsite'], $platformKey, json_encode($platformData),]
+                )->rowCount();
+                if ($affectedRows > 0) {
+                    $this->logger->debug(
+                        'Updated platform data of ' . $affectedRows . ' record/s in aom_visits table.'
+                    );
+                }
+
+                $this->allocateCostOfPlatformRow(AOM::PLATFORM_CRITEO, $platformRow, $platformKey, $platformData);
+            }
+
+            $this->validateMergeResults(AOM::PLATFORM_CRITEO, $date);
+        }
+    }
+
+    public function getPlatformDataOfVisit($idsite, $date, $idvisit, array $aomAdParams)
     {
         $mergerPlatformDataOfVisit = new MergerPlatformDataOfVisit(AOM::PLATFORM_CRITEO);
 
         // We need a campaignId for Criteo
         if (!array_key_exists('campaignId', $aomAdParams)) {
             $this->logger->warning(
-                'Could not find campaignId in ad params although platform has been identified as Criteo.'
+                'Could not find campaignId in ad params of visit ' . $idvisit
+                    . ' although platform has been identified as Criteo.'
             );
             return $mergerPlatformDataOfVisit;
         }

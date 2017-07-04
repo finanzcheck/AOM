@@ -11,17 +11,15 @@ use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractImporter;
+use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Platforms\ImportException;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\Services\ExchangeRateService;
 use Piwik\Plugins\AOM\SystemSettings;
 use Piwik\Site;
 
-class Importer extends AbstractImporter
+class Importer extends AbstractImporter implements ImporterInterface
 {
-    /**
-     * Imports all active accounts day by day
-     */
     public function import()
     {
         $settings = new SystemSettings();

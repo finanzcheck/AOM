@@ -69,6 +69,8 @@ class VisitsController
     }
 
     /**
+     * TODO: Do e-commerce orders really always have log_conversion.idgoal = 0?
+     *
      * @param $idSite
      * @param bool $orderId
      * @param bool $period

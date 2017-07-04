@@ -138,7 +138,7 @@ abstract class AbstractPlatform
 
         foreach ($urlsToCheck as $urlToCheck) {
 
-            // TODO: Should we combine the results of all the different checks instead of simpy return the first match?
+            // TODO: Should we combine the results of all the different checks instead of simply return the first match?
 
             // Try to get adParams from referrer
             // TODO: Rename adParams into something which also works for data extracted from the referrer?
@@ -197,24 +197,13 @@ abstract class AbstractPlatform
         return $installer;
     }
 
-    /**
-     * Imports platform data for the specified period.
-     * If no period has been specified, the platform detects the period to import on its own (usually "yesterday").
-     * When triggered via scheduled tasks, imported platform data is being merged automatically afterwards.
-     *
-     * @param bool $mergeAfterwards
-     * @param string $startDate YYYY-MM-DD
-     * @param string $endDate YYYY-MM-DD
-     * @return mixed
-     * @throws Exception
-     */
     public function import($mergeAfterwards = false, $startDate = null, $endDate = null)
     {
         if (!$this->isActive()) {
             return;
         }
 
-        /** @var AbstractImporter $importer */
+        /** @var ImporterInterface $importer */
         $importer = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Importer');
         $importer->setPeriod($startDate, $endDate);
         $importer->import();
@@ -233,25 +222,15 @@ abstract class AbstractPlatform
         }
     }
 
-    /**
-     * Merges platform data for the specified period.
-     * If no period has been specified, we'll try to merge yesterdays data only.
-     *
-     * @param string $startDate YYYY-MM-DD
-     * @param string $endDate YYYY-MM-DD
-     * @return mixed
-     * @throws Exception
-     */
     public function merge($startDate, $endDate)
     {
         if (!$this->isActive()) {
             return;
         }
 
-        /** @var Merger $merger */
+        /** @var MergerInterface $merger */
         $merger = AOM::getPlatformInstance($this->getUnqualifiedClassName(), 'Merger');
         $merger->setPeriod($startDate, $endDate);
-        $merger->setPlatform($this);
         $merger->merge();
     }
 

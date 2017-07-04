@@ -14,12 +14,26 @@ use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
-class AbstractMerger
+abstract class AbstractMerger
 {
     /**
      * @var LoggerInterface
      */
     protected $logger;
+
+    /**
+     * The start date of the period to merge (YYYY-MM-DD).
+     *
+     * @var string
+     */
+    protected $startDate;
+
+    /**
+     * The end date of the period to merge (YYYY-MM-DD).
+     *
+     * @var string
+     */
+    protected $endDate;
 
     /**
      * @param LoggerInterface|null $logger
@@ -29,14 +43,71 @@ class AbstractMerger
         $this->logger = (null === $logger ? AOM::getLogger() : $logger);
     }
 
-    public function allocateCostOfPlatformRow($platformName, $platformRowId, $platformKey, array $platformData)
+    /**
+     * Sets the period that should be merged.
+     *
+     * TODO: Consider site timezone here?!
+     *
+     * @param string $startDate YYYY-MM-DD
+     * @param string $endDate YYYY-MM-DD
+     */
+    public function setPeriod($startDate, $endDate)
     {
-        // Get cost according to platform
-        $platformRow = Db::fetchRow(
-            'SELECT idsite, date, cost FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName)
-                . ' WHERE id = ?',
-            [$platformRowId,]
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getStartDate()
+    {
+        return $this->startDate;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getEndDate()
+    {
+        return $this->endDate;
+    }
+
+    /**
+     * Returns all platform rows of the given date.
+     *
+     * @param string $platformName
+     * @param string $date
+     * @return array
+     */
+    protected function getPlatformRows($platformName, $date)
+    {
+        $platformRows = Db::fetchAll(
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName) . ' WHERE date = ?',
+            [$date,]
         );
+
+        $this->logger->debug('Got ' . count($platformRows) . ' ' . $platformName . ' cost records for ' . $date .'.');
+
+        return $platformRows;
+    }
+
+    public function allocateCostOfPlatformRowId($platformName, $platformRowId, $platformKey, array $platformData)
+    {
+        $this->allocateCostOfPlatformRow(
+            $platformName,
+            Db::fetchRow(
+                'SELECT idsite, date, cost FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName)
+                . ' WHERE id = ?',
+                [$platformRowId,]
+            ),
+            $platformKey,
+            $platformData
+        );
+    }
+
+    public function allocateCostOfPlatformRow($platformName, array $platformRow, $platformKey, array $platformData)
+    {
         list($idsite, $date, $cost) = [$platformRow['idsite'], $platformRow['date'], $platformRow['cost']];
 
         // When there are no cost, there is nothing to allocate.
@@ -50,7 +121,7 @@ class AbstractMerger
         // When there are both, real and artificial visits, artificial visits are not allowed to have any cost
         if ($matchingVisits['piwikVisits'] > 0 && $matchingVisits['artificialVisitsCost'] > 0) {
             Db::query(
-                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = 0 AND ts_last_update = NOW() '
+                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = 0, ts_last_update = NOW() '
                     . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
                     . ' AND piwik_idvisit IS NULL',
                 [$idsite, $date, $platformName, $platformKey,]
@@ -61,13 +132,17 @@ class AbstractMerger
         // If there are real visits, distribute cost between them
         if ($matchingVisits['piwikVisits'] > 0) {
             $costPerVisit = number_format($cost / $matchingVisits['piwikVisits'], 4);
-            Db::query(
-                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ? AND ts_last_update = NOW() '
+            $result = Db::query(
+                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
                 . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
-                . ' AND piwik_idvisit IS NOT NULL',
-                [$costPerVisit, $idsite, $date, $platformName, $platformKey,]
+                . ' AND piwik_idvisit IS NOT NULL AND cost != ?',
+                [$costPerVisit, $idsite, $date, $platformName, $platformKey, $costPerVisit,]
             );
-            $this->logger->debug('Updated cost of real visits to ' . $costPerVisit . '.');
+            if ($result->rowCount() > 0) {
+                $this->logger->debug(
+                    'Updated cost of ' . $result->rowCount() . ' real visit/s to ' . $costPerVisit . '.'
+                );
+            }
             return;
         }
 
@@ -78,18 +153,16 @@ class AbstractMerger
         }
 
         // If there are no real visit but an artificial visit, update artificial visit if costs are not correct
-        if (round($cost) != round($matchingVisits['artificialVisitsCost'])) {
+        if (round($cost, 4) != round($matchingVisits['artificialVisitsCost'], 4)) {
             Db::query(
-                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ? AND ts_last_update = NOW() '
+                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
                 . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
-                . ' AND piwik_idvisit IS NULL',
-                [$cost, $idsite, $date, $platformName, $platformKey,]
+                . ' AND piwik_idvisit IS NULL AND (cost IS NULL OR cost != ?)',
+                [$cost, $idsite, $date, $platformName, $platformKey, $cost,]
             );
             $this->logger->debug('Updated cost of artificial visit to ' . $cost . '.');
             return;
         }
-
-        die('XXX');
     }
 
     /**
@@ -123,11 +196,11 @@ class AbstractMerger
     }
 
     /**
-     * @param $idsite
-     * @param $date
-     * @param $platformName
+     * @param int $idsite
+     * @param string $date
+     * @param string $platformName
      * @param array $platformData
-     * @param $platformKey
+     * @param string $platformKey
      */
     private function addArtificialVisit($idsite, $date, $platformName, array $platformData, $platformKey)
     {
@@ -152,5 +225,34 @@ class AbstractMerger
         );
 
         $this->logger->debug('Added artificial visit to aom_visit table.');
+    }
+
+    /**
+     * @param string $platformName
+     * @param string $date
+     */
+    protected function validateMergeResults($platformName, $date)
+    {
+        $importedCost = Db::fetchOne(
+            'SELECT SUM(cost) FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName)
+                . ' WHERE date = ?',
+            [$date,]
+        );
+
+        $mergedCost = Db::fetchOne(
+            'SELECT SUM(cost) FROM ' . Common::prefixTable('aom_visits')
+                . ' WHERE channel = ? AND date_website_timezone = ?',
+            [$platformName, $date,]
+        );
+
+        $difference = round(abs($importedCost / $mergedCost - 1) * 100, 4);
+        $message = $platformName . '\'s imported cost ' . round($importedCost, 4) . ' differs from merged cost '
+            . round($mergedCost, 4) . ' by ' . $difference . '% for ' . $date . '.';
+
+        if ($difference > 1) {
+            $this->logger->error($message);
+        } elseif ($difference > 0.1) {
+            $this->logger->warning($message);
+        }
     }
 }

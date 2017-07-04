@@ -13,11 +13,13 @@ use Google\AdsApi\Common\OAuth2TokenBuilder;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Platforms\AbstractImporter;
+use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
 use Psr\Log\NullLogger;
 
-class Importer extends \Piwik\Plugins\AOM\Platforms\AbstractImporter
+class Importer extends AbstractImporter implements ImporterInterface
 {
     /**
      * When no period is provided, AdWords (re)imports the last 3 days unless they have been (re)imported today.

@@ -16,20 +16,64 @@ use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
 
 class Merger extends AbstractMerger implements MergerInterface
 {
-    public function getPlatformDataOfVisit($idsite, $date, array $aomAdParams)
+    public function merge()
+    {
+        foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
+            foreach ($this->getPlatformRows(AOM::PLATFORM_BING, $date) as $platformRow) {
+
+                $platformKey = $this->getPlatformKey(
+                    $platformRow['campaign_id'], $platformRow['ad_group_id'], $platformRow['keyword_id']
+                );
+
+                $platformData = [
+                    'accountId' => $platformRow['account_id'],
+                    'account' => $platformRow['account'],
+                    'campaignId' => $platformRow['campaign_id'],
+                    'campaign' => $platformRow['campaign'],
+                    'adGroupId' => $platformRow['ad_group_id'],
+                    'adGroup' => $platformRow['ad_group'],
+                    'keywordId' => $platformRow['keyword_id'],
+                    'keyword' => $platformRow['keyword'],
+                ];
+
+                // Update visit's platform data (including historic records)
+                $affectedRows = Db::query(
+                    'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
+                    . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
+                    [json_encode($platformData), $platformRow['idsite'], $platformKey, json_encode($platformData),]
+                )->rowCount();
+                if ($affectedRows > 0) {
+                    $this->logger->debug(
+                        'Updated platform data of ' . $affectedRows . ' record/s in aom_visits table.'
+                    );
+                }
+
+                $this->allocateCostOfPlatformRow(AOM::PLATFORM_BING, $platformRow, $platformKey, $platformData);
+            }
+
+            $this->validateMergeResults(AOM::PLATFORM_BING, $date);
+        }
+    }
+
+    public function getPlatformDataOfVisit($idsite, $date, $idvisit, array $aomAdParams)
     {
         $mergerPlatformDataOfVisit = new MergerPlatformDataOfVisit(AOM::PLATFORM_BING);
 
         // Make sure that we have the campaignId, adGroupId and keywordId available
-        $missingParams = array_diff(['campaignId', 'adGroupId', 'keywordId',], array_keys($aomAdParams));
+        $missingParams = array_diff(['campaignId', 'adGroupId', 'targetId',], array_keys($aomAdParams));
         if (count($missingParams)) {
             $this->logger->warning(
-                'Could not find ' . implode(', ', $missingParams) . ' in ad params although platform has been '
-                    . ' identified as Bing.'
+                'Could not find ' . implode(', ', $missingParams) . ' in ad params of visit ' . $idvisit
+                    . ' although platform has been identified as Bing.'
             );
             return $mergerPlatformDataOfVisit;
         }
 
+        // keywordId results from targetId
+        // TODO: We should check if this really works
+        $aomAdParams['keywordId'] = (false !== strpos($aomAdParams['targetId'], 'kwd-'))
+            ? substr($aomAdParams['targetId'], strpos($aomAdParams['targetId'], 'kwd-') + 4)
+            : null;
         $mergerPlatformDataOfVisit->setPlatformKey(
             $this->getPlatformKey($aomAdParams['campaignId'], $aomAdParams['adGroupId'], $aomAdParams['keywordId'])
         );
@@ -100,7 +144,7 @@ class Merger extends AbstractMerger implements MergerInterface
     private function getExactMatchPlatformRow($idsite, $date, $campaignId, $adGroupId, $keywordId)
     {
         $result = Db::fetchRow(
-            'SELECT id AS platformRowId, account_id AS accountId, accoung, campaign, ad_group AS adGroup, keyword '
+            'SELECT id AS platformRowId, account_id AS accountId, account, campaign, ad_group AS adGroup, keyword '
                 . ' FROM ' . Common::prefixTable('aom_bing')
                 . ' WHERE idsite = ? AND date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
             [$idsite, $date, $campaignId, $adGroupId, $keywordId,]
@@ -108,17 +152,17 @@ class Merger extends AbstractMerger implements MergerInterface
 
         if ($result) {
             $this->logger->debug(
-                'Found exact match platform row ID ' . $result['platformRowId'] . ' in imported Criteo data for visit.'
+                'Found exact match platform row ID ' . $result['platformRowId'] . ' in imported Bing data for visit.'
             );
         } else {
-            $this->logger->debug('Could not find exact match in imported Criteo data for Criteo visit.');
+            $this->logger->debug('Could not find exact match in imported Bing data for Bing visit.');
         }
 
         return $result;
     }
 
     /**
-     * Returns platform data when a historical match of Criteo click and platform data is found. False otherwise.
+     * Returns platform data when a historical match of Bing click and platform data is found. False otherwise.
      *
      * TODO: Imported data should also create platform_key which would make querying easier.
      *
@@ -131,15 +175,16 @@ class Merger extends AbstractMerger implements MergerInterface
     private function getHistoricalMatchPlatformRow($idsite, $campaignId, $adGroupId, $keywordId)
     {
         $result = Db::fetchRow(
-            'SELECT campaign, site FROM ' . Common::prefixTable('aom_criteo')
-            . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
+            'SELECT account_id AS accountId, account, campaign, ad_group AS adGroup, keyword '
+                .' FROM ' . Common::prefixTable('aom_bing')
+                . ' WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
             [$idsite, $campaignId, $adGroupId, $keywordId,]
         );
 
         if ($result) {
-            $this->logger->debug('Found historical match in imported Criteo data for visit.');
+            $this->logger->debug('Found historical match in imported Bing data for visit.');
         } else {
-            $this->logger->debug('Could not find historical match in imported Criteo data for Criteo visit.');
+            $this->logger->debug('Could not find historical match in imported Bing data for Bing visit.');
         }
 
         return $result;

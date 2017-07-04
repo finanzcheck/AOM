@@ -15,10 +15,11 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MarketingPerformanceSubTables;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
-class IndividualCampaigns extends AbstractPlatform
+class IndividualCampaigns extends AbstractPlatform implements PlatformInterface
 {
     /**
      * Returns true if the visit is coming from this platform. False otherwise.

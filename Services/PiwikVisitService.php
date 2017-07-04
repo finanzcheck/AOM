@@ -36,14 +36,23 @@ class PiwikVisitService
      */
     public function checkForNewVisit()
     {
-        foreach (Db::query('SELECT *, conv(hex(idvisitor), 16, 10) AS idvisitor '
-            . ' FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit > '
-            . (Db::fetchOne('SELECT MAX(piwik_idvisit) FROM ' . Common::prefixTable('aom_visits')))
-            . ' ORDER BY idvisit ASC LIMIT 10') // Limit to distribute work (if it has queued up for whatever reason)
-            as $visit)
-        {
+        // Limit to 10 visits to distribute work (if it has queued up for whatever reason)
+        foreach (array_slice($this->getUnprocessedVisits(), 0, 10) as $visit) {
             $this->addNewPiwikVisit($visit);
         }
+    }
+
+    /**
+     * @return array
+     */
+    private function getUnprocessedVisits()
+    {
+        return Db::fetchAll(
+            'SELECT *, conv(hex(idvisitor), 16, 10) AS idvisitor '
+                . ' FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit > '
+                . (Db::fetchOne('SELECT MAX(piwik_idvisit) FROM ' . Common::prefixTable('aom_visits')))
+                . ' ORDER BY idvisit ASC'
+        );
     }
 
     /**
@@ -55,6 +64,12 @@ class PiwikVisitService
      */
     public function checkForNewConversion()
     {
+        $c = count($this->getUnprocessedVisits());
+        if ($c > 0) {
+            $this->logger->info('Skip checking for new conversions as there are still '. $c . ' unprocessed visits.');
+            return;
+        }
+
         $latestProcessedConversion = Option::get('Plugin_AOM_LatestProcessedConversion');
         if (false === $latestProcessedConversion) {
             $latestProcessedConversion = 0;
@@ -112,6 +127,7 @@ class PiwikVisitService
             ? $platformMerger->getPlatformDataOfVisit(
                 $idsite,
                 $date,
+                $visit['idvisit'],
                 is_array(@json_decode($visit['aom_ad_params'], true)) ? json_decode($visit['aom_ad_params'], true) : []
             )
             : null;
@@ -136,12 +152,12 @@ class PiwikVisitService
                 ($mergerPlatformDataOfVisit ? $mergerPlatformDataOfVisit->getPlatformKey() : null),
             ]
         );
-        $this->logger->debug('Added Piwik visit to aom_visit table.');
+        $this->logger->debug('Added Piwik visit ' . $visit['idvisit'] . ' to aom_visit table.');
 
         // As this new visit could be directly matched with provided cost, we need to redistribute these cost.
         if ($mergerPlatformDataOfVisit && $mergerPlatformDataOfVisit->getPlatformRowId()) {
 
-            $platformMerger->allocateCostOfPlatformRow(
+            $platformMerger->allocateCostOfPlatformRowId(
                 $visit['aom_platform'],
                 $mergerPlatformDataOfVisit->getPlatformRowId(),
                 $mergerPlatformDataOfVisit->getPlatformKey(),

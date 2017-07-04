@@ -12,10 +12,11 @@ use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
-class Bing extends AbstractPlatform
+class Bing extends AbstractPlatform implements PlatformInterface
 {
     const AD_CAMPAIGN_ID = 1;
     const AD_AD_GROUP_ID = 2;

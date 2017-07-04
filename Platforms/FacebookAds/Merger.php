@@ -13,7 +13,12 @@ use Piwik\Plugins\AOM\Platforms\MergerInterface;
 
 class Merger extends AbstractMerger implements MergerInterface
 {
-    public function getPlatformDataOfVisit($idsite, $date, array $aomAdParams)
+    public function merge()
+    {
+        throw new Exception('Not implemented');
+    }
+
+    public function getPlatformDataOfVisit($idsite, $date, $idvisit, array $aomAdParams)
     {
         throw new Exception('Not implemented');
     }

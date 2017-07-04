@@ -8,6 +8,7 @@ namespace Piwik\Plugins\AOM\Commands;
 
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\SystemSettings;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
@@ -69,6 +70,7 @@ class PlatformImport extends ConsoleCommand
             return;
         }
 
+        /** @var PlatformInterface $platform */
         $platform = AOM::getPlatformInstance($input->getOption('platform'));
         $platform->import($input->getOption('merge'), $input->getOption('startDate'), $input->getOption('endDate'));
 
