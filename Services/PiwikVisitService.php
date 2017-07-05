@@ -29,7 +29,6 @@ class PiwikVisitService
     {
         $this->logger = (null === $logger ? AOM::getLogger() : $logger);
     }
-
     /**
      * This method is called by the Tracker.end event.
      * It detects if a new visit has been created by the Tracker. If so, it adds the visit to the aom_visits table.
@@ -132,7 +131,9 @@ class PiwikVisitService
             )
             : null;
 
-        // TODO: Temporarily disables so that we can use the same test data multiple times
+        $channel = self::determineChannel($visit['aom_platform'], $visit['referer_type']);
+        $campaignData = self::getCampaignData($visit);
+        $platformData = ($mergerPlatformDataOfVisit ? $mergerPlatformDataOfVisit->getPlatformData() : null);
         Db::query(
             'INSERT INTO ' . Common::prefixTable('aom_visits')
                 . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, '
@@ -146,13 +147,16 @@ class PiwikVisitService
                 'piwik-visit-' . $visit['idvisit'],
                 $visit['visit_first_action_time'],
                 $date,
-                self::determineChannel($visit['aom_platform'], $visit['referer_type']),
-                json_encode(self::getCampaignData($visit)),
-                ($mergerPlatformDataOfVisit ? json_encode($mergerPlatformDataOfVisit->getPlatformData()) : null),
+                $channel,
+                json_encode($campaignData),
+                json_encode($platformData),
                 ($mergerPlatformDataOfVisit ? $mergerPlatformDataOfVisit->getPlatformKey() : null),
             ]
         );
-        $this->logger->debug('Added Piwik visit ' . $visit['idvisit'] . ' to aom_visit table.');
+        $aomVisitId = Db::fetchOne('SELECT LAST_INSERT_ID()');
+        $this->logger->debug(
+            'Added Piwik visit ' . $visit['idvisit'] . ' as AOM visit ' . $aomVisitId . ' to aom_visit table.'
+        );
 
         // As this new visit could be directly matched with provided cost, we need to redistribute these cost.
         if ($mergerPlatformDataOfVisit && $mergerPlatformDataOfVisit->getPlatformRowId()) {
@@ -165,10 +169,7 @@ class PiwikVisitService
             );
         }
 
-        // TODO: Move this to a centralized addOrUpdateVisit-method?
-        // Post an event that a visit has been added or updated
-        // (other plugins might listen to this event and publish them for example to an external SNS topic)
-        Piwik::postEvent('AOM.addOrUpdateVisit', []);    // TODO: Add visit as argument, e.g. [$myFirstArg, &$myRefArg]
+        self::postAomVisitAddedOrUpdatedEvent($aomVisitId);
     }
 
     /**
@@ -227,5 +228,38 @@ class PiwikVisitService
         }
 
         return $campaignData;
+    }
+
+    /**
+     * Post an event that a visit has been added or updated.
+     * Other plugins might listen to this event and publish them for example to an external SNS topic.
+     *
+     * TODO: Make sure that this method is called in all necessary places.
+     * TODO: Should we add conversion information here (but based on which conversion attribution)?
+     *
+     * @param int $aomVisitId
+     */
+    public static function postAomVisitAddedOrUpdatedEvent($aomVisitId)
+    {
+        // TODO: Make execution of this method configurable (activate AOM events for other plugins) as this adds overhead!
+        $aomVisit = Db::fetchRow('SELECT piwik_idvisit, piwik_idvisitor, date_website_timezone, channel, '
+            . ' campaign_data, platform_data, cost '
+            . ' FROM ' . Common::prefixTable('aom_visits') . ' WHERE id = ?',
+            [$aomVisitId,]
+        );
+
+        Piwik::postEvent(
+            'AOM.aomVisitAddedOrUpdated',
+            [
+                'aomVisitId' => $aomVisitId,
+                'piwikVisitId' => $aomVisit['piwik_idvisit'],
+                'visitorId' => $aomVisit['piwik_idvisitor'],
+                'date' => $aomVisit['date_website_timezone'],
+                'channel' => $aomVisit['channel'],
+                'campaignData' => $aomVisit['campaign_data'],
+                'platformData' => $aomVisit['platform_data'],
+                'cost' => $aomVisit['cost'],
+            ]
+        );
     }
 }

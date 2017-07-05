@@ -23,9 +23,9 @@ class Merger extends AbstractMerger implements MergerInterface
 
                 $platformKey = $this->getPlatformKey(
                     $platformRow['network'],
-                    $platformRow['campaignId'],
-                    $platformRow['adGroupId'],
-                    $platformRow['keywordId']
+                    $platformRow['campaign_id'],
+                    $platformRow['ad_group_id'],
+                    $platformRow['keyword_id']
                 );
 
                 $platformData = [

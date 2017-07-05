@@ -107,9 +107,9 @@ class AOM extends \Piwik\Plugin
                 campaign_data TEXT,
                 platform_key VARCHAR(255),
                 platform_data TEXT,
-                cost FLOAT,
+                cost DECIMAL(10,4),
                 conversions INTEGER,
-                revenue FLOAT,
+                revenue DECIMAL(14,4),
                 ts_created TIMESTAMP,
                 ts_last_update TIMESTAMP
             )  DEFAULT CHARSET=utf8');

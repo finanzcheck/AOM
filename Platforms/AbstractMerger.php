@@ -120,29 +120,14 @@ abstract class AbstractMerger
 
         // When there are both, real and artificial visits, artificial visits are not allowed to have any cost
         if ($matchingVisits['piwikVisits'] > 0 && $matchingVisits['artificialVisitsCost'] > 0) {
-            Db::query(
-                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = 0, ts_last_update = NOW() '
-                    . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
-                    . ' AND piwik_idvisit IS NULL',
-                [$idsite, $date, $platformName, $platformKey,]
-            );
+            $this->updateArtificialVisit($idsite, $date, $platformName, $platformKey, 0);
             $this->logger->debug('Updated cost of artificial visit to 0 as also real visits where found.');
         }
 
         // If there are real visits, distribute cost between them
         if ($matchingVisits['piwikVisits'] > 0) {
             $costPerVisit = number_format($cost / $matchingVisits['piwikVisits'], 4);
-            $result = Db::query(
-                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
-                . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
-                . ' AND piwik_idvisit IS NOT NULL AND cost != ?',
-                [$costPerVisit, $idsite, $date, $platformName, $platformKey, $costPerVisit,]
-            );
-            if ($result->rowCount() > 0) {
-                $this->logger->debug(
-                    'Updated cost of ' . $result->rowCount() . ' real visit/s to ' . $costPerVisit . '.'
-                );
-            }
+            $this->distributeCostBetweenRealVisits($idsite, $date, $platformName, $platformKey, $costPerVisit);
             return;
         }
 
@@ -154,13 +139,7 @@ abstract class AbstractMerger
 
         // If there are no real visit but an artificial visit, update artificial visit if costs are not correct
         if (round($cost, 4) != round($matchingVisits['artificialVisitsCost'], 4)) {
-            Db::query(
-                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
-                . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
-                . ' AND piwik_idvisit IS NULL AND (cost IS NULL OR cost != ?)',
-                [$cost, $idsite, $date, $platformName, $platformKey, $cost,]
-            );
-            $this->logger->debug('Updated cost of artificial visit to ' . $cost . '.');
+            $this->updateArtificialVisit($idsite, $date, $platformName, $platformKey, $cost);
             return;
         }
     }
@@ -210,9 +189,9 @@ abstract class AbstractMerger
 
         Db::query(
             'INSERT INTO ' . Common::prefixTable('aom_visits')
-            . ' (idsite, unique_hash, first_action_time_utc, date_website_timezone, channel, platform_data, '
-            . ' platform_key, ts_last_update, ts_created) '
-            . ' VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+                . ' (idsite, unique_hash, first_action_time_utc, date_website_timezone, channel, platform_data, '
+                . ' platform_key, ts_last_update, ts_created) '
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
             [
                 $idsite,
                 $uniqueHash,
@@ -228,6 +207,52 @@ abstract class AbstractMerger
     }
 
     /**
+     * @param int $idsite
+     * @param string $date
+     * @param string $platformName
+     * @param string $platformKey
+     * @param float $cost
+     */
+    private function updateArtificialVisit($idsite, $date, $platformName, $platformKey, $cost)
+    {
+        $result = Db::query(
+            'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
+                . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
+                . ' AND piwik_idvisit IS NULL AND (cost IS NULL OR cost != ?)',
+            [$cost, $idsite, $date, $platformName, $platformKey, $cost,]
+        );
+
+        if ($result->rowCount() > 0) {
+            $this->logger->debug('Updated cost of artificial visit to ' . $cost . '.');
+        }
+    }
+
+    /**
+     * @param int $idsite
+     * @param string $date
+     * @param string $platformName
+     * @param string $platformKey
+     * @param float $costPerVisit
+     */
+    private function distributeCostBetweenRealVisits($idsite, $date, $platformName, $platformKey, $costPerVisit)
+    {
+        $result = Db::query(
+            'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
+                . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
+                . ' AND piwik_idvisit IS NOT NULL AND (cost IS NULL OR cost != ?)',
+            [$costPerVisit, $idsite, $date, $platformName, $platformKey, $costPerVisit,]
+        );
+
+        if ($result->rowCount() > 0) {
+            $this->logger->debug(
+                'Updated cost of ' . $result->rowCount() . ' real visit/s to ' . $costPerVisit . '.'
+            );
+        }
+    }
+
+    /**
+     * Validates the results of an entire merge by comparing the total imported cost to the merged visit's total cost.
+     *
      * @param string $platformName
      * @param string $date
      */
@@ -245,7 +270,7 @@ abstract class AbstractMerger
             [$platformName, $date,]
         );
 
-        $difference = round(abs($importedCost / $mergedCost - 1) * 100, 4);
+        $difference = ($mergedCost > 0) ? round(abs($importedCost / $mergedCost - 1) * 100, 2) : INF;
         $message = $platformName . '\'s imported cost ' . round($importedCost, 4) . ' differs from merged cost '
             . round($mergedCost, 4) . ' by ' . $difference . '% for ' . $date . '.';
 

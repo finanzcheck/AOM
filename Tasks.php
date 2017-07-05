@@ -3,10 +3,10 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM;
 
-use Piwik\Plugins\AOM\Commands\ReprocessVisits;
 use Piwik\Scheduler\Schedule\Schedule;
 use Piwik\Scheduler\Task;
 use Psr\Log\LoggerInterface;
@@ -48,21 +48,6 @@ class Tasks extends \Piwik\Plugin\Tasks
             } else {
                 $this->logger->info('Skipping inactive platform "' . $platformName. '".');
             }
-        }
-
-        // Reprocess visits
-        // TODO: Is there any better way than doing this every single hour?!
-        foreach (AOM::getPeriodAsArrayOfDates(
-            date('Y-m-d', strtotime('-3 day', time())),
-            date('Y-m-d', time())
-        ) as $date) {
-            $this->custom(
-                new ReprocessVisits(),
-                'processDate',
-                $date,
-                Schedule::getScheduledTimeForPeriod(Schedule::PERIOD_HOUR),
-                Task::LOWEST_PRIORITY
-            );
         }
     }
 }

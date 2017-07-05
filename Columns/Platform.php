@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Columns;
 
@@ -69,13 +70,6 @@ class Platform extends VisitDimension
                 }
             }
         }
-
-//        file_put_contents(
-//            '/srv/www/piwik/PLATFORM-IDENT-TEST.log',
-//            $identifiedPlatform . ';'
-//            . (isset($request->getParams()['url']) ? $request->getParams()['url'] : '') . ';'
-//            . (isset($request->getParams()['urlref']) ? $request->getParams()['urlref'] : '') . ';'
-//            . PHP_EOL, FILE_APPEND);
 
         return $identifiedPlatform;
     }
