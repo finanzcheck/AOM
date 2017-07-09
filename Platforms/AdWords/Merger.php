@@ -19,6 +19,12 @@ class Merger extends AbstractMerger implements MergerInterface
     public function merge()
     {
         foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
+
+            // Usually we should have some Piwik visits in the aom_visits table, that only have a gclid ad param.
+            // We need to update platform_key and platform_data of these visits by matching them with our gclid table
+            // before we can merge them with costs.
+            $this->enrichAomVisitsBasedOnGclid($date);
+
             foreach ($this->getPlatformRows(AOM::PLATFORM_AD_WORDS, $date) as $platformRow) {
 
                 $platformKey = $this->getPlatformKey(
@@ -42,7 +48,7 @@ class Merger extends AbstractMerger implements MergerInterface
                 // Update visit's platform data (including historic records)
                 $affectedRows = Db::query(
                     'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
-                    . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
+                        . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
                     [json_encode($platformData), $platformRow['idsite'], $platformKey, json_encode($platformData),]
                 )->rowCount();
                 if ($affectedRows > 0) {
@@ -55,6 +61,53 @@ class Merger extends AbstractMerger implements MergerInterface
             }
 
             $this->validateMergeResults(AOM::PLATFORM_AD_WORDS, $date);
+        }
+    }
+
+    /**
+     * @param string $date
+     */
+    private function enrichAomVisitsBasedOnGclid($date)
+    {
+       // Get all AdWords visits whose gclids haven't been matched yet.
+        $unmatched = Db::fetchAll(
+            'SELECT id, idsite, platform_data FROM ' . Common::prefixTable('aom_visits')
+            . ' WHERE date_website_timezone = ? AND channel = ? AND platform_key IS NULL',
+            [$date, AOM::PLATFORM_AD_WORDS, ]
+        );
+        $this->logger->debug('Got ' . count($unmatched) . '  AdWords visits whose gclids have not been matched yet.');
+
+        foreach ($unmatched as $visit) {
+
+            $platformData = @json_decode($visit['platform_data'], true);
+            if (json_last_error() != JSON_ERROR_NONE
+                || !is_array($platformData)
+                || !array_key_exists('gclid', $platformData)
+            ) {
+                continue;
+            }
+
+            $click = $this->findGoogleClickBasedOnGclid($visit['idsite'], $date, $platformData['gclid']);
+            if (!$click) {
+                continue;
+            }
+
+            Db::query(
+                'UPDATE ' . Common::prefixTable('aom_visits')
+                    . ' SET platform_key = ?, platform_data = ?, ts_last_update = NOW() '
+                    . ' WHERE id = ?',
+                [
+                    $this->getPlatformKey(
+                        $click['network'], $click['campaignId'], $click['adGroupId'], $click['keywordId']
+                    ),
+                    json_encode($click),
+                    $visit['id'],
+                ]
+            );
+            $this->logger->debug('Updated AOM visit ' . $visit['id'] . ' based on gclid.');
+
+            // We do not publish an update here, as we'll distribute cost immediately afterwards and we'll publish an
+            // update there.
         }
     }
 
@@ -72,7 +125,9 @@ class Merger extends AbstractMerger implements MergerInterface
         }
 
         // Find Google click based on gclid
-        // (a match will only be possible if AdWords is already imported but tracking event processing is delayed)
+        // A match will only be possible if AdWords is already imported but tracking event processing is delayed.
+        // This is usually not the case; usually AdWords visits will be stored in aom_visits with gclid only.
+        // When importing Google Click Performance report, the gclid will be updated and the platform_key generated.
         $gclid = $aomAdParams['gclid'];
         $click = $this->findGoogleClickBasedOnGclid($idsite, $date, $gclid);
 
@@ -114,7 +169,7 @@ class Merger extends AbstractMerger implements MergerInterface
         $result = Db::fetchRow(
             'SELECT account, campaign_id AS campaignId, campaign, ad_group_id AS adGroupId, ad_group AS adGroup, '
                 . ' keyword_id AS keywordId, keyword_placement AS keywordPlacement, match_type AS matchType, '
-                . ' ad_id AS adId, network, device'
+                . ' ad_id AS adId, network, device, gclid '
                 . ' FROM ' . Common::prefixTable('aom_adwords_gclid')
                 . ' WHERE date BETWEEN DATE(?) - INTERVAL 1 DAY AND DATE(?) AND idsite = ? AND gclid = ?',
             [$date, $date, $idsite, $gclid,]

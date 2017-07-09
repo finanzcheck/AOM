@@ -14,7 +14,6 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class AdWords extends AbstractPlatform implements PlatformInterface
@@ -79,6 +78,9 @@ class AdWords extends AbstractPlatform implements PlatformInterface
     /**
      * Returns true if the visit is coming from this platform. False otherwise.
      *
+     * TODO: There should only be one Piwik visit per gclid!
+     * TODO: Set source of visits to "direct" if a previous visit with same gclid exists?!
+     *
      * @param Request $request
      * @return bool
      */
@@ -125,121 +127,6 @@ class AdWords extends AbstractPlatform implements PlatformInterface
                 'platform' => AOM::PLATFORM_AD_WORDS,
                 'gclid' => $queryParams['gclid'],
             ] : null;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-        if (!$date) {
-            $date = date('Y-m-d', strtotime(AOM::convertUTCToLocalDateTime(date('Y-m-d H:i:s'), $idsite)));
-        }
-
-        $adData = $this->getAdData(
-            $idsite,
-            $date,
-            $adParams
-        );
-
-        if (!$adData[0] && array_key_exists('campaignId', $adParams) && array_key_exists('adGroupId', $adParams)) {
-            $adData = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
-        }
-
-        return $adData;
-    }
-
-    /**
-     * Tries to match ad params with imported platform data for a specific date.
-     *
-     * @param int $idsite
-     * @param string $date
-     * @param array $adParams
-     * @return array|null Either a [{visitId}, {adData}] array or null (when no adData could be found)
-     * @throws \Exception
-     */
-    public static function getAdData($idsite, $date, $adParams)
-    {
-        // We cannot get adData for adParams when required data is missing
-        if (!array_key_exists('network', $adParams) || 0 === strlen($adParams['network'])
-            || !array_key_exists('campaignId', $adParams) || 0 === strlen($adParams['campaignId'])
-            || !array_key_exists('adGroupId', $adParams) || 0 === strlen($adParams['adGroupId'])
-            || ((!array_key_exists('placement', $adParams) || 0 === strlen($adParams['placement']))
-                && (!array_key_exists('targetId', $adParams) || 0 === strlen($adParams['targetId'])))
-        ) {
-            return null;
-        }
-
-        if ($adParams['network'] == 'd') {
-
-            $query = 'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
-                WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "d"
-                AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
-                AND keyword_placement = "' . $adParams['placement'] . '"';
-
-        } else {
-
-            $targetId = $adParams['targetId'];
-            if (strpos($adParams['targetId'], 'kwd-') !== false) {
-                $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
-            }
-
-            $query = 'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
-                WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "' . $adParams['network'] . '"
-                AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
-                AND keyword_id = "' . $targetId . '"';
-        }
-
-        $result = Db::fetchAll($query);
-
-        if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match query: ' . $query);
-        } elseif(count($result) == 0) {
-            return null;
-        }
-
-        return [$result[0]['id'], $result[0]];
-    }
-
-
-    /**
-     * Tries to identify campaign name, ad group name etc. from historical imported data by given ad param ids.
-     *
-     * @param int $idsite
-     * @param int $campaignId
-     * @param int $adGroupId
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
-    {
-        // We cannot get the desired data as required attributes are missing (we might get this data later via gclid!)
-        if (0 === strlen($campaignId) || 0 === strlen($adGroupId)) {
-            return null;
-        }
-
-        $result = Db::fetchRow(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
-                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? ORDER BY date DESC LIMIT 1',
-            [
-                $idsite,
-                $campaignId,
-                $adGroupId
-            ]
-        );
-
-        if ($result) {
-
-            // Keep generic date-independent information only
-            return [
-                'campaign_id' => $campaignId,
-                'campaign' => $result['campaign'],
-                'ad_group_id' => $adGroupId,
-                'ad_group' => $result['ad_group'],
-            ];
-        }
-
-        return null;
     }
 
     /**

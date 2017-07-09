@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
@@ -10,11 +11,9 @@ use Google\AdsApi\AdWords\AdWordsSession;
 use Google\AdsApi\AdWords\Reporting\v201702\DownloadFormat;
 use Google\AdsApi\AdWords\Reporting\v201702\ReportDownloader;
 use Monolog\Logger;
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
-use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
 class ImporterClickPerformance
@@ -57,42 +56,6 @@ class ImporterClickPerformance
 
         $xml = simplexml_load_string($reportDownloadResult->getAsString());
 
-
-        // Get all visits which ad params we could possibly improve
-
-        // Leave one hour tolerance for visits that arrive late
-        $endDate = new \DateTime($date . ' 23:59:59', new \DateTimeZone(Site::getTimezoneFor($account['websiteId'])));
-        $endDate->add(new \DateInterval('PT1H'));
-        $endDate->setTimezone(new \DateTimeZone('UTC'));
-        $endDate = $endDate->format('Y-m-d H:i:s');
-
-        // We cannot use gclid as key as multiple Piwik visits might have the same gclid (e.g. when the visitor reload)!
-        $visits = Db::fetchAssoc(
-            'SELECT idvisit, 
-                  SUBSTRING_INDEX(
-                    SUBSTR(aom_ad_params, LOCATE(\'gclid\', aom_ad_params)+CHAR_LENGTH(\'gclid\')+3),\'"\',1
-                  ) AS gclid, 
-                  aom_ad_params
-                FROM ' . Common::prefixTable('log_visit') . '
-                WHERE idsite = ? AND aom_platform = ? AND visit_first_action_time >= ?
-                     AND visit_first_action_time <= ?',
-            [
-                $account['websiteId'],
-                AOM::PLATFORM_AD_WORDS,
-                AOM::convertLocalDateTimeToUTC($date . ' 00:00:00', Site::getTimezoneFor($account['websiteId'])),
-                $endDate,
-            ]
-        );
-        foreach ($visits as &$visit) {
-            $visit['adParams'] = @json_decode($visit['aom_ad_params'], true);
-            if (!is_array($visit['adParams'])) {
-                $visit['adParams'] = [];
-            }
-        }
-
-        // This will be our lookup table based on gclids
-        $gclids = [];
-
         // We'll create a very big INSERT here to improve performance (INSERT INTO a (b,c) VALUES (1,1),(1,2),...)
         $dataToInsert = [];
 
@@ -111,17 +74,6 @@ class ImporterClickPerformance
                 $network = AdWords::$networks[(string) $row['networkWithSearchPartners']];
             }
 
-            // Add data to lookup table
-            $gclids[(string) $row['googleClickID']] = [
-                'campaignId' => (string) $row['campaignID'],
-                'adGroupId' => (string) $row['adGroupID'],
-                'targetId' => 'kwd-' . (string) $row['keywordID'],
-                'placement' => (string) $row['keywordPlacement'],
-                'creative' => (string) $row['adID'],
-                'network' => $network,
-                'matchType' => (string) $row['matchType'],
-            ];
-
             // Add data to big INSERT statement
             array_push(
                 $dataToInsert,
@@ -134,43 +86,6 @@ class ImporterClickPerformance
         }
 
         $this->bulkInsertGclidData($dataToInsert, $validRows);
-
-        // Improve ad params
-        foreach ($visits as $visit) {
-            if (array_key_exists($visit['gclid'], $gclids)
-                && (!array_key_exists('campaignId', $visit['adParams'])
-                    || $visit['adParams']['campaignId'] != $gclids[$visit['gclid']]['campaignId']
-                    || !array_key_exists('adGroupId', $visit['adParams'])
-                    || $visit['adParams']['adGroupId'] != $gclids[$visit['gclid']]['adGroupId']
-                    || !array_key_exists('targetId', $visit['adParams'])
-                    || !array_key_exists('network', $visit['adParams'])
-                    || $visit['adParams']['network'] != $gclids[$visit['gclid']]['network']
-                    || !array_key_exists('matchType', $visit['adParams'])
-                    || $visit['adParams']['matchType'] != $gclids[$visit['gclid']]['matchType'])
-            ) {
-                $visit['adParams']['campaignId'] = $gclids[$visit['gclid']]['campaignId'];
-                $visit['adParams']['adGroupId'] = $gclids[$visit['gclid']]['adGroupId'];
-                $visit['adParams']['targetId'] = $gclids[$visit['gclid']]['targetId'];
-                $visit['adParams']['placement'] = $gclids[$visit['gclid']]['placement'];
-                $visit['adParams']['creative'] = $gclids[$visit['gclid']]['creative'];
-                $visit['adParams']['network'] = $gclids[$visit['gclid']]['network'];
-                $visit['adParams']['matchType'] = $gclids[$visit['gclid']]['matchType'];
-
-                // TODO: Create bulk update here!
-                Db::exec("UPDATE " . Common::prefixTable('log_visit')
-                    . " SET aom_ad_params = '" . json_encode($visit['adParams']) . "'"
-                    . " WHERE idvisit = " . $visit['idvisit']);
-
-                $this->log(
-                    Logger::DEBUG,
-                    'Improved ad params of visit ' . $visit['idvisit'] . ' via gclid-matching.'
-                );
-            }
-
-            // TODO:
-            // There are often visits with gclid that belongs to previous days,
-            // i.e. this visit should not be assigned to AdWords!
-        }
     }
 
     /**

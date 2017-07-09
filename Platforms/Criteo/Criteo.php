@@ -49,65 +49,6 @@ class Criteo extends AbstractPlatform implements PlatformInterface
     }
 
     /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-        if(!$date) {
-            $date = date('Y-m-d');
-        }
-        return $this::getAdData($idsite, $date, $adParams['campaignId']);
-    }
-
-    /**
-     * @param int $idsite
-     * @param string $date
-     * @param int $campaignId
-     * @return array|null
-     * @throws Exception
-     */
-    public static function getAdData($idsite, $date, $campaignId)
-    {
-        // Exact match
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO) . '
-                WHERE idsite = ? AND date = ? AND campaign_id = ?',
-            [
-                $idsite,
-                $date,
-                $campaignId,
-            ]
-        );
-        if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match.');
-        } elseif (1 === count($result)) {
-            return [$result[0]['id'], $result[0]];
-        }
-
-        // No exact match found; search for historic data
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO)
-                . ' WHERE idsite = ? AND campaign_id = ? ORDER BY date DESC LIMIT 1',
-            [
-                $idsite,
-                $campaignId
-            ]
-        );
-        if (count($result) > 0) {
-            // Keep generic date-independent information only
-            return [
-                null,
-                [
-                    'campaign_id' => $campaignId,
-                    'campaign' => $result[0]['campaign'],
-                ]
-            ];
-        }
-
-        return [null, null];
-    }
-
-    /**
      * Activates sub tables for the marketing performance report in the Piwik UI for Criteo.
      *
      * @return MarketingPerformanceSubTables

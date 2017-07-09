@@ -39,7 +39,6 @@ class Bing extends AbstractPlatform implements PlatformInterface
             [
                 $paramPrefix . '_campaign_id',
                 $paramPrefix . '_ad_group_id',
-                $paramPrefix . '_order_item_id',
                 $paramPrefix . '_target_id',
             ],
             array_keys($queryParams)
@@ -57,103 +56,10 @@ class Bing extends AbstractPlatform implements PlatformInterface
             'platform' => AOM::PLATFORM_BING,
             'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
             'adGroupId' => $queryParams[$paramPrefix . '_ad_group_id'],
-            'orderItemId' => $queryParams[$paramPrefix . '_order_item_id'],
             'targetId' => $queryParams[$paramPrefix . '_target_id'],
         ];
 
-        // Add optional params
-        if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
-            $adParams['adId'] = $queryParams[$paramPrefix . '_ad_id'];
-        }
-
         return $adParams;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-        if(!$date) {
-            $date = date('Y-m-d');
-        }
-
-        $data = $this->getAdData($idsite, $date, $adParams);
-        if(!$data[0]) {
-            $data = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
-        }
-        return $data;
-    }
-
-    /**
-     * Searches for matching ad data.
-     *
-     * @param $idsite
-     * @param $date
-     * @param $adParams
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getAdData($idsite, $date, $adParams)
-    {
-        $targetId = $adParams['targetId'];
-        if (strpos($adParams['targetId'], 'kwd-') !== false) {
-            $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
-        }
-
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_BING) . '
-                WHERE idsite = ? AND date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
-            [
-                $idsite,
-                $date,
-                $adParams['campaignId'],
-                $adParams['adGroupId'],
-                $targetId
-            ]
-        );
-
-        if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match.');
-        } elseif (count($result) == 0) {
-            return null;
-        }
-
-        return [$result[0]['id'], $result[0]];
-    }
-
-    /**
-     * Searches for historical ad data.
-     *
-     * @param $idsite
-     * @param $campaignId
-     * @param $adGroupId
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
-    {
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_BING) . '
-                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
-            [
-                $idsite,
-                $campaignId,
-                $adGroupId
-            ]
-        );
-
-        if (count($result) > 0) {
-            // Keep generic date-independent information only
-            return [
-                'campaign_id' => $campaignId,
-                'campaign' => $result[0]['campaign'],
-                'ad_group_id' => $adGroupId,
-                'ad_group' => $result[0]['ad_group'],
-            ];
-        }
-
-        return null;
     }
 
     /**

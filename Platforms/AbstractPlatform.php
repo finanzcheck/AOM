@@ -170,19 +170,6 @@ abstract class AbstractPlatform
     abstract protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request);
 
     /**
-     * Extracts advertisement data from the ad params and stores it in log_visit.aom_ad_data.
-     * At this point it is likely that there is no actual ad data available. In this case historical data is used to
-     * add some basic information.
-     * The implementation of this method must ensure a consistently ordered JSON.
-     *
-     * @param string $idSite
-     * @param array $adParams
-     * @param string $date
-     * @return mixed
-     */
-    abstract public function getAdDataFromAdParams($idSite, array $adParams, $date = null);
-
-    /**
      * Instantiates and returns the platform specific installer.
      *
      * @return InstallerInterface

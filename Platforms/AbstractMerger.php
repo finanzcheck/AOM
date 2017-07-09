@@ -83,7 +83,8 @@ abstract class AbstractMerger
     protected function getPlatformRows($platformName, $date)
     {
         $platformRows = Db::fetchAll(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName) . ' WHERE date = ?',
+            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName) . ' '
+                . ' WHERE date = ? ORDER BY cost DESC',
             [$date,]
         );
 
@@ -126,14 +127,14 @@ abstract class AbstractMerger
 
         // If there are real visits, distribute cost between them
         if ($matchingVisits['piwikVisits'] > 0) {
-            $costPerVisit = number_format($cost / $matchingVisits['piwikVisits'], 4);
+            $costPerVisit = $cost / $matchingVisits['piwikVisits']; // Precision is handled by database decimal column
             $this->distributeCostBetweenRealVisits($idsite, $date, $platformName, $platformKey, $costPerVisit);
             return;
         }
 
         // If there are no real visits and no artificial visits, create artificial visit with cost
         if (0 == $matchingVisits['totalVisits']) {
-            $this->addArtificialVisit($idsite, $date, $platformName, $platformData, $platformKey);
+            $this->addArtificialVisit($idsite, $date, $platformName, $platformData, $platformKey, $cost);
             return;
         }
 
@@ -180,8 +181,9 @@ abstract class AbstractMerger
      * @param string $platformName
      * @param array $platformData
      * @param string $platformKey
+     * @param float $cost
      */
-    private function addArtificialVisit($idsite, $date, $platformName, array $platformData, $platformKey)
+    private function addArtificialVisit($idsite, $date, $platformName, array $platformData, $platformKey, $cost)
     {
         // We must avoid having the same record multiple times in this table, e.g. when this command is being executed
         // in parallel. Manually created visits must create consistent unique hashes from the same raw data.
@@ -190,8 +192,8 @@ abstract class AbstractMerger
         Db::query(
             'INSERT INTO ' . Common::prefixTable('aom_visits')
                 . ' (idsite, unique_hash, first_action_time_utc, date_website_timezone, channel, platform_data, '
-                . ' platform_key, ts_last_update, ts_created) '
-                . ' VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+                . ' platform_key, cost, ts_last_update, ts_created) '
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
             [
                 $idsite,
                 $uniqueHash,
@@ -200,6 +202,7 @@ abstract class AbstractMerger
                 $platformName,
                 json_encode($platformData),
                 $platformKey,
+                $cost,
             ]
         );
 
@@ -245,7 +248,7 @@ abstract class AbstractMerger
 
         if ($result->rowCount() > 0) {
             $this->logger->debug(
-                'Updated cost of ' . $result->rowCount() . ' real visit/s to ' . $costPerVisit . '.'
+                'Updated cost of ' . $result->rowCount() . ' real visit/s to ' . number_format($costPerVisit, 4) . '.'
             );
         }
     }
@@ -270,14 +273,16 @@ abstract class AbstractMerger
             [$platformName, $date,]
         );
 
-        $difference = ($mergedCost > 0) ? round(abs($importedCost / $mergedCost - 1) * 100, 2) : INF;
-        $message = $platformName . '\'s imported cost ' . round($importedCost, 4) . ' differs from merged cost '
-            . round($mergedCost, 4) . ' by ' . $difference . '% for ' . $date . '.';
+        if ($importedCost > 0) {
+            $difference = ($mergedCost > 0) ? round(abs($importedCost / $mergedCost - 1) * 100, 2) : INF;
+            $message = $platformName . '\'s imported cost ' . round($importedCost, 4) . ' differs from merged cost '
+                . round($mergedCost, 4) . ' by ' . $difference . '% for ' . $date . '.';
 
-        if ($difference > 1) {
-            $this->logger->error($message);
-        } elseif ($difference > 0.1) {
-            $this->logger->warning($message);
+            if ($difference > 1) {
+                $this->logger->error($message);
+            } elseif ($difference > 0.1) {
+                $this->logger->warning($message);
+            }
         }
     }
 }

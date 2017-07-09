@@ -14,7 +14,6 @@ use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MarketingPerformanceSubTables;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class FacebookAds extends AbstractPlatform implements PlatformInterface
@@ -51,88 +50,6 @@ class FacebookAds extends AbstractPlatform implements PlatformInterface
             'adsetId' => $queryParams[$paramPrefix . '_adset_id'],
             'adId' => $queryParams[$paramPrefix . '_ad_id'],
         ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-        if(!$date) {
-            $date = date('Y-m-d');
-        }
-        $data = $this->getAdData($idsite, $date, $adParams);
-        if(!$data[0]) {
-            $data = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adsetId'])];
-        }
-        return $data;
-    }
-
-    /**
-     * Searches for matching ad data
-     * @param $idsite
-     * @param $date
-     * @param $adParams
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getAdData($idsite, $date, $adParams)
-    {
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
-                WHERE idsite = ? AND date = ? AND campaign_id = ? AND adset_id = ? AND ad_id = ?',
-            [
-                $idsite,
-                $date,
-                $adParams['campaignId'],
-                $adParams['adsetId'],
-                $adParams['adId']
-            ]
-        );
-
-        if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match.');
-        } elseif(count($result) == 0) {
-            return null;
-        }
-
-        return [$result[0]['id'], $result[0]];
-    }
-
-
-
-    /**
-     * Searches for historical AdData
-     *
-     * @param $idsite
-     * @param $campaignId
-     * @param $adsetId
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getHistoricalAdData($idsite, $campaignId, $adsetId)
-    {
-        $result = Db::fetchAll(
-            'SELECT * FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_FACEBOOK_ADS) . '
-                WHERE idsite = ? AND campaign_id = ? AND adset_id = ?',
-            [
-                $idsite,
-                $campaignId,
-                $adsetId
-            ]
-        );
-
-        if (count($result) > 0) {
-            // Keep generic date-independent information only
-            return [
-                'campaign_id' => $campaignId,
-                'campaign_name' => $result[0]['campaign_name'],
-                'adset_id' => $adsetId,
-                'adset_name' => $result[0]['adset_name'],
-            ];
-        }
-
-        return null;
     }
 
     /**
