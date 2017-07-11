@@ -37,7 +37,6 @@ class PiwikVisitService
     {
         // Limit to 10 visits to distribute work (if it has queued up for whatever reason)
         foreach (array_slice($this->getUnprocessedVisits(), 0, 10) as $visit) {
-
             $this->addNewPiwikVisit($visit);
         }
     }

@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\tests\Fixtures;
 
@@ -32,9 +33,22 @@ class BasicFixtures extends Fixture
         $settings->platformBingIsActive->setValue(true);
         $settings->platformCriteoIsActive->setValue(true);
         $settings->platformFacebookAdsIsActive->setValue(true);
-        $settings->platformIndividualCampaignsIsActive->setValue(true);
+//        $settings->platformIndividualCampaignsIsActive->setValue(true);
         $settings->platformTaboolaIsActive->setValue(true);
         $settings->save();
+
+        // Make sure that VisitorRecognizer.php has not been modified (ExternalVisitId plugin)
+        $code = file_get_contents(PIWIK_INCLUDE_PATH . '/core/Tracker/VisitorRecognizer.php');
+        if (strlen($code) < 100
+            || strpos($code, 'This method has been manually overridden by the ExternalVisitId plugin')
+            || strpos($code, '$externalVisitId')
+            || strpos($code, 'WHERE idsite = ? AND idvisitor = ? AND external_visit_id = ?')
+        ) {
+            die(
+                'Piwik AOM tests do not work when Piwik\Tracker\VisitorRecognizer.findKnownVisitor() has been modified '
+                    . 'by the ExternalVisitId plugin.'
+            );
+        }
     }
 
     public function tearDown()
