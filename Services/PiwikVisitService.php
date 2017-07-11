@@ -35,8 +35,9 @@ class PiwikVisitService
      */
     public function checkForNewVisit()
     {
-        // Limit to 100 visits to distribute work (if it has queued up for whatever reason)
-        foreach (array_slice($this->getUnprocessedVisits(), 0, 100) as $visit) {
+        // Limit to 500 visits to distribute work (if it has queued up for whatever reason)
+        // TODO: Move limits to command/supervisor
+        foreach (array_slice($this->getUnprocessedVisits(), 0, 500) as $visit) {
             $this->addNewPiwikVisit($visit);
         }
     }
@@ -77,6 +78,7 @@ class PiwikVisitService
             $latestProcessedConversion = 0;
         }
 
+        // TODO: Move limits to command/supervisor
         foreach (Db::query('SELECT idconversion, idvisit, idsite, idorder, revenue '
             . ' FROM ' . Common::prefixTable('log_conversion') . ' WHERE idconversion > ' . $latestProcessedConversion
             . ' ORDER BY idconversion ASC LIMIT 100') // Limit to distribute work (if it has queued up)
@@ -87,11 +89,10 @@ class PiwikVisitService
                 'UPDATE ' . Common::prefixTable('aom_visits') . ' SET '
                     . ' conversions = IFNULL(conversions, 0) + 1, revenue = IFNULL(revenue, 0) + ?, '
                     . ' ts_last_update = NOW() '
-                    . ' WHERE idsite = ? AND piwik_idvisit = ?',
+                    . ' WHERE unique_hash = ?',
                 [
                     $conversion['revenue'],
-                    $conversion['idsite'],
-                    $conversion['idvisit'],
+                    'piwik-visit-' . $conversion['idvisit'],    // We use unique_hash to use an existing index.
                 ]
             );
             if (1 === $result->rowCount()) {
