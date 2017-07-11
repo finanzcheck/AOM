@@ -158,7 +158,8 @@ abstract class AbstractPlatform
             for ($i = 0; $i < count($failures); $i++) {
                 if ($i > 0) { $message .= ' and '; }
                 $message .= 'without required param' . (count($failures[$i]['missingParams']) != 1 ? 's' : '')
-                    . ' "' . implode('", "', $failures[$i]['missingParams']) . '" in URL ' . $failures[$i]['url'];
+                    . ' "' . implode('", "', $failures[$i]['missingParams']) . '" in URL "' . $failures[$i]['url']
+                    . '"';
             }
             $this->logger->warning($message . '.');
         }
