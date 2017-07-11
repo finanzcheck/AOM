@@ -10,6 +10,7 @@ use Exception;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\InstallerInterface;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 
 class Installer implements InstallerInterface
 {
@@ -20,8 +21,8 @@ class Installer implements InstallerInterface
      */
     public function installPlugin()
     {
-        AOM::addDatabaseTable(
-            'CREATE TABLE ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (
+        DatabaseHelperService::addTable(
+            'CREATE TABLE ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 id_account_internal VARCHAR(50) NOT NULL,
                 idsite INTEGER NOT NULL,
@@ -39,15 +40,15 @@ class Installer implements InstallerInterface
             )  DEFAULT CHARSET=utf8');
 
         // Avoid issues from parallel imports
-        AOM::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE UNIQUE INDEX index_aom_criteo_unique ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (idsite, date, campaign_id)'
+            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (idsite, date, campaign_id)'
         );
 
         // Optimize for queries from MarketingPerformanceController.php
-        AOM::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE INDEX index_aom_criteo ON '
-            . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (idsite, date)');
+            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' (idsite, date)');
     }
 
     /**
@@ -57,6 +58,6 @@ class Installer implements InstallerInterface
      */
     public function uninstallPlugin()
     {
-        Db::dropTables(AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO));
+        Db::dropTables(DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO));
     }
 }

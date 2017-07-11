@@ -11,10 +11,11 @@ use Piwik\Db;
 use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Tracker\Request;
 
-class Bing extends Platform
+class Bing extends AbstractPlatform implements PlatformInterface
 {
     const AD_CAMPAIGN_ID = 1;
     const AD_AD_GROUP_ID = 2;
@@ -28,130 +29,27 @@ class Bing extends Platform
      * @param array $queryParams
      * @param string $paramPrefix
      * @param Request $request
-     * @return array|null
+     * @return array
      */
     protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
         // Validate required params
         $missingParams = array_diff(
-            [
-                $paramPrefix . '_campaign_id',
-                $paramPrefix . '_ad_group_id',
-                $paramPrefix . '_order_item_id',
-                $paramPrefix . '_target_id',
-            ],
+            [$paramPrefix . '_campaign_id', $paramPrefix . '_ad_group_id', $paramPrefix . '_target_id',],
             array_keys($queryParams)
         );
         if (count($missingParams)) {
-            $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_BING . ' without required param/s: '
-                . implode(', ', $missingParams)
-            );
-
-            return null;
+            return [false, $missingParams];
         }
 
         $adParams = [
             'platform' => AOM::PLATFORM_BING,
             'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
             'adGroupId' => $queryParams[$paramPrefix . '_ad_group_id'],
-            'orderItemId' => $queryParams[$paramPrefix . '_order_item_id'],
             'targetId' => $queryParams[$paramPrefix . '_target_id'],
         ];
 
-        // Add optional params
-        if (array_key_exists($paramPrefix . '_ad_id', $queryParams)) {
-            $adParams['adId'] = $queryParams[$paramPrefix . '_ad_id'];
-        }
-
-        return $adParams;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-        if(!$date) {
-            $date = date('Y-m-d');
-        }
-
-        $data = $this->getAdData($idsite, $date, $adParams);
-        if(!$data[0]) {
-            $data = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
-        }
-        return $data;
-    }
-
-    /**
-     * Searches for matching ad data.
-     *
-     * @param $idsite
-     * @param $date
-     * @param $adParams
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getAdData($idsite, $date, $adParams)
-    {
-        $targetId = $adParams['targetId'];
-        if (strpos($adParams['targetId'], 'kwd-') !== false) {
-            $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
-        }
-
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
-                WHERE idsite = ? AND date = ? AND campaign_id = ? AND ad_group_id = ? AND keyword_id = ?',
-            [
-                $idsite,
-                $date,
-                $adParams['campaignId'],
-                $adParams['adGroupId'],
-                $targetId
-            ]
-        );
-
-        if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match.');
-        } elseif (count($result) == 0) {
-            return null;
-        }
-
-        return [$result[0]['id'], $result[0]];
-    }
-
-    /**
-     * Searches for historical ad data.
-     *
-     * @param $idsite
-     * @param $campaignId
-     * @param $adGroupId
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
-    {
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_BING) . '
-                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ?',
-            [
-                $idsite,
-                $campaignId,
-                $adGroupId
-            ]
-        );
-
-        if (count($result) > 0) {
-            // Keep generic date-independent information only
-            return [
-                'campaign_id' => $campaignId,
-                'campaign' => $result[0]['campaign'],
-                'ad_group_id' => $adGroupId,
-                'ad_group' => $result[0]['ad_group'],
-            ];
-        }
-
-        return null;
+        return [true, $adParams];
     }
 
     /**
@@ -244,15 +142,23 @@ class Bing extends Platform
 
             $platformData = json_decode($visit['platform_data'], true);
 
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_Bing',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['account'],
-                    $platformData['campaign'],
-                    $platformData['ad_group'],
-                ]
-            );
+            if (is_array($platformData)
+                && array_key_exists('account', $platformData) && array_key_exists('campaign', $platformData)
+                && array_key_exists('adGroup', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_Bing',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['account'],
+                        $platformData['campaign'],
+                        $platformData['adGroup'],
+                        $platformData['keywordPlacement'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_Bing_Incomplete');
+            }
         }
 
         return false;

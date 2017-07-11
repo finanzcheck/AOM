@@ -12,6 +12,7 @@ use Google\AdsApi\AdWords\Reporting\v201702\ReportDownloader;
 use Monolog\Logger;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Psr\Log\LoggerInterface;
 
 class ImporterCriteriaPerformance
@@ -26,7 +27,7 @@ class ImporterCriteriaPerformance
      */
     public function __construct(LoggerInterface $logger = null)
     {
-        $this->logger = (null === $logger ? AOM::getTasksLogger() : $logger);
+        $this->logger = (null === $logger ? AOM::getLogger() : $logger);
     }
 
     /**
@@ -154,7 +155,7 @@ class ImporterCriteriaPerformance
         $allPlaces = implode(', ', array_fill(0, count($consolidatedData), $rowPlaces));
 
         $result = Db::query(
-            'INSERT INTO ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
+            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS)
             . ' (' . implode(', ', $columns) . ') VALUES ' . $allPlaces,
             $dataToInsert
         );
@@ -162,7 +163,7 @@ class ImporterCriteriaPerformance
         $this->log(
             Logger::DEBUG,
             'Inserted ' . $result->rowCount() . ' records into '
-                . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '.'
+                . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '.'
         );
     }
 

@@ -11,6 +11,7 @@ use Piwik\DataTable;
 use Piwik\DataTable\Row;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 
 class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\MarketingPerformanceSubTables
 {
@@ -56,7 +57,7 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
         $campaignData = Db::fetchAssoc(
             'SELECT CONCAT(\'C\', campaign_id) AS campaignId, campaign, ROUND(sum(cost), 2) as cost, '
                 . 'SUM(clicks) as clicks, SUM(impressions) as impressions '
-                . 'FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' '
+                . 'FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO) . ' '
                 . 'WHERE idsite = ? AND date >= ? AND date <= ? '
                 . 'GROUP BY campaignId',
             [

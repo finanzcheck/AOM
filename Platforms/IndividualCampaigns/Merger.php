@@ -5,7 +5,7 @@
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
  * @author André Kolell <andre.kolell@gmail.com>
  */
-namespace Piwik\Plugins\AOM\Platforms\FacebookAds;
+namespace Piwik\Plugins\AOM\Platforms\IndividualCampaigns;
 
 use Exception;
 use Piwik\Plugins\AOM\Platforms\AbstractMerger;
