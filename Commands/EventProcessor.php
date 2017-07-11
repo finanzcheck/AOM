@@ -9,12 +9,9 @@ namespace Piwik\Plugins\AOM\Commands;
 
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\Services\PiwikVisitService;
-use Piwik\Plugins\AOM\SystemSettings;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -51,7 +48,9 @@ class EventProcessor extends ConsoleCommand
         // We might need a little more RAM
         ini_set('memory_limit','1024M');
 
+        // TODO: Update docs.
         // TODO: Make sure that this command cannot create race conditions!
+        // TODO: Make this command running continuously via Supervisor as preferred method.
 
         $piwikVisitService = new PiwikVisitService($this->logger);
 
