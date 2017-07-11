@@ -26,7 +26,7 @@ class FacebookAds extends AbstractPlatform implements PlatformInterface
      * @param array $queryParams
      * @param string $paramPrefix
      * @param Request $request
-     * @return array|null
+     * @return array
      */
     protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
@@ -36,19 +36,17 @@ class FacebookAds extends AbstractPlatform implements PlatformInterface
             array_keys($queryParams)
         );
         if (count($missingParams)) {
-            $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_FACEBOOK_ADS . ' without required param/s: '
-                . implode(', ', $missingParams)
-            );
-
-            return null;
+            return [false, $missingParams];
         }
 
         return [
-            'platform' => AOM::PLATFORM_FACEBOOK_ADS,
-            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
-            'adsetId' => $queryParams[$paramPrefix . '_adset_id'],
-            'adId' => $queryParams[$paramPrefix . '_ad_id'],
+            true,
+            [
+                'platform' => AOM::PLATFORM_FACEBOOK_ADS,
+                'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+                'adsetId' => $queryParams[$paramPrefix . '_adset_id'],
+                'adId' => $queryParams[$paramPrefix . '_ad_id'],
+            ]
         ];
     }
 

@@ -98,13 +98,16 @@ class IndividualCampaigns extends AbstractPlatform implements PlatformInterface
             // TODO: Calculating costs might occur in an event based approach immediately here.
 
             return [
-                'platform' => AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS,
-                'individualCampaignRowId' => $matches[0]['id'],
-                'campaignName' => $matches[0]['campaign'],
+                true,
+                [
+                    'platform' => AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS,
+                    'individualCampaignRowId' => $matches[0]['id'],
+                    'campaignName' => $matches[0]['campaign'],
+                ]
             ];
         }
 
-        return null;
+        return [false, []];
     }
 
     /**

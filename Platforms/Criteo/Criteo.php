@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\Criteo;
 
@@ -25,24 +26,22 @@ class Criteo extends AbstractPlatform implements PlatformInterface
      * @param array $queryParams
      * @param string $paramPrefix
      * @param Request $request
-     * @return array|null
+     * @return array
      */
     protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
         // Validate required params
         $missingParams = array_diff([$paramPrefix . '_campaign_id',], array_keys($queryParams));
         if (count($missingParams)) {
-            $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_CRITEO . ' without required param/s: '
-                . implode(', ', $missingParams)
-            );
-
-            return null;
+            return [false, $missingParams];
         }
 
         return [
-            'platform' => AOM::PLATFORM_CRITEO,
-            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+            true,
+            [
+                'platform' => AOM::PLATFORM_CRITEO,
+                'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+            ]
         ];
     }
 

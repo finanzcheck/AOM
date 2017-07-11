@@ -29,26 +29,17 @@ class Bing extends AbstractPlatform implements PlatformInterface
      * @param array $queryParams
      * @param string $paramPrefix
      * @param Request $request
-     * @return array|null
+     * @return array
      */
     protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
         // Validate required params
         $missingParams = array_diff(
-            [
-                $paramPrefix . '_campaign_id',
-                $paramPrefix . '_ad_group_id',
-                $paramPrefix . '_target_id',
-            ],
+            [$paramPrefix . '_campaign_id', $paramPrefix . '_ad_group_id', $paramPrefix . '_target_id',],
             array_keys($queryParams)
         );
         if (count($missingParams)) {
-            $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_BING . ' without required param/s: '
-                . implode(', ', $missingParams)
-            );
-
-            return null;
+            return [false, $missingParams];
         }
 
         $adParams = [
@@ -58,7 +49,7 @@ class Bing extends AbstractPlatform implements PlatformInterface
             'targetId' => $queryParams[$paramPrefix . '_target_id'],
         ];
 
-        return $adParams;
+        return [true, $adParams];
     }
 
     /**

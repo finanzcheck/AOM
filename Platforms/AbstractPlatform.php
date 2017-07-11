@@ -119,6 +119,7 @@ abstract class AbstractPlatform
      * associative array.
      *
      * TODO: Check if we should use $action->getActionUrl() instead of or in addition to $request->getParams()['url'].
+     * TODO: Rename adParams into something which also makes sense for data extracted from the referrer
      *
      * @param Request $request
      * @return null|array
@@ -126,6 +127,7 @@ abstract class AbstractPlatform
     public function getAdParamsFromRequest(Request $request)
     {
         $paramPrefix = $this->getSettings()->paramPrefix->getValue();
+        $platform = AOM::getPlatformInstance($this->getUnqualifiedClassName());
 
         // Check current URL before referrer URL
         $urlsToCheck = [];
@@ -136,22 +138,29 @@ abstract class AbstractPlatform
             $urlsToCheck[] = $request->getParams()['urlref'];
         }
 
+        // TODO: Should we combine the results of all the different checks instead of simply return the first match?
+        $failures = [];
         foreach ($urlsToCheck as $urlToCheck) {
 
-            // TODO: Should we combine the results of all the different checks instead of simply return the first match?
-
-            // Try to get adParams from referrer
-            // TODO: Rename adParams into something which also works for data extracted from the referrer?
-
-            // Try to get adParams from
             $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
             parse_str($queryString, $queryParams);
 
-            $platform = AOM::getPlatformInstance($this->getUnqualifiedClassName());
-            $adParams = $platform->getAdParamsFromUrl($urlToCheck, $queryParams, $paramPrefix, $request);
-            if (is_array($adParams) && count($adParams) > 0) {
-                return $adParams;
+            list($success, $params) = $platform->getAdParamsFromUrl($urlToCheck, $queryParams, $paramPrefix, $request);
+            if ($success) {
+                return $params;
+            } else {
+                $failures[] = ['url' => $urlToCheck, 'missingParams' => $params];
             }
+        }
+
+        if (count($failures) > 0) {
+            $message = 'Visit from platform ' . $platform->getName() . ' ';
+            for ($i = 0; $i <= count($failures); $i++) {
+                if ($i > 0) { $message .= 'and '; }
+                $message .= 'without required param' . (count($failures[$i]['missingParams']) != 1 ? 's' : '')
+                    . ' "' . implode('", "', $failures[$i]['missingParams']) . '" in URL ' . $failures[$i]['url'];
+            }
+            $this->logger->warning($message . '.');
         }
 
         return null;

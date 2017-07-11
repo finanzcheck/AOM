@@ -122,11 +122,17 @@ class AdWords extends AbstractPlatform implements PlatformInterface
     protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
         // No validation possible, as there either is a gclid or not (the _platform param won't be set!)
-        return array_key_exists('gclid', $queryParams)
-            ? [
-                'platform' => AOM::PLATFORM_AD_WORDS,
-                'gclid' => $queryParams['gclid'],
-            ] : null;
+        if (array_key_exists('gclid', $queryParams)) {
+            return [
+                true,
+                [
+                    'platform' => AOM::PLATFORM_AD_WORDS,
+                    'gclid' => $queryParams['gclid'],
+                ]
+            ];
+        }
+
+        return [false, []];
     }
 
     /**

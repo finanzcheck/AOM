@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
@@ -35,18 +36,16 @@ class Taboola extends AbstractPlatform implements PlatformInterface
             array_keys($queryParams)
         );
         if (count($missingParams)) {
-            $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_TABOOLA . ' without required param/s: '
-                . implode(', ', $missingParams)
-            );
-
-            return null;
+            return [false, $missingParams];
         }
 
         return [
-            'platform' => AOM::PLATFORM_TABOOLA,
-            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
-            'siteId' => $queryParams[$paramPrefix . '_site_id'],
+            true,
+            [
+                'platform' => AOM::PLATFORM_TABOOLA,
+                'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+                'siteId' => $queryParams[$paramPrefix . '_site_id'],
+            ]
         ];
     }
 
