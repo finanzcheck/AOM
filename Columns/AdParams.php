@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Columns;
 
@@ -30,9 +31,6 @@ class AdParams extends VisitDimension
      */
     public function onNewVisit(Request $request, Visitor $visitor, $action)
     {
-        // TODO: Remove
-//        file_put_contents('/srv/www/piwik/X.log', $request->getParam('url') . PHP_EOL, FILE_APPEND);
-
         return json_encode($this->getAdParamsFromRequest($request));
     }
 
@@ -94,9 +92,6 @@ class AdParams extends VisitDimension
     public static function getAdParamsFromRequest(Request $request)
     {
         $platformName = Platform::identifyPlatformFromRequest($request);
-
-        // TODO: Remove
-//        file_put_contents('/srv/www/piwik/X.log', 'identified: ' . $platformName . PHP_EOL, FILE_APPEND);
 
         if ($platformName) {
             $platform = AOM::getPlatformInstance($platformName);

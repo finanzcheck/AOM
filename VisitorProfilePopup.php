@@ -3,20 +3,21 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM;
 
 use DOMDocument;
 use DOMXPath;
-use Piwik\Db;
-use Piwik\Plugins\AOM\Platforms\Platform;
+
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 
 class VisitorProfilePopup
 {
     public static function enrich(&$result)
     {
         $doc = new DOMDocument();
-        $doc->loadHTML($result);
+        @$doc->loadHTML($result);
 
         $xpath = new DOMXpath($doc);
 
@@ -36,7 +37,7 @@ class VisitorProfilePopup
             foreach ($visitsNodes as $visitNode) {
                 $visitId = $visitNode->value;
                 if ($visitId  > 0) {
-                    $additionalDescription = Platform::getHumanReadableDescriptionForVisit($visitId);
+                    $additionalDescription = AbstractPlatform::getHumanReadableDescriptionForVisit($visitId);
                     if ($additionalDescription) {
 
                         $el = $doc->createElement('div');

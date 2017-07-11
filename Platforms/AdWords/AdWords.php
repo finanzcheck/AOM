@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\AdWords;
 
@@ -11,25 +12,12 @@ use Piwik\Db;
 use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Tracker\Request;
 
-class AdWords extends Platform
+class AdWords extends AbstractPlatform implements PlatformInterface
 {
-    /**
-     * AdWords can either track and merge via gclid (auto-tagging) or via regular-params but not both at the same time!
-     */
-    const TRACKING_VARIANT_GCLID = 'gclid';
-    const TRACKING_VARIANT_REGULAR_PARAMS = 'regular-params';
-
-    /**
-     * @var array All supported tracking variants
-     */
-    public static $trackingVariants = [
-        self::TRACKING_VARIANT_GCLID,
-        self::TRACKING_VARIANT_REGULAR_PARAMS,
-    ];
-
     const CRITERIA_TYPE_AGE = 'age';
     const CRITERIA_TYPE_GENDER = 'gender';
     const CRITERIA_TYPE_KEYWORD = 'keyword';
@@ -88,47 +76,30 @@ class AdWords extends Platform
     ];
 
     /**
-     * Whether or not this platform has been activated in the plugin's configuration.
-     *
-     * @return string
-     */
-    public function getTrackingVariant()
-    {
-        $trackingVariant = $this->getSettings()->{'platformAdWordsTrackingVariant'}->getValue();
-
-        return in_array($trackingVariant, self::$trackingVariants) ? $trackingVariant : self::TRACKING_VARIANT_GCLID;
-    }
-
-    /**
      * Returns true if the visit is coming from this platform. False otherwise.
+     *
+     * TODO: There should only be one Piwik visit per gclid!
+     * TODO: Set source of visits to "direct" if a previous visit with same gclid exists?!
      *
      * @param Request $request
      * @return bool
      */
     public function isVisitComingFromPlatform(Request $request)
     {
-        if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
+        // Check current URL first before referrer URL
+        $urlsToCheck = [];
+        if (isset($request->getParams()['url'])) {
+            $urlsToCheck[] = $request->getParams()['url'];
+        }
+        if (isset($request->getParams()['urlref'])) {
+            $urlsToCheck[] = $request->getParams()['urlref'];
+        }
 
-            // Check current URL first before referrer URL
-            $urlsToCheck = [];
-            if (isset($request->getParams()['url'])) {
-                $urlsToCheck[] = $request->getParams()['url'];
-            }
-            if (isset($request->getParams()['urlref'])) {
-                $urlsToCheck[] = $request->getParams()['urlref'];
-            }
+        foreach ($urlsToCheck as $urlToCheck) {
+            $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
+            parse_str($queryString, $queryParams);
 
-            foreach ($urlsToCheck as $urlToCheck) {
-                $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
-                parse_str($queryString, $queryParams);
-
-                if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
-                    return true;
-                }
-            }
-
-        } elseif (self::TRACKING_VARIANT_REGULAR_PARAMS === $this->getTrackingVariant()) {
-            if (parent::isVisitComingFromPlatform($request)) {
+            if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
                 return true;
             }
         }
@@ -140,9 +111,7 @@ class AdWords extends Platform
      * Extracts and returns advertisement platform specific data from an URL.
      * $queryParams and $paramPrefix are only passed as params for convenience reasons.
      *
-     * In AdWords the extraction is based on the configured tracking variant (either gclid or regular parameters):
-     *  - When "gclid" is configured, then all other params are being ignored
-     *  - When "regular-params" are configured, then gclid is ignored but a lot of ValueTrack params are required
+     * Since AOM 1.0.0 AdWords only works with gclid.
      *
      * @param string $url
      * @param array $queryParams
@@ -152,197 +121,18 @@ class AdWords extends Platform
      */
     protected function getAdParamsFromUrl($url, array $queryParams, $paramPrefix, Request $request)
     {
-        if (self::TRACKING_VARIANT_GCLID === $this->getTrackingVariant()) {
-
-            // No validation possible, as there either is a gclid or not (the _platform param won't be set!)
-            return array_key_exists('gclid', $queryParams)
-                ? [
+        // No validation possible, as there either is a gclid or not (the _platform param won't be set!)
+        if (array_key_exists('gclid', $queryParams)) {
+            return [
+                true,
+                [
                     'platform' => AOM::PLATFORM_AD_WORDS,
                     'gclid' => $queryParams['gclid'],
-                ] : null;
-
-        } elseif (self::TRACKING_VARIANT_REGULAR_PARAMS === $this->getTrackingVariant()) {
-
-            // Validate required params
-            $missingParams = array_diff(
-                [
-                    $paramPrefix . '_campaign_id',
-                    $paramPrefix . '_ad_group_id',
-                    $paramPrefix . '_feed_item_id',
-                    $paramPrefix . '_target_id',
-                    $paramPrefix . '_creative',
-                    $paramPrefix . '_placement',
-                    $paramPrefix . '_target',
-                    $paramPrefix . '_network',
-                ],
-                array_keys($queryParams)
-            );
-            if (count($missingParams)) {
-                $this->getLogger()->warning(
-                    'Visit with platform ' . AOM::PLATFORM_AD_WORDS
-                    . ' without required param' . (count($missingParams) > 0 ? 's' : '') . ': '
-                    . implode(', ', $missingParams)
-                );
-
-                return null;
-            }
-        }
-
-        $adParams = [
-            'platform' => AOM::PLATFORM_AD_WORDS,
-        ];
-
-        // Add params
-        if (array_key_exists($paramPrefix . '_campaign_id', $queryParams)) {
-            $adParams['campaignId'] = $queryParams[$paramPrefix . '_campaign_id'];
-        }
-        if (array_key_exists($paramPrefix . '_ad_group_id', $queryParams)) {
-            $adParams['adGroupId'] = $queryParams[$paramPrefix . '_ad_group_id'];
-        }
-        if (array_key_exists($paramPrefix . '_feed_item_id', $queryParams)) {
-            $adParams['feedItemId'] = $queryParams[$paramPrefix . '_feed_item_id'];
-        }
-        if (array_key_exists($paramPrefix . '_target_id', $queryParams)) {
-            $adParams['targetId'] = $queryParams[$paramPrefix . '_target_id'];
-        }
-        if (array_key_exists($paramPrefix . '_creative', $queryParams)) {
-            $adParams['creative'] = $queryParams[$paramPrefix . '_creative'];
-        }
-        if (array_key_exists($paramPrefix . '_placement', $queryParams)) {
-            $adParams['placement'] = $queryParams[$paramPrefix . '_placement'];
-        }
-        if (array_key_exists($paramPrefix . '_target', $queryParams)) {
-            $adParams['target'] = $queryParams[$paramPrefix . '_target'];
-        }
-        if (array_key_exists($paramPrefix . '_network', $queryParams)) {
-            $adParams['network'] = $queryParams[$paramPrefix . '_network'];
-        }
-        if (array_key_exists($paramPrefix . '_ad_position', $queryParams)) {
-            $adParams['adPosition'] = $queryParams[$paramPrefix . '_ad_position'];
-        }
-        if (array_key_exists($paramPrefix . '_loc_physical', $queryParams)) {
-            $adParams['locPhysical'] = $queryParams[$paramPrefix . '_loc_physical'];
-        }
-        if (array_key_exists($paramPrefix . '_loc_Interest', $queryParams)) {
-            $adParams['locInterest'] = $queryParams[$paramPrefix . '_loc_Interest'];
-        }
-
-        return $adParams;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-        if (!$date) {
-            $date = date('Y-m-d', strtotime(AOM::convertUTCToLocalDateTime(date('Y-m-d H:i:s'), $idsite)));
-        }
-
-        $adData = $this->getAdData(
-            $idsite,
-            $date,
-            $adParams
-        );
-
-        if (!$adData[0] && array_key_exists('campaignId', $adParams) && array_key_exists('adGroupId', $adParams)) {
-            $adData = [null, $this::getHistoricalAdData($idsite, $adParams['campaignId'], $adParams['adGroupId'])];
-        }
-
-        return $adData;
-    }
-
-    /**
-     * Tries to match ad params with imported platform data for a specific date.
-     *
-     * @param int $idsite
-     * @param string $date
-     * @param array $adParams
-     * @return array|null Either a [{visitId}, {adData}] array or null (when no adData could be found)
-     * @throws \Exception
-     */
-    public static function getAdData($idsite, $date, $adParams)
-    {
-        // We cannot get adData for adParams when required data is missing
-        if (!array_key_exists('network', $adParams) || 0 === strlen($adParams['network'])
-            || !array_key_exists('campaignId', $adParams) || 0 === strlen($adParams['campaignId'])
-            || !array_key_exists('adGroupId', $adParams) || 0 === strlen($adParams['adGroupId'])
-            || ((!array_key_exists('placement', $adParams) || 0 === strlen($adParams['placement']))
-                && (!array_key_exists('targetId', $adParams) || 0 === strlen($adParams['targetId'])))
-        ) {
-            return null;
-        }
-
-        if ($adParams['network'] == 'd') {
-
-            $query = 'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
-                WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "d"
-                AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
-                AND keyword_placement = "' . $adParams['placement'] . '"';
-
-        } else {
-
-            $targetId = $adParams['targetId'];
-            if (strpos($adParams['targetId'], 'kwd-') !== false) {
-                $targetId = substr($adParams['targetId'], strpos($adParams['targetId'], 'kwd-') + 4);
-            }
-
-            $query = 'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
-                WHERE idsite = ' . $idsite . ' AND date = "' . $date . '" AND network = "' . $adParams['network'] . '"
-                AND campaign_id = "' . $adParams['campaignId'] . '" AND ad_group_id = "' . $adParams['adGroupId'] . '"
-                AND keyword_id = "' . $targetId . '"';
-        }
-
-        $result = Db::fetchAll($query);
-
-        if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match query: ' . $query);
-        } elseif(count($result) == 0) {
-            return null;
-        }
-
-        return [$result[0]['id'], $result[0]];
-    }
-
-
-    /**
-     * Tries to identify campaign name, ad group name etc. from historical imported data by given ad param ids.
-     *
-     * @param int $idsite
-     * @param int $campaignId
-     * @param int $adGroupId
-     * @return array|null
-     * @throws \Exception
-     */
-    public static function getHistoricalAdData($idsite, $campaignId, $adGroupId)
-    {
-        // We cannot get the desired data as required attributes are missing (we might get this data later via gclid!)
-        if (0 === strlen($campaignId) || 0 === strlen($adGroupId)) {
-            return null;
-        }
-
-        $result = Db::fetchRow(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_AD_WORDS) . '
-                WHERE idsite = ? AND campaign_id = ? AND ad_group_id = ? ORDER BY date DESC LIMIT 1',
-            [
-                $idsite,
-                $campaignId,
-                $adGroupId
-            ]
-        );
-
-        if ($result) {
-
-            // Keep generic date-independent information only
-            return [
-                'campaign_id' => $campaignId,
-                'campaign' => $result['campaign'],
-                'ad_group_id' => $adGroupId,
-                'ad_group' => $result['ad_group'],
+                ]
             ];
         }
 
-        return null;
+        return [false, []];
     }
 
     /**
@@ -382,16 +172,23 @@ class AdWords extends Platform
 
             $platformData = json_decode($visit['platform_data'], true);
 
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_AdWords',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['account'],
-                    $platformData['campaign'],
-                    $platformData['ad_group'],
-                    $platformData['keyword_placement'],
-                ]
-            );
+            if (is_array($platformData)
+                && array_key_exists('account', $platformData) && array_key_exists('campaign', $platformData)
+                && array_key_exists('adGroup', $platformData) && array_key_exists('keywordPlacement', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_AdWords',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['account'],
+                        $platformData['campaign'],
+                        $platformData['adGroup'],
+                        $platformData['keywordPlacement'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_AdWords_Incomplete');
+            }
         }
 
         return false;

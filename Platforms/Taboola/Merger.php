@@ -3,94 +3,160 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
+use Piwik\Common;
+use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Platforms\AbstractMerger;
+use Piwik\Plugins\AOM\Platforms\MergerInterface;
+use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
 
-class Merger extends \Piwik\Plugins\AOM\Platforms\Merger
+class Merger extends AbstractMerger implements MergerInterface
 {
-    /**
-     * @param array $adData
-     * @return string
-     */
-    protected function buildKeyFromAdData(array $adData)
-    {
-        return implode('-', [$adData['idsite'], $adData['date'], $adData['campaign_id'], $adData['site_id'],]);
-    }
-
-    /**
-     * @param array $visit
-     * @return array
-     */
-    protected function getIdsFromVisit(array $visit)
-    {
-        $date = substr(AOM::convertUTCToLocalDateTime($visit['visit_first_action_time'], $visit['idsite']), 0, 10);
-        $adParams = @json_decode($visit['aom_ad_params'], true);
-        $campaignId = isset($adParams['campaignId']) ? $adParams['campaignId'] : null;
-        $siteId = isset($adParams['siteId']) ? $adParams['siteId'] : null;
-
-        return [$visit['idsite'], $date, $campaignId, $siteId];
-    }
-
-    /**
-     * @param array $visit
-     * @return null|string
-     */
-    protected function buildKeyFromVisit($visit)
-    {
-        list($idsite, $date, $campaignId, $siteId) = $this->getIdsFromVisit($visit);
-        if (!$campaignId || !$siteId) {
-            return null;
-        }
-
-        return implode('-', [$idsite, $date, $campaignId, $siteId,]);
-    }
-
     public function merge()
     {
-        $this->logger->info('Will merge Taboola now.');
+        foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
 
-        $adDataMap = $this->getAdData();
+            // TODO: Do not merge if there are no processed real visits yet?
 
-        // Update visits
-        $updateStatements = [];
-        foreach ($this->getVisits() as $visit) {
-            $updateMap = null;
+            foreach ($this->getPlatformRows(AOM::PLATFORM_TABOOLA, $date) as $platformRow) {
 
-            $key = $this->buildKeyFromVisit($visit);
-            if (isset($adDataMap[$key])) {
-                // Set aom_ad_data
-                $updateMap = [
-                    'aom_ad_data' => json_encode($adDataMap[$key]),
-                    'aom_platform_row_id' => $adDataMap[$key]['id']
+                $platformKey = $this->getPlatformKey($platformRow['campaign_id'], $platformRow['site_id']);
+                $platformData = [
+                    'campaignId' => $platformRow['campaign_id'],
+                    'campaign' => $platformRow['campaign'],
+                    'siteId' => $platformRow['site_id'],
+                    'site' => $platformRow['site'],
                 ];
-            } else {
-                // Search for historical data
-                list($idsite, $date, $campaignId, $siteId) = $this->getIdsFromVisit($visit);
-                list($rowId, $data) = Taboola::getAdData($idsite, $date, $campaignId, $siteId);
 
-                if ($data) {
-                    $updateMap = [
-                        'aom_ad_data' => json_encode($data),
-                        'aom_platform_row_id' => $rowId
-                    ];
-                } elseif ($visit['aom_platform_row_id'] || $visit['aom_ad_data']) {
+                // Update visit's platform data (including historic records) and publish update events when necessary
+                $this->updatePlatformData($platformRow['idsite'], $platformKey, $platformRow);
 
-                    // Unset aom_ad_data
-                    $updateMap = [
-                        'aom_ad_data' => 'null',
-                        'aom_platform_row_id' => 'null'
-                    ];
-                }
+                $this->allocateCostOfPlatformRow(AOM::PLATFORM_TABOOLA, $platformRow, $platformKey, $platformData);
             }
-            if ($updateMap) {
-                $updateStatements[] = [$visit['idvisit'], $updateMap];
-            }
+
+            $this->validateMergeResults(AOM::PLATFORM_TABOOLA, $date);
+        }
+    }
+
+    public function getPlatformDataOfVisit($idsite, $date, $idvisit, array $aomAdParams)
+    {
+        $mergerPlatformDataOfVisit = new MergerPlatformDataOfVisit(AOM::PLATFORM_TABOOLA);
+
+        // Make sure that we have the campaignId and siteId available
+        $missingParams = array_diff(['campaignId', 'siteId',], array_keys($aomAdParams));
+        if (count($missingParams)) {
+            $this->logger->warning(
+                'Could not find ' . implode(', ', $missingParams) . ' in ad params of visit ' . $idvisit
+                . ' although platform has been identified as Bing.'
+            );
+            return $mergerPlatformDataOfVisit;
         }
 
-        $this->updateVisits($updateStatements);
+        $mergerPlatformDataOfVisit->setPlatformKey(
+            $this->getPlatformKey($aomAdParams['campaignId'], $aomAdParams['siteId'])
+        );
 
-        $this->logger->info('Merged data.');
+        // Get the exactly matching platform row
+        $platformRow = $this->getExactMatchPlatformRow(
+            $idsite, $date, $aomAdParams['campaignId'], $aomAdParams['siteId']
+        );
+        if (!$platformRow) {
+
+            $platformRow = $this->getHistoricalMatchPlatformRow(
+                $idsite, $aomAdParams['campaignId'], $aomAdParams['siteId']
+            );
+
+            // Neither exact nor historical match with platform data found
+            if (!$platformRow) {
+                return $mergerPlatformDataOfVisit->setPlatformData(
+                    ['campaignId' => $aomAdParams['campaignId'], 'siteId' => $aomAdParams['siteId']]
+                );
+            }
+
+            // Historical match only
+            return $mergerPlatformDataOfVisit->setPlatformData(array_merge(
+                ['campaignId' => $aomAdParams['campaignId'], 'siteId' => $aomAdParams['siteId']],
+                $platformRow
+            ));
+        }
+
+        // Exact match
+        return $mergerPlatformDataOfVisit
+            ->setPlatformData(array_merge(
+                ['campaignId' => $aomAdParams['campaignId'], 'siteId' => $aomAdParams['siteId']],
+                ['campaign' => $platformRow['campaign'], 'site' => $platformRow['site']]
+            ))
+            ->setPlatformRowId($platformRow['platformRowId']);
+    }
+
+    /**
+     * Returns platform data when a match of Taboola click and platform data including cost is found. False otherwise.
+     *
+     * TODO: Imported data should also create platform_key which would make querying easier.
+     *
+     * @param int $idsite
+     * @param string $date
+     * @param string $campaignId
+     * @param string $siteId
+     * @return array|bool
+     */
+    private function getExactMatchPlatformRow($idsite, $date, $campaignId, $siteId)
+    {
+        $result = Db::fetchRow(
+            'SELECT id AS platformRowId, campaign, site FROM ' . Common::prefixTable('aom_taboola')
+                . ' WHERE idsite = ? AND date = ? AND campaign_id = ? AND site_id = ?',
+            [$idsite, $date, $campaignId, $siteId,]
+        );
+
+        if ($result) {
+            $this->logger->debug(
+                'Found exact match platform row ID ' . $result['platformRowId'] . ' in imported Taboola data for visit.'
+            );
+        } else {
+            $this->logger->debug('Could not find exact match in imported Taboola data for Taboola visit.');
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns platform data when a historical match of Taboola click and platform data is found. False otherwise.
+     *
+     * TODO: Imported data should also create platform_key which would make querying easier.
+     *
+     * @param int $idsite
+     * @param string $campaignId
+     * @param string $siteId
+     * @return array|bool
+     */
+    private function getHistoricalMatchPlatformRow($idsite, $campaignId, $siteId)
+    {
+        $result = Db::fetchRow(
+            'SELECT campaign, site FROM ' . Common::prefixTable('aom_taboola')
+            . ' WHERE idsite = ? AND campaign_id = ? AND site_id = ?',
+            [$idsite, $campaignId, $siteId,]
+        );
+
+        if ($result) {
+            $this->logger->debug('Found historical match in imported Taboola data for visit.');
+        } else {
+            $this->logger->debug('Could not find historical match in imported Taboola data for Taboola visit.');
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $campaignId
+     * @param string $siteId
+     * @return string
+     */
+    private function getPlatformKey($campaignId, $siteId)
+    {
+        return $campaignId . '-' . $siteId;
     }
 }

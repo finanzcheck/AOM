@@ -7,17 +7,18 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\IndividualCampaigns;
 
-use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\MarketingPerformanceSubTables;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
-class IndividualCampaigns extends Platform
+class IndividualCampaigns extends AbstractPlatform implements PlatformInterface
 {
     /**
      * Returns true if the visit is coming from this platform. False otherwise.
@@ -57,12 +58,12 @@ class IndividualCampaigns extends Platform
 //        file_put_contents('/srv/www/piwik/X.log', 'IndividualCampaigns->getAdParamsFromUrl date ' . date('Y-m-d', $request->getCurrentTimestamp()) . PHP_EOL, FILE_APPEND);
 //        file_put_contents('/srv/www/piwik/X.log', json_encode(Db::fetchAll(
 //                'SELECT id, campaign, params_substring, referrer_substring '
-//                . ' FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS))) . PHP_EOL, FILE_APPEND);
+//                . ' FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS))) . PHP_EOL, FILE_APPEND);
 
         // TODO: Support more than simple substring matching
         $matches = Db::fetchAll(
             'SELECT id, campaign, params_substring, referrer_substring '
-            . ' FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+            . ' FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
             . ' WHERE idsite = ? AND date = ? AND '
             . ' ((params_substring <> \'\' AND ? LIKE CONCAT("%",params_substring,"%")) '
             . ' OR (referrer_substring <> \'\' AND ? LIKE CONCAT("%",referrer_substring,"%")))',
@@ -97,80 +98,16 @@ class IndividualCampaigns extends Platform
             // TODO: Calculating costs might occur in an event based approach immediately here.
 
             return [
-                'platform' => AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS,
-                'individualCampaignRowId' => $matches[0]['id'],
-                'campaignName' => $matches[0]['campaign'],
+                true,
+                [
+                    'platform' => AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS,
+                    'individualCampaignRowId' => $matches[0]['id'],
+                    'campaignName' => $matches[0]['campaign'],
+                ]
             ];
         }
 
-        return null;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-//        if (!$date) {
-//            $date = date('Y-m-d');
-//        }
-// TODO...
-//        return $this::getAdData($idsite, $date, $adParams['campaignId'], $adParams['siteId']);
-    }
-
-    /**
-     * @param int $idsite
-     * @param string $date
-     * @param int $campaignId
-     * @param string $siteId
-     * @return array|null
-     * @throws Exception
-     */
-    public static function getAdData($idsite, $date, $campaignId, $siteId)
-    {
-//        // Exact match
-//        $result = DB::fetchAll(
-//            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '
-//                WHERE idsite = ? AND date = ? AND campaign_id = ? AND site_id = ?',
-//            [
-//                $idsite,
-//                $date,
-//                $campaignId,
-//                $siteId,
-//            ]
-//        );
-//        if (count($result) > 1) {
-//            throw new \Exception('Found more than one match for exact match.');
-//        } elseif (1 === count($result)) {
-//            return [$result[0]['id'], $result[0]];
-//        }
-//
-//        // No exact match found; search for historic data
-//        // TODO: Besser nicht, da wir nur exakte Matches innerhalb der jeweiligen Periode haben wollen!
-////        $result = DB::fetchAll(
-////            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
-////                . ' WHERE idsite = ? AND campaign_id = ? AND site_id = ? ORDER BY date DESC LIMIT 1',
-////            [
-////                $idsite,
-////                $campaignId,
-////                $siteId,
-////            ]
-////        );
-//        if (count($result) > 0) {
-//
-//            // Keep generic date-independent information only
-//            return [
-//                null,
-//                [
-//                    'campaign_id' => $campaignId,
-//                    'campaign' => $result[0]['campaign'],
-//                    'site_id' => $siteId,
-//                    'site' => $result[0]['site'],
-//                ]
-//            ];
-//        }
-//
-//        return [null, null];
+        return [false, []];
     }
 
     /**
@@ -213,14 +150,20 @@ class IndividualCampaigns extends Platform
             $platformData = json_decode($visit['platform_data'], true);
 
             // TODO: Wie bekommen wir die Translation ausreichend flexibel? Oder nur Kampagnentitel + Kosten?
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_Individual',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['campaign'],
-                    $platformData['site'],
-                ]
-            );
+            if (is_array($platformData)
+                && array_key_exists('campaignName', $platformData) && array_key_exists('adsetName', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_IndividualCampaign',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['campaign_name'],
+                        $platformData['adset_name'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_IndividualCampaign_Incomplete');
+            }
         }
 
         return false;

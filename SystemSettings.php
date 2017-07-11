@@ -40,11 +40,6 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
     /**
      * @var SystemSetting
      */
-    public $platformAdWordsTrackingVariant;
-
-    /**
-     * @var SystemSetting
-     */
     public $platformBingIsActive;
 
     /**
@@ -75,7 +70,6 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
 
         // Add settings for platforms
         $this->platformAdWordsIsActive = $this->createPlatformAdWordsIsActiveSetting();
-        $this->platformAdWordsTrackingVariant = $this->createPlatformAdWordsTrackingVariantSetting();
         $this->platformBingIsActive = $this->createPlatformBingIsActiveSetting();
         $this->platformCriteoIsActive = $this->createPlatformCriteoIsActiveSetting();
         $this->platformFacebookAdsIsActive = $this->createPlatformFacebookAdsIsActiveSetting();
@@ -124,26 +118,6 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
             function (FieldConfig $field) {
                 $field->title = Piwik::translate('AOM_PluginSettings_Setting_EnableAdWords_Title');
                 $field->uiControl = FieldConfig::UI_CONTROL_CHECKBOX;
-            }
-        );
-    }
-
-    private function createPlatformAdWordsTrackingVariantSetting()
-    {
-        return $this->makeSetting(
-            'platformAdWordsTrackingVariant',
-            $default = AdWords::TRACKING_VARIANT_GCLID,
-            FieldConfig::TYPE_STRING,
-            function (FieldConfig $field) {
-                $field->title = Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_Title');
-                $field->uiControl = FieldConfig::UI_CONTROL_SINGLE_SELECT;
-                $field->availableValues = [
-                    AdWords::TRACKING_VARIANT_GCLID =>
-                        Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_OptionGclid'),
-                    AdWords::TRACKING_VARIANT_REGULAR_PARAMS =>
-                        Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_OptionRegularParams'),
-                ];
-                $field->description = Piwik::translate('AOM_PluginSettings_Setting_AdWordsTrackingVariant_Description');
             }
         );
     }

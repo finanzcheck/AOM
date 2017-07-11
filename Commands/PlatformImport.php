@@ -3,11 +3,13 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Commands;
 
 use Piwik\Plugin\ConsoleCommand;
 use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\SystemSettings;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
@@ -32,7 +34,7 @@ class PlatformImport extends ConsoleCommand
      */
     public function __construct($name = null, LoggerInterface $logger = null)
     {
-        $this->logger = AOM::getTasksLogger();
+        $this->logger = AOM::getLogger();
 
         parent::__construct($name);
     }
@@ -69,6 +71,7 @@ class PlatformImport extends ConsoleCommand
             return;
         }
 
+        /** @var PlatformInterface $platform */
         $platform = AOM::getPlatformInstance($input->getOption('platform'));
         $platform->import($input->getOption('merge'), $input->getOption('startDate'), $input->getOption('endDate'));
 

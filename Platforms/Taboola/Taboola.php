@@ -3,19 +3,20 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
-use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Metrics\Formatter;
 use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Tracker\Request;
 
-class Taboola extends Platform
+class Taboola extends AbstractPlatform implements PlatformInterface
 {
     /**
      * Extracts and returns advertisement platform specific data from an URL.
@@ -35,84 +36,17 @@ class Taboola extends Platform
             array_keys($queryParams)
         );
         if (count($missingParams)) {
-            $this->getLogger()->warning(
-                'Visit with platform ' . AOM::PLATFORM_TABOOLA . ' without required param/s: '
-                . implode(', ', $missingParams)
-            );
-
-            return null;
+            return [false, $missingParams];
         }
 
         return [
-            'platform' => AOM::PLATFORM_TABOOLA,
-            'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
-            'siteId' => $queryParams[$paramPrefix . '_site_id'],
+            true,
+            [
+                'platform' => AOM::PLATFORM_TABOOLA,
+                'campaignId' => $queryParams[$paramPrefix . '_campaign_id'],
+                'siteId' => $queryParams[$paramPrefix . '_site_id'],
+            ]
         ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAdDataFromAdParams($idsite, array $adParams, $date = null)
-    {
-        if (!$date) {
-            $date = date('Y-m-d');
-        }
-
-        return $this::getAdData($idsite, $date, $adParams['campaignId'], $adParams['siteId']);
-    }
-
-    /**
-     * @param int $idsite
-     * @param string $date
-     * @param int $campaignId
-     * @param string $siteId
-     * @return array|null
-     * @throws Exception
-     */
-    public static function getAdData($idsite, $date, $campaignId, $siteId)
-    {
-        // Exact match
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '
-                WHERE idsite = ? AND date = ? AND campaign_id = ? AND site_id = ?',
-            [
-                $idsite,
-                $date,
-                $campaignId,
-                $siteId,
-            ]
-        );
-        if (count($result) > 1) {
-            throw new \Exception('Found more than one match for exact match.');
-        } elseif (1 === count($result)) {
-            return [$result[0]['id'], $result[0]];
-        }
-
-        // No exact match found; search for historic data
-        $result = DB::fetchAll(
-            'SELECT * FROM ' . AOM::getPlatformDataTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
-                . ' WHERE idsite = ? AND campaign_id = ? AND site_id = ? ORDER BY date DESC LIMIT 1',
-            [
-                $idsite,
-                $campaignId,
-                $siteId,
-            ]
-        );
-        if (count($result) > 0) {
-            // Keep generic date-independent information only
-            return [
-                null,
-                [
-                    'campaign_id' => $campaignId,
-                    'campaign' => $result[0]['campaign'],
-                    'site_id' => $siteId,
-                    'site' => $result[0]['site'],
-                ]
-            ];
-        }
-
-        return [null, null];
     }
 
     /**
@@ -151,15 +85,21 @@ class Taboola extends Platform
             $formatter = new Formatter();
 
             $platformData = json_decode($visit['platform_data'], true);
-            
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_Taboola',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['campaign'],
-                    $platformData['site'],
-                ]
-            );
+
+            if (is_array($platformData)
+                && array_key_exists('campaign', $platformData) && array_key_exists('site', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_Taboola',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['campaign'],
+                        $platformData['site'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_Taboola_Incomplete');
+            }
         }
 
         return false;

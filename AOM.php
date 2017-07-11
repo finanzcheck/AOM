@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM;
 
@@ -12,7 +13,11 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
-use Piwik\Plugins\AOM\Platforms\Platform;
+use Piwik\Plugins\AOM\Platforms\AbstractImporter;
+use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\MergerInterface;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
+use Piwik\Plugins\AOM\Services\PiwikVisitService;
 use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
@@ -20,12 +25,7 @@ class AOM extends \Piwik\Plugin
     /**
      * @var LoggerInterface
      */
-    private static $defaultLogger;
-
-    /**
-     * @var LoggerInterface
-     */
-    private static $tasksLogger;
+    private static $logger;
 
     const PLATFORM_AD_WORDS = 'AdWords';
     const PLATFORM_BING = 'Bing';
@@ -63,18 +63,13 @@ class AOM extends \Piwik\Plugin
         // TODO: Allow to configure path and log-level (for every logger)?!
         $format = '%level_name% [%datetime%]: %message% %context% %extra%';
 
-        self::$defaultLogger = new Logger('aom');
-        $defaultLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG);
-        $defaultLoggerFileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
-        self::$defaultLogger->pushHandler($defaultLoggerFileStreamHandler);
-
-        self::$tasksLogger = new Logger('aom-tasks');
-        $tasksLoggerFileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom-tasks.log', Logger::DEBUG);
-        $tasksLoggerFileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
-        self::$tasksLogger->pushHandler($tasksLoggerFileStreamHandler);
-        $tasksLoggerConsoleStreamHandler = new StreamHandler('php://stdout', Logger::DEBUG);
-        $tasksLoggerConsoleStreamHandler->setFormatter(new ColoredLineFormatter(null, $format, null, true, true));
-        self::$tasksLogger->pushHandler($tasksLoggerConsoleStreamHandler);
+        self::$logger = new Logger('aom');
+        $fileStreamHandler = new StreamHandler(PIWIK_INCLUDE_PATH . '/aom.log', Logger::DEBUG);
+        $fileStreamHandler->setFormatter(new LineFormatter($format . "\n", null, true, true));
+        self::$logger->pushHandler($fileStreamHandler);
+        $consoleStreamHandler = new StreamHandler('php://stdout', Logger::DEBUG);
+        $consoleStreamHandler->setFormatter(new ColoredLineFormatter(null, $format, null, true, true));
+        self::$logger->pushHandler($consoleStreamHandler);
 
         parent::__construct($pluginName);
     }
@@ -92,40 +87,53 @@ class AOM extends \Piwik\Plugin
             $platform->installPlugin();
         }
 
-        self::addDatabaseTable(
+        // We need an auto incrementing key on this table to have a pointer on which conversions we already processed
+        DatabaseHelperService::addColumn(
+            'ALTER TABLE ' . Common::prefixTable('log_conversion')
+                . ' ADD COLUMN `idconversion` INT(10) NOT NULL AUTO_INCREMENT UNIQUE FIRST'
+        );
+
+        // This table holds all visits (Piwik visits and artificial visits)
+        DatabaseHelperService::addTable(
             'CREATE TABLE ' . Common::prefixTable('aom_visits') . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 idsite INTEGER NOT NULL,
                 piwik_idvisit INTEGER,
-                piwik_idvisitor VARCHAR(100) NOT NULL,
+                piwik_idvisitor VARCHAR(100),
+                unique_hash VARCHAR(100) NOT NULL,
                 first_action_time_utc DATETIME NOT NULL,
                 date_website_timezone DATE NOT NULL,
                 channel VARCHAR(100),
                 campaign_data TEXT,
+                platform_key VARCHAR(255),
                 platform_data TEXT,
-                cost FLOAT,
+                cost DECIMAL(10,4),
                 conversions INTEGER,
-                revenue FLOAT,
-                unique_hash VARCHAR(100) NOT NULL,
-                ts_created TIMESTAMP
+                revenue DECIMAL(14,4),
+                ts_created TIMESTAMP,
+                ts_last_update TIMESTAMP
             )  DEFAULT CHARSET=utf8');
 
         // Use piwik_idvisit as unique key to avoid race conditions (manually created visits would have null here)
         // Manually created visits must create consistent keys from the same raw data
-        self::addDatabaseIndex(
+        DatabaseHelperService::addIndex(
             'CREATE UNIQUE INDEX index_aom_unique_visits ON ' . Common::prefixTable('aom_visits')
-            . ' (unique_hash)'
+                . ' (unique_hash)'
         );
 
-        // Optimize for deleting reprocessed data
-        self::addDatabaseIndex(
-            'CREATE INDEX index_aom_visits_site_date ON ' . Common::prefixTable('aom_visits')
-            . ' (idsite, date_website_timezone)');
+        // Optimize for queries from Merger
+        DatabaseHelperService::addIndex(
+            'CREATE INDEX index_aom_visits_site_date_channel ON ' . Common::prefixTable('aom_visits')
+                . ' (idsite, date_website_timezone, channel)');
 
-        // Optimize for queries from MarketingPerformanceController.php
-        self::addDatabaseIndex(
-            'CREATE INDEX index_aom_visits ON ' . Common::prefixTable('aom_visits')
-            . ' (idsite, channel, date_website_timezone)');
+        DatabaseHelperService::addIndex(
+            'CREATE INDEX index_aom_visits_site_platform_key ON ' . Common::prefixTable('aom_visits')
+            . ' (idsite, platform_key)');
+
+        // Optimize for queries from MarketingPerformanceController
+        DatabaseHelperService::addIndex(
+            'CREATE INDEX index_aom_visits_marketing_performance ON ' . Common::prefixTable('aom_visits')
+                . ' (idsite, channel, date_website_timezone)');
 
         $this->getLogger()->debug('Installed AOM.');
     }
@@ -148,10 +156,14 @@ class AOM extends \Piwik\Plugin
      */
     public function registerEvents()
     {
-        return array(
+        return [
             'AssetManager.getJavaScriptFiles' => 'getJsFiles',
             'Controller.Live.getVisitorProfilePopup.end' => 'enrichVisitorProfilePopup',
-        );
+            'Tracker.end' => [
+                'after' => true,
+                'function' => 'checkForNewVisitAndConversion',
+            ],
+        ];
     }
 
     /**
@@ -165,7 +177,9 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * Modifies the visitor profile popup's HTML
+     * Modifies the visitor profile popup's HTML.
+     *
+     * TODO: Check if this still works (for all platforms, including individual campaigns).
      *
      * @param $result
      * @param $parameters
@@ -177,23 +191,24 @@ class AOM extends \Piwik\Plugin
     }
 
     /**
-     * This logger writes to aom.log only.
+     * Checks if a new visit has been created. If so, add this visit to aom_visits table.
+     * Also checks if a new conversion has been created. If so, increment conversion counter and add revenue of visit.
+     */
+    public function checkForNewVisitAndConversion()
+    {
+        $piwikVisitService = new PiwikVisitService(self::getLogger());
+        $piwikVisitService->checkForNewVisit();
+        $piwikVisitService->checkForNewConversion();
+    }
+
+    /**
+     * This logger writes to aom.log and to the console.
      *
      * @return LoggerInterface
      */
     public static function getLogger()
     {
-        return self::$defaultLogger;
-    }
-
-    /**
-     * This logger writes to the console and to aom-tasks.log.
-     *
-     * @return LoggerInterface
-     */
-    public static function getTasksLogger()
-    {
-        return self::$tasksLogger;
+        return self::$logger;
     }
 
     /**
@@ -201,7 +216,7 @@ class AOM extends \Piwik\Plugin
      *
      * @param string $platform
      * @param null|string $class
-     * @return Platform
+     * @return AbstractPlatform|AbstractImporter|MergerInterface    // TODO: Return interfaces instead of abstract
      * @throws \Exception
      */
     public static function getPlatformInstance($platform, $class = null)
@@ -214,12 +229,9 @@ class AOM extends \Piwik\Plugin
             throw new \Exception('Class "' . $class . '" not supported. Must be either null, "Importer" or "Merger".');
         }
 
-        // Find the right logger for the job
-        $logger = (in_array($class, ['Importer', 'Merger']) ? self::$tasksLogger : self::$defaultLogger);
-
         $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\' . (null === $class ? $platform : $class);
 
-        return new $className($logger);
+        return new $className(self::$logger);
     }
 
     /**
@@ -286,93 +298,5 @@ class AOM extends \Piwik\Plugin
         }
 
         return $dates;
-    }
-
-    /**
-     * Returns the exchange rate from the base currency to the target currency (for a given date).
-     *
-     * @param string $baseCurrency
-     * @param string $targetCurrency
-     * @param string $date
-     * @return float
-     * @throws \Exception
-     */
-    public static function getExchangeRate($baseCurrency, $targetCurrency, $date = null)
-    {
-        if ($baseCurrency !== $targetCurrency) {
-            $ch = curl_init();
-            curl_setopt(
-                $ch,
-                CURLOPT_URL,
-                'http://api.fixer.io/' . (null === $date ? 'latest' : $date)
-                . '?base=' . $baseCurrency . '&symbols=' . $targetCurrency
-            );
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-            $output = curl_exec($ch);
-            $response = json_decode($output, true);
-            if (!is_array($response) || !array_key_exists('rates', $response)
-                || !is_array($response['rates'])  || !array_key_exists($targetCurrency, $response['rates'])
-            ) {
-                throw new \Exception('Could not retrieve exchange rate.');
-            }
-
-            $error = curl_errno($ch);
-            if ($error > 0) {
-                throw new \Exception('Could not retrieve exchange rate.');
-            }
-            curl_close($ch);
-
-            return $response['rates'][$targetCurrency];
-        }
-
-        return 1.0;
-    }
-
-    /**
-     * @param string $platformName
-     * @return string
-     */
-    public static function getPlatformDataTableNameByPlatformName($platformName)
-    {
-        return Common::prefixTable('aom_' . strtolower($platformName));
-    }
-
-    /**
-     * Adds a database table unless it already exists
-     *
-     * @param $sql
-     * @throws \Exception
-     */
-    public static function addDatabaseTable($sql)
-    {
-        try {
-            Db::exec($sql);
-        } catch (\Exception $e) {
-            // ignore error if table already exists (1050 code is for 'table already exists')
-            if (!Db::get()->isErrNo($e, '1050')) {
-                throw $e;
-            }
-        }
-    }
-
-    /**
-     * Adds an index to the database unless it already exists
-     *
-     * @param $sql
-     * @throws \Exception
-     */
-
-    public static function addDatabaseIndex($sql)
-    {
-        try {
-            Db::exec($sql);
-        } catch (\Exception $e) {
-            // ignore error if index already exists (1061)
-            if (!Db::get()->isErrNo($e, '1061')) {
-                throw $e;
-            }
-        }
     }
 }
