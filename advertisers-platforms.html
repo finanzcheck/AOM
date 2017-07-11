@@ -13,7 +13,8 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 
 <h3>Tracking params</h3>
 
-<p>The recommended way is to use <a href="https://support.google.com/analytics/answer/1733663">auto-tagging</a>, which
+<p>Since July 2017 the only supported way for Google AdWords is to use
+    <a href="https://support.google.com/analytics/answer/1733663">auto-tagging</a>, which
     automatically adds a parameter named <code>gclid</code> to all links coming from AdWords. With the help of AdWords'
     <a href="https://developers.google.com/adwords/api/docs/appendix/reports/click-performance-report">click performance
     report</a> we can identify campaign, ad group etc. for every single AdWords click afterwards.</p>
@@ -26,155 +27,6 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
     "gclid":"CICO-Krt9c4CFSQz0wodCNUH8Q"
 }</code></pre></div>
 
-<p>Only if you cannot or don't want to use auto-tagging for whatever reason, you can use
-    <a href="https://support.google.com/adwords/answer/2375447?hl=en">ValueTrack params</a> to obtain the required
-    data. The following params are supported:</p>
-
-<table><thead>
-<tr>
-    <th>Param</th>
-    <th>Mandatory</th>
-    <th>Contents</th>
-    <th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-    <td>{prefix}_platform</td>
-    <td>true</td>
-    <td>AdWords</td>
-    <td></td>
-</tr>
-<tr>
-    <td>{prefix}_campaign_id</td>
-    <td>true</td>
-    <td>{campaignid}</td>
-    <td>The campaign ID.</td>
-</tr>
-<tr>
-    <td>{prefix}_ad_group_id</td>
-    <td>true</td>
-    <td>{adgroupid}</td>
-    <td>The ad group ID.</td>
-</tr>
-<tr>
-    <td>{prefix}_feed_item_id</td>
-    <td>true</td>
-    <td>{feeditemid}</td>
-    <td>Most probably the ID of a specific
-        <a href="https://developers.google.com/adwords/api/docs/guides/feed-services">sitelink</a>.</td>
-</tr>
-<tr>
-    <td>{prefix}_target_id</td>
-    <td>true</td>
-    <td>{targetid}</td>
-    <td>The ID of the keyword, dynamic search ad, remarketing list target or product partition ID that triggered an
-        ad.</td>
-</tr>
-<tr>
-    <td>{prefix}_creative</td>
-    <td>true</td>
-    <td>{creative}</td>
-    <td>A unique ID for your ad.</td>
-</tr>
-<tr>
-    <td>{prefix}_placement</td>
-    <td>true</td>
-    <td>{placement}</td>
-    <td>The content site where your ad was clicked or the matching placement targeting criteria for the site where your
-        ad was clicked.</td>
-</tr>
-<tr>
-    <td>{prefix}_target</td>
-    <td>true</td>
-    <td>{target}</td>
-    <td>A placement category (works with placement-targeted campaigns only).</td>
-</tr>
-<tr>
-    <td>{prefix}_network</td>
-    <td>true</td>
-    <td>{network}</td>
-    <td>Where the click came from: "g" for Google search, "s" for a search partner, or "d" for the display network.</td>
-</tr>
-<tr>
-    <td>{prefix}_device</td>
-    <td>true</td>
-    <td>{device}</td>
-    <td>What device the click came from: "m" for mobile (including WAP), "t" for tablet, and "c" for computer.</td>
-</tr>
-<tr>
-    <td>{prefix}_ad_position</td>
-    <td>false</td>
-    <td>{adposition}</td>
-    <td></td>
-</tr>
-<tr>
-    <td>{prefix}_loc_physical</td>
-    <td>false</td>
-    <td>{loc_physical_ms}</td>
-    <td>The ID of the geographical location of the click.</td>
-</tr>
-<tr>
-    <td>{prefix}_loc_interest</td>
-    <td>false</td>
-    <td>{loc_interest_ms}</td>
-    <td>The ID of the location of interest that helped trigger the ad.</td>
-</tr>
-</tbody></table>
-
-<p>A typical link at Google AdWords (with the prefix "aom") should have the following params (as mentioned previously,
-    <strong>this is only necessary when you don't use auto-tagging</strong>):</p>
-<pre><code>&amp;aom_platform=AdWords&amp;aom_campaign_id={campaignid}&amp;aom_ad_group_id={adgroupid}&amp;aom_feed_item_id={feeditemid}&amp;aom_target_id={targetid}&amp;aom_creative={creative}&amp;aom_placement={placement}&amp;aom_target={target}&amp;aom_network={network}&amp;aom_device={device}&amp;aom_ad_position={adposition}&amp;aom_loc_physical={loc_physical_ms}&amp;aom_loc_Interest={loc_interest_ms}</code></pre>
-
-<p>When a Google AdWords ad for which URL you provided ValueTrack params is clicked, data like the following can be
-    found in <code>log_visit.aom_ad_params</code>:</p>
-<div class="code-block">
-    <pre><code class="language-php">{
-    "platform":"AdWords",
-    "campaignId":"184418636",
-    "adGroupId":"9794351276",
-    "feedItemId":"",
-    "targetId":"kwd-118607649",
-    "creative":"47609133356",
-    "placement":"",
-    "target":"",
-    "network":"g",
-    "device":"m",
-    "adPosition":"1t2",
-    "locPhysical":"20228",
-    "locInterest":"1004074"
-}
-{
-    "platform":"AdWords",
-    "campaignId":"171096476",
-    "adGroupId":"8837340236",
-    "feedItemId":"",
-    "targetId":"",
-    "creative":"47609140796",
-    "placement":"suchen.mobile.de/auto-inserat",
-    "target":"",
-    "network":"d",
-    "device":"c",
-    "adPosition":"none",
-    "locPhysical":"9041542",
-    "locInterest":""
-}
-{
-    "platform":"AdWords",
-    "campaignId":"147730196",
-    "adGroupId":"7300245836",
-    "feedItemId":"",
-    "targetId":"aud-55070239676",
-    "creative":"47609140676",
-    "placement":"carfansofamerica.com",
-    "target":"",
-    "network":"d",
-    "device":"c",
-    "adPosition":"none",
-    "locPhysical":"9042649",
-    "locInterest":""
-}</code></pre></div>
-
-<p>Placements are shortened when the length of the entire JSON is more than 1,024 characters.</p>
 
 <!-- Google AdWords: Importing & merging -->
 <h3>Importing &amp; merging</h3>
@@ -185,11 +37,10 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
     <a href="http://local.piwik.de?module=AOM&amp;action=platformAction&amp;platform=AdWords&amp;method=processOAuthRedirect">http://local.piwik.de?module=AOM&amp;action=platformAction&amp;platform=AdWords&amp;method=processOAuthRedirect</a>)
     being an authorized redirect URI.</p>
 
-<p>AdWords data is being (re)imported for the last 3 days (as old data might change). When you rely on auto-tagging
-    (which is preferred) and therefore do not provide any ValueTrack params, merging will first fetch a
+<p>AdWords data is being (re)imported for the last 3 days (as old data might change). At first a
     <a href="https://developers.google.com/adwords/api/docs/appendix/reports/click-performance-report">click performance
-    report</a> to identify campaign, ad group etc. for every single AdWords click (gclid). Afterwards, the merging
-    process for auto-tagging and ValueTrack params is the same.</p>
+    report</a> will be fetched to identify campaign, ad group etc. for every single AdWords click (gclid). Afterwards,
+    the usual merge process is going to happen.</p>
 
 
 <!-- Microsoft Bing Ads -->
@@ -223,24 +74,14 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
     <td>{AdGroupId}</td>
 </tr>
 <tr>
-    <td>{prefix}_order_item_id</td>
-    <td>true</td>
-    <td>{OrderItemId}</td>
-</tr>
-<tr>
     <td>{prefix}_target_id</td>
     <td>true</td>
     <td>{TargetId}</td>
 </tr>
-<tr>
-    <td>{prefix}_ad_id</td>
-    <td>false</td>
-    <td>{AdId}</td>
-</tr>
 </tbody></table>
 
 <p>A typical link at Microsoft Bing Ads (with the prefix "aom") should have the following params:</p>
-<pre><code>&amp;aom_platform=Bing&amp;aom_campaign_id={CampaignId}&amp;aom_ad_group_id={AdGroupId}&amp;aom_order_item_id={OrderItemId}&amp;aom_target_id={TargetId}&amp;aom_ad_id={AdId}</code></pre>
+<pre><code>&amp;aom_platform=Bing&amp;aom_campaign_id={CampaignId}&amp;aom_ad_group_id={AdGroupId}&amp;aom_target_id={TargetId}</code></pre>
 
 <p>When a Bing ad is clicked, data like the following can be found in <code>log_visit.aom_ad_params</code>:</p>
 <div class="code-block">
@@ -248,20 +89,17 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
     "platform":"Bing",
     "campaignId":190561279,
     "adGroupId":2029114499,
-    "orderItemId":40414589411,
-    "targetId":"40414589411",
-    "adId":5222037942
+    "targetId":"40414589411"
 }</code></pre></div>
 
 
 <!-- Bing Ads: Importing & merging -->
 <h3>Importing &amp; merging</h3>
 
-<p>For importing and merging you must activate Bing and provide API credentials within this plugin's
-    settings. This requires a
-    <a href="https://account.live.com/developers/applications">mobile or desktop client app</a> at Bing.
-    Piwik's URI (e.g. <a href="http://local.piwik.de/">http://local.piwik.de/</a>) must be added at Bing
-    to the app's valid redirect URLs under "API settings". </p>
+<p>For importing and merging you must activate Bing and provide API credentials within this plugin's settings. This
+    requires a <a href="https://account.live.com/developers/applications">mobile or desktop client app</a> at Bing.
+    Piwik's URI (e.g. <a href="http://local.piwik.de/">http://local.piwik.de/</a>) must be added at Bing to the app's
+    valid redirect URLs under "API settings". </p>
 
 <p>Bing's data is being imported once a day. </p>
 
@@ -315,6 +153,8 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <!-- Facebook Ads -->
 <h2 class="sub-title text-center">Facebook Ads</h2>
 
+<strong>Attention: The implementation of Facebook Ads is deprecated and does not work at the moment.</strong>
+
 <h3>Tracking params</h3>
 
 <p>When using Facebook Ads, all links must be created manually.
@@ -366,10 +206,9 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <!-- Facebook Ads: Importing & merging -->
 <h3>Importing &amp; merging</h3>
 
-<p>For importing and merging you must activate Facebook Ads and provide API credentials within this
-    plugin's settings. This requires a
-    <a href="https://developers.facebook.com/docs/marketing-api/quickstart">Facebook App with Marketing API access</a>.
-    Piwik's URI (e.g. <a href="http://local.piwik.de/">http://local.piwik.de/</a>) must be added to the
+<p>For importing and merging you must activate Facebook Ads and provide API credentials within this plugin's settings.
+    This requires a <a href="https://developers.facebook.com/docs/marketing-api/quickstart">Facebook App with Marketing
+    API access</a>. Piwik's URI (e.g. <a href="http://local.piwik.de/">http://local.piwik.de/</a>) must be added to the
     app's valid OAuth redirect URIs.</p>
 
 <p>Facebook Ads' data is being imported once a day.</p>
@@ -437,11 +276,40 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 <p>Taboola's data is being imported every few hours.</p>
 
 
+<!-- Individual campaigns -->
+<h2 class="sub-title text-center">Individual campaigns</h2>
+
+<p>For some campaigns, such as email marketing partnerships or CPA deals, there might not be an advertising platform
+    with an API, where you can fetch the additional data (like campaign names and cost) from. Therefore Piwik AOM allows
+    you to provide this data and Piwik AOM distributes the costs to the visits that resulted from the campaign (even if
+    there were no visits the costs are still being considered). Here are some examples:</p>
+
+<h4>Email marketing campaign</h4>
+
+<p>Imagine you've created an email marketing campaign ...
+    <strong>This feature is work in progress and will be released soon.</strong></p>
+
+<p>You cannot distribute costs to visits that have been detected by Piwik AOM, i.e. you cannot distribute (additional)
+    cost for example to an AdWords campaign that already got additional data from AdWords. Piwik AOM takes care of that,
+    but <strong>you need to make sure that your specifications don't overlap</strong>, e.g. that you distribute the cost
+    of two email marketing campaigns to the same pool of visits.</p>
+
+
+<!-- Individual campaigns: Offline campaigns -->
+<h3>What about offline campaigns such as TV advertising, radio spots or offline magazines?</h3>
+
+<p>The problem with offline campaigns like TV advertising is that you can neither detect from the HTTP referrer nor
+    from the params that the visitor came from a specific TV spot. He might have also read about your brand in an
+    offline magazine or got a recommendation from a friend. Nonetheless, there are ways to track TV advertising and the
+    similar - but this is a topic on our future roadmap!</p>
+
+
 <!-- Other advertising platforms and Piwik's default tracking params -->
 <h2 class="sub-title text-center">Other advertising platforms and Piwik's default tracking params</h2>
 
 <p>You should not use any of the params listed above when the advertising platform you are using is not listed here.</p>
 
-<p>Piwik's <a href="http://piwik.org/docs/tracking-campaigns/">default tracking params</a> (<code>pk_kwd</code> and the
-    even more important <code>pk_campaign</code>) should be used for both supported and unsupported advertising
-    platforms.</p>
+<p>Piwik's <a href="http://piwik.org/docs/tracking-campaigns/">default tracking params</a> <code>pk_campaign</code> and
+    <code>pk_kwd</code> (or the tracking params provided by the
+    <a href="https://plugins.piwik.org/MarketingCampaignsReporting">Marketing Campaigns Reporting plugin</a>) should
+    be used for both supported and unsupported advertising platforms.</p>
