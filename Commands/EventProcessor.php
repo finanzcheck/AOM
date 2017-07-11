@@ -1,0 +1,64 @@
+<?php
+/**
+ * AOM - Piwik Advanced Online Marketing Plugin
+ *
+ * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
+ */
+namespace Piwik\Plugins\AOM\Commands;
+
+use Piwik\Plugin\ConsoleCommand;
+use Piwik\Plugins\AOM\AOM;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Plugins\AOM\Services\PiwikVisitService;
+use Piwik\Plugins\AOM\SystemSettings;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+
+/**
+ * Example:
+ * ./console aom:process
+ */
+class EventProcessor extends ConsoleCommand
+{
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @param string|null $name
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct($name = null, LoggerInterface $logger = null)
+    {
+        $this->logger = AOM::getLogger();
+
+        parent::__construct($name);
+    }
+
+    protected function configure()
+    {
+        $this
+            ->setName('aom:process')
+            ->setDescription('Processes visits and conversions by updating aom_visits.');
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        // We might need a little more RAM
+        ini_set('memory_limit','1024M');
+
+        // TODO: Make sure that this command cannot create race conditions!
+
+        $piwikVisitService = new PiwikVisitService($this->logger);
+
+        // Check if new visits have been created. If so, add this visit to aom_visits table.
+        $piwikVisitService->checkForNewVisit();
+
+        // Check if new conversion have been created. If so, increment conversion counter and add revenue of visit.
+        $piwikVisitService->checkForNewConversion();
+    }
+}

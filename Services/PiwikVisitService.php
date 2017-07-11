@@ -29,14 +29,14 @@ class PiwikVisitService
     {
         $this->logger = (null === $logger ? AOM::getLogger() : $logger);
     }
+
     /**
-     * This method is called by the Tracker.end event.
-     * It detects if a new visit has been created by the Tracker. If so, it adds the visit to the aom_visits table.
+     * This method should be called by the EventProcessor command by a cron every minute.
      */
     public function checkForNewVisit()
     {
-        // Limit to 10 visits to distribute work (if it has queued up for whatever reason)
-        foreach (array_slice($this->getUnprocessedVisits(), 0, 10) as $visit) {
+        // Limit to 100 visits to distribute work (if it has queued up for whatever reason)
+        foreach (array_slice($this->getUnprocessedVisits(), 0, 100) as $visit) {
             $this->addNewPiwikVisit($visit);
         }
     }
@@ -58,9 +58,9 @@ class PiwikVisitService
     }
 
     /**
-     * This method is called by the Tracker.end event.
-     * It detects if a new conversion has been created by the Tracker. If so, it adds the conversion-related information
-     * to the aom_visits table.
+     * This method should be called by the EventProcessor command by a cron every minute.
+     * It detects if new conversion have been created. If so, it adds the conversion-related information to the
+     * aom_visits table.
      *
      * TODO: Only consider e-commerce conversions?
      */
@@ -79,7 +79,7 @@ class PiwikVisitService
 
         foreach (Db::query('SELECT idconversion, idvisit, idsite, idorder, revenue '
             . ' FROM ' . Common::prefixTable('log_conversion') . ' WHERE idconversion > ' . $latestProcessedConversion
-            . ' ORDER BY idconversion ASC LIMIT 10') // Limit to distribute work (if it has queued up)
+            . ' ORDER BY idconversion ASC LIMIT 100') // Limit to distribute work (if it has queued up)
                  as $conversion)
         {
             // For every single conversion: Increment visit's conversion count and add revenue

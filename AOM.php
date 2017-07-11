@@ -159,10 +159,6 @@ class AOM extends \Piwik\Plugin
         return [
             'AssetManager.getJavaScriptFiles' => 'getJsFiles',
             'Controller.Live.getVisitorProfilePopup.end' => 'enrichVisitorProfilePopup',
-            'Tracker.end' => [
-                'after' => true,
-                'function' => 'checkForNewVisitAndConversion',
-            ],
         ];
     }
 
@@ -188,17 +184,6 @@ class AOM extends \Piwik\Plugin
     public function enrichVisitorProfilePopup(&$result, $parameters)
     {
         VisitorProfilePopup::enrich($result);
-    }
-
-    /**
-     * Checks if a new visit has been created. If so, add this visit to aom_visits table.
-     * Also checks if a new conversion has been created. If so, increment conversion counter and add revenue of visit.
-     */
-    public function checkForNewVisitAndConversion()
-    {
-        $piwikVisitService = new PiwikVisitService(self::getLogger());
-        $piwikVisitService->checkForNewVisit();
-        $piwikVisitService->checkForNewConversion();
     }
 
     /**
