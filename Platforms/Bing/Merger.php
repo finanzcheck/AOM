@@ -19,6 +19,9 @@ class Merger extends AbstractMerger implements MergerInterface
     public function merge()
     {
         foreach (AOM::getPeriodAsArrayOfDates($this->startDate, $this->endDate) as $date) {
+
+            // TODO: Do not merge if there are no processed real visits yet?
+
             foreach ($this->getPlatformRows(AOM::PLATFORM_BING, $date) as $platformRow) {
 
                 $platformKey = $this->getPlatformKey(
@@ -36,17 +39,8 @@ class Merger extends AbstractMerger implements MergerInterface
                     'keyword' => $platformRow['keyword'],
                 ];
 
-                // Update visit's platform data (including historic records)
-                $affectedRows = Db::query(
-                    'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
-                    . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
-                    [json_encode($platformData), $platformRow['idsite'], $platformKey, json_encode($platformData),]
-                )->rowCount();
-                if ($affectedRows > 0) {
-                    $this->logger->debug(
-                        'Updated platform data of ' . $affectedRows . ' record/s in aom_visits table.'
-                    );
-                }
+                // Update visit's platform data (including historic records) and publish update events when necessary
+                $this->updatePlatformData($platformRow['idsite'], $platformKey, $platformRow);
 
                 $this->allocateCostOfPlatformRow(AOM::PLATFORM_BING, $platformRow, $platformKey, $platformData);
             }

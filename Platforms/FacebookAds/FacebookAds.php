@@ -91,14 +91,20 @@ class FacebookAds extends AbstractPlatform implements PlatformInterface
 
             $platformData = json_decode($visit['platform_data'], true);
 
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_FacebookAds',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['campaign_name'],
-                    $platformData['adset_name'],
-                ]
-            );
+            if (is_array($platformData)
+                && array_key_exists('campaignName', $platformData) && array_key_exists('adsetName', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_FacebookAds',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['campaign_name'],
+                        $platformData['adset_name'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_FacebookAds_Incomplete');
+            }
         }
 
         return false;

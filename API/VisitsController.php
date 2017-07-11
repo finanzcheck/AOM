@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\API;
 
@@ -20,9 +21,9 @@ use Piwik\Site;
 class VisitsController
 {
     /**
-     * @param $idSite
-     * @param $period
-     * @param $date
+     * @param int $idSite
+     * @param string $period
+     * @param string $date
      * @return mixed
      * @throws Exception
      */
@@ -52,8 +53,8 @@ class VisitsController
     }
 
     /**
-     * @param $idSite
-     * @param $orderId
+     * @param int $idSite
+     * @param string $orderId
      * @return bool|mixed
      * @throws Exception
      */
@@ -71,10 +72,10 @@ class VisitsController
     /**
      * TODO: Do e-commerce orders really always have log_conversion.idgoal = 0?
      *
-     * @param $idSite
-     * @param bool $orderId
-     * @param bool $period
-     * @param bool $date
+     * @param int $idSite
+     * @param string|bool $orderId
+     * @param string|bool $period
+     * @param string|bool $date
      * @return array
      * @throws Exception
      */
@@ -150,6 +151,8 @@ class VisitsController
     /**
      * Returns all visits that match the given criteria.
      *
+     * TODO: This method should be based on aom_visits instead!
+     *
      * @param int $idSite Id Site
      * @param string $visitFirstActionTimeMinUTC
      * @param string $visitFirstActionTimeMaxUTC
@@ -194,18 +197,17 @@ class VisitsController
                     log_visit.referer_url AS refererUrl,
                     log_visit.aom_platform AS platform,
                     ' . (in_array(
-                'MarketingCampaignsReporting',
-                Manager::getInstance()->getInstalledPluginsName())
-                ? 'log_visit.campaign_name AS campaignName,
-                           log_visit.campaign_keyword AS campaignKeyword,
-                           log_visit.campaign_source AS campaignSource,
-                           log_visit.campaign_medium AS campaignMedium,
-                           log_visit.campaign_content AS campaignContent,
-                           log_visit.campaign_id AS campaignId,'
-                : ''
-            ) . '
+                            'MarketingCampaignsReporting',
+                            Manager::getInstance()->getInstalledPluginsName())
+                        ? 'log_visit.campaign_name AS campaignName,
+                                   log_visit.campaign_keyword AS campaignKeyword,
+                                   log_visit.campaign_source AS campaignSource,
+                                   log_visit.campaign_medium AS campaignMedium,
+                                   log_visit.campaign_content AS campaignContent,
+                                   log_visit.campaign_id AS campaignId,'
+                        : ''
+                    ) . '
                     log_visit.aom_ad_params AS rawAdParams,
-                    log_visit.aom_ad_data AS rawAdData,
                     log_action_entry_action_name.name AS entryTitle,
                     log_action_entry_action_url.name AS entryUrl
                 FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
@@ -253,19 +255,9 @@ class VisitsController
                     }
                 }
 
-                // Make ad data JSON to associative array
-                $visit['adData'] = [];
-                if (is_array($visit) && array_key_exists('rawAdData', $visit) || 0 === strlen($visit['rawAdData'])) {
-
-                    $adData = @json_decode($visit['rawAdData'], true);
-
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($adData)) {
-                        $visit['adData'] = $adData;
-                    }
-                }
+                // TODO: Add platform data!
 
                 unset($visit['rawAdParams']);
-                unset($visit['rawAdData']);
             }
         }
 

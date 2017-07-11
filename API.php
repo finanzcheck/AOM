@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM;
 
@@ -80,8 +81,7 @@ class API extends \Piwik\Plugin\API
      * Returns various status information that can be used for monitoring:
      * ?module=API&token_auth=...&method=AOM.getStatus&idSite=1&format=json
      *
-     * @param $idSite
-     *
+     * @param int $idSite
      * @return array
      * @throws Exception
      */
@@ -93,19 +93,19 @@ class API extends \Piwik\Plugin\API
     }
 
     /**
-     * Returns various information about reprocessed visits that can be used for monitoring:
-     * ?module=API&token_auth=...&method=AOM.getReprocessedVisitsStatus&idSite=1&format=json
+     * Returns various information about AOM visits that can be used for monitoring:
+     * ?module=API&token_auth=...&method=AOM.getAomVisitsStatus&idSite=1&format=json
      *
      * @param $idSite
      * @param bool $groupByChannel
      * @return array
      * @throws Exception
      */
-    public function getReprocessedVisitsStatus($idSite, $groupByChannel = false)
+    public function getAomVisitsStatus($idSite, $groupByChannel = false)
     {
         Piwik::checkUserHasViewAccess($idSite);
 
-        return StatusController::getReprocessedVisitsStatus($idSite, $groupByChannel);
+        return StatusController::getAomVisitsStatus($idSite, $groupByChannel);
     }
 
     /**

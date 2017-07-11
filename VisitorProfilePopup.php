@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM;
 
@@ -16,7 +17,7 @@ class VisitorProfilePopup
     public static function enrich(&$result)
     {
         $doc = new DOMDocument();
-        $doc->loadHTML($result);
+        @$doc->loadHTML($result);
 
         $xpath = new DOMXpath($doc);
 

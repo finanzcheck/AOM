@@ -7,7 +7,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\IndividualCampaigns;
 
-use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Metrics\Formatter;
@@ -148,14 +147,20 @@ class IndividualCampaigns extends AbstractPlatform implements PlatformInterface
             $platformData = json_decode($visit['platform_data'], true);
 
             // TODO: Wie bekommen wir die Translation ausreichend flexibel? Oder nur Kampagnentitel + Kosten?
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_Individual',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['campaign'],
-                    $platformData['site'],
-                ]
-            );
+            if (is_array($platformData)
+                && array_key_exists('campaignName', $platformData) && array_key_exists('adsetName', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_IndividualCampaign',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['campaign_name'],
+                        $platformData['adset_name'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_IndividualCampaign_Incomplete');
+            }
         }
 
         return false;

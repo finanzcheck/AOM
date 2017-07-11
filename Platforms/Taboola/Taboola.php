@@ -6,7 +6,6 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
-use Exception;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\Metrics\Formatter;
@@ -14,7 +13,6 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class Taboola extends AbstractPlatform implements PlatformInterface
@@ -88,15 +86,21 @@ class Taboola extends AbstractPlatform implements PlatformInterface
             $formatter = new Formatter();
 
             $platformData = json_decode($visit['platform_data'], true);
-            
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_Taboola',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['campaign'],
-                    $platformData['site'],
-                ]
-            );
+
+            if (is_array($platformData)
+                && array_key_exists('campaign', $platformData) && array_key_exists('site', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_Taboola',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['campaign'],
+                        $platformData['site'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_Taboola_Incomplete');
+            }
         }
 
         return false;

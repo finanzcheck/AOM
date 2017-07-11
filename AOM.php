@@ -126,6 +126,10 @@ class AOM extends \Piwik\Plugin
             'CREATE INDEX index_aom_visits_site_date_channel ON ' . Common::prefixTable('aom_visits')
                 . ' (idsite, date_website_timezone, channel)');
 
+        DatabaseHelperService::addIndex(
+            'CREATE INDEX index_aom_visits_site_platform_key ON ' . Common::prefixTable('aom_visits')
+            . ' (idsite, platform_key)');
+
         // Optimize for queries from MarketingPerformanceController
         DatabaseHelperService::addIndex(
             'CREATE INDEX index_aom_visits_marketing_performance ON ' . Common::prefixTable('aom_visits')

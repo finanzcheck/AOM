@@ -13,7 +13,6 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Tracker\Request;
 
 class Bing extends AbstractPlatform implements PlatformInterface
@@ -152,15 +151,23 @@ class Bing extends AbstractPlatform implements PlatformInterface
 
             $platformData = json_decode($visit['platform_data'], true);
 
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_Bing',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['account'],
-                    $platformData['campaign'],
-                    $platformData['ad_group'],
-                ]
-            );
+            if (is_array($platformData)
+                && array_key_exists('account', $platformData) && array_key_exists('campaign', $platformData)
+                && array_key_exists('adGroup', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_Bing',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['account'],
+                        $platformData['campaign'],
+                        $platformData['adGroup'],
+                        $platformData['keywordPlacement'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_Bing_Incomplete');
+            }
         }
 
         return false;

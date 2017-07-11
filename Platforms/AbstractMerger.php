@@ -11,6 +11,7 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
+use Piwik\Plugins\AOM\Services\PiwikVisitService;
 use Piwik\Site;
 use Psr\Log\LoggerInterface;
 
@@ -99,7 +100,7 @@ abstract class AbstractMerger
             $platformName,
             Db::fetchRow(
                 'SELECT idsite, date, cost FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName)
-                . ' WHERE id = ?',
+                    . ' WHERE id = ?',
                 [$platformRowId,]
             ),
             $platformKey,
@@ -127,7 +128,7 @@ abstract class AbstractMerger
 
         // If there are real visits, distribute cost between them
         if ($matchingVisits['piwikVisits'] > 0) {
-            $costPerVisit = $cost / $matchingVisits['piwikVisits']; // Precision is handled by database decimal column
+            $costPerVisit = round(($cost / $matchingVisits['piwikVisits']), 4);
             $this->distributeCostBetweenRealVisits($idsite, $date, $platformName, $platformKey, $costPerVisit);
             return;
         }
@@ -205,8 +206,13 @@ abstract class AbstractMerger
                 $cost,
             ]
         );
+        $aomVisitId = Db::fetchOne('SELECT LAST_INSERT_ID()');
 
-        $this->logger->debug('Added artificial visit to aom_visit table.');
+        $this->logger->debug(
+            'Added artificial visit ' . $aomVisitId . ' for platform key "' . $platformKey . '" to aom_visit table.'
+        );
+
+        PiwikVisitService::postAomVisitAddedOrUpdatedEvent($aomVisitId);
     }
 
     /**
@@ -227,10 +233,20 @@ abstract class AbstractMerger
 
         if ($result->rowCount() > 0) {
             $this->logger->debug('Updated cost of artificial visit to ' . $cost . '.');
+
+            // Publish event for update of artificial visit (this should only be one single update)
+            foreach (Db::fetchAll(
+                'SELECT id FROM ' . Common::prefixTable('aom_visits')
+                    . ' WHERE idsite = ? AND date_website_timezone = ? AND platform_key = ?',
+                [$idsite, $date, $platformKey,]
+            ) as $updatedVisit) {
+                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($updatedVisit['id']);
+            }
         }
     }
 
     /**
+     * Distributes cost between real visits and publishes event for every updated visit.
      * @param int $idsite
      * @param string $date
      * @param string $platformName
@@ -242,25 +258,79 @@ abstract class AbstractMerger
         $result = Db::query(
             'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
                 . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
-                . ' AND piwik_idvisit IS NOT NULL AND (cost IS NULL OR cost != ?)',
+                . ' AND piwik_idvisit IS NOT NULL AND (cost IS NULL or cost != ?)',
             [$costPerVisit, $idsite, $date, $platformName, $platformKey, $costPerVisit,]
         );
 
         if ($result->rowCount() > 0) {
             $this->logger->debug(
-                'Updated cost of ' . $result->rowCount() . ' real visit/s to ' . number_format($costPerVisit, 4) . '.'
+                'Updated cost of ' . $result->rowCount() . ' real visit' . ($result->rowCount() != 1 ? 's' : '')
+                    . ' to ' . number_format($costPerVisit, 4) . '.'
             );
+
+            // Publish events for every single update
+            foreach (Db::fetchAll(
+                'SELECT id FROM ' . Common::prefixTable('aom_visits')
+                . ' WHERE idsite = ? AND date_website_timezone = ? AND platform_key = ?',
+                [$idsite, $date, $platformKey,]
+            ) as $updatedVisit) {
+                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($updatedVisit['id']);
+            }
         }
     }
 
     /**
-     * Validates the results of an entire merge by comparing the total imported cost to the merged visit's total cost.
+     * Updates platform data of matching visits (including historic ones) and publishes event for every updated visit.
+     *
+     * @param int $idsite
+     * @param string $platformKey
+     * @param array $platformData
+     */
+    protected function updatePlatformData($idsite, $platformKey, array $platformData)
+    {
+        // Remove irrelevant platform data from the array.
+        // If we don't do thins, the UPDATE would affect the same rows after every (re)import!
+        $platformData = array_diff_key(
+            $platformData,
+            array_flip(['id', 'id_account_internal', 'idsite', 'date', 'ts_created',])
+        );
+
+        $affectedRows = Db::query(
+            'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
+            . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
+            [json_encode($platformData), $idsite, $platformKey, json_encode($platformData),]
+        )->rowCount();
+
+        if ($affectedRows > 0) {
+            $this->logger->debug(
+                'Updated platform data of ' . $affectedRows . ' record' . ($affectedRows != 1 ? 's' : '')
+                    . ' with platform key "' . $platformKey . '" in aom_visits table.'
+            );
+
+            // Publish events for every single update
+            foreach (Db::fetchAll(
+                'SELECT id FROM ' . Common::prefixTable('aom_visits')
+                . ' WHERE idsite = ? AND platform_key = ? AND platform_data = ?',
+                [$idsite, $platformKey, json_encode($platformData),]
+            ) as $updatedVisit) {
+                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($updatedVisit['id']);
+            }
+        }
+    }
+
+    /**
+     * Validates the results of an entire merge.
+     *
+     * Compares the total imported cost to the merged visit's total cost.
+     * Checks also the share of artificial visits.
      *
      * @param string $platformName
      * @param string $date
      */
     protected function validateMergeResults($platformName, $date)
     {
+        // Compare the total imported cost to the merged visit's total cost
+
         $importedCost = Db::fetchOne(
             'SELECT SUM(cost) FROM ' . DatabaseHelperService::getTableNameByPlatformName($platformName)
                 . ' WHERE date = ?',
@@ -282,6 +352,35 @@ abstract class AbstractMerger
                 $this->logger->error($message);
             } elseif ($difference > 0.1) {
                 $this->logger->warning($message);
+            }
+        }
+
+
+        // Check the share of artificial visits
+
+        $visits = Db::fetchRow(
+            'SELECT COUNT(*) AS totalVisits, '
+            . ' SUM(CASE WHEN piwik_idvisit IS NOT NULL THEN 1 ELSE 0 END) piwikVisits, '
+            . ' SUM(CASE WHEN piwik_idvisit IS NULL THEN 1 ELSE 0 END) artificialVisits '
+            . ' FROM ' . Common::prefixTable('aom_visits')
+            . ' WHERE date_website_timezone = ? AND channel = ?',
+            [$date, $platformName,]
+        );
+
+        if (0 === $visits['piwikVisits'] && $visits['artificialVisits'] > 0) {
+            $this->logger->error('Got ' . $visits['artificialVisits'] . ' artificial visits but no Piwik visits!');
+        } elseif ($visits['artificialVisits'] > 0) {
+            $percentageOfArtificialVisits = ($visits['piwikVisits'] > 0)
+                ? ($visits['artificialVisits'] / $visits['piwikVisits'] * 100) : INF;
+            $message = 'Got ' . number_format($percentageOfArtificialVisits, 2) . '% (' . $visits['artificialVisits']
+                . ') artificial visits (' . $visits['piwikVisits'] . ' Piwik visits).';
+
+            if ($percentageOfArtificialVisits > 10) {
+                $this->logger->error($message);
+            } elseif ($percentageOfArtificialVisits > 5) {
+                $this->logger->warning($message);
+            } else {
+                $this->logger->info($message);
             }
         }
     }

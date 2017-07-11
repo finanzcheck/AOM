@@ -166,16 +166,23 @@ class AdWords extends AbstractPlatform implements PlatformInterface
 
             $platformData = json_decode($visit['platform_data'], true);
 
-            return Piwik::translate(
-                'AOM_Platform_VisitDescription_AdWords',
-                [
-                    $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
-                    $platformData['account'],
-                    $platformData['campaign'],
-                    $platformData['ad_group'],
-                    $platformData['keyword_placement'],
-                ]
-            );
+            if (is_array($platformData)
+                && array_key_exists('account', $platformData) && array_key_exists('campaign', $platformData)
+                && array_key_exists('adGroup', $platformData) && array_key_exists('keywordPlacement', $platformData))
+            {
+                return Piwik::translate(
+                    'AOM_Platform_VisitDescription_AdWords',
+                    [
+                        $formatter->getPrettyMoney($visit['cost'], $visit['idsite']),
+                        $platformData['account'],
+                        $platformData['campaign'],
+                        $platformData['adGroup'],
+                        $platformData['keywordPlacement'],
+                    ]
+                );
+            } else {
+                return Piwik::translate('AOM_Platform_VisitDescription_AdWords_Incomplete');
+            }
         }
 
         return false;

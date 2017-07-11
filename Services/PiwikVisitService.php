@@ -37,6 +37,7 @@ class PiwikVisitService
     {
         // Limit to 10 visits to distribute work (if it has queued up for whatever reason)
         foreach (array_slice($this->getUnprocessedVisits(), 0, 10) as $visit) {
+
             $this->addNewPiwikVisit($visit);
         }
     }
@@ -46,10 +47,13 @@ class PiwikVisitService
      */
     private function getUnprocessedVisits()
     {
+        $latestProcessedPiwikVisit =
+            Db::fetchOne('SELECT MAX(piwik_idvisit) FROM ' . Common::prefixTable('aom_visits'));
+
         return Db::fetchAll(
             'SELECT *, conv(hex(idvisitor), 16, 10) AS idvisitor '
-                . ' FROM ' . Common::prefixTable('log_visit') . ' WHERE idvisit > '
-                . (Db::fetchOne('SELECT MAX(piwik_idvisit) FROM ' . Common::prefixTable('aom_visits')))
+                . ' FROM ' . Common::prefixTable('log_visit')
+                . ' WHERE idvisit > ' . ($latestProcessedPiwikVisit > 0 ? $latestProcessedPiwikVisit : 0)
                 . ' ORDER BY idvisit ASC'
         );
     }
@@ -82,7 +86,8 @@ class PiwikVisitService
             // For every single conversion: Increment visit's conversion count and add revenue
             $result = Db::query(
                 'UPDATE ' . Common::prefixTable('aom_visits') . ' SET '
-                    . ' conversions = conversions + 1, revenue = revenue + ?, ts_last_update = NOW() '
+                    . ' conversions = IFNULL(conversions, 0) + 1, revenue = IFNULL(revenue, 0) + ?, '
+                    . ' ts_last_update = NOW() '
                     . ' WHERE idsite = ? AND piwik_idvisit = ?',
                 [
                     $conversion['revenue'],
@@ -92,9 +97,10 @@ class PiwikVisitService
             );
             if (1 === $result->rowCount()) {
                 $this->logger->debug(
-                    'Added conversion ' . $conversion['idconversion'] . ' (' . $conversion['idorder'] . ') to visit '
-                        . $conversion['idvisit'] . ' in aom_visits table.'
+                    'Added conversion ' . $conversion['idconversion'] . ' (' . $conversion['idorder'] . ')'
+                        . ' to Piwik visit ' . $conversion['idvisit'] . ' in aom_visits table.'
                 );
+                self::postAomVisitAddedOrUpdatedEvent($conversion['idvisit']);
             } else {
                 $this->logger->error(
                     'Could not add conversion ' . $conversion['idconversion'] . ' (' . $conversion['idorder'] . ') as '
@@ -202,28 +208,28 @@ class PiwikVisitService
     {
         $campaignData = [];
 
-        if (null !== $visit['campaign_name']) {
+        if (isset($visit['campaign_name'])) {
             $campaignData['campaignName'] = $visit['campaign_name'];
         }
-        if (null !== $visit['campaign_keyword']) {
+        if (isset($visit['campaign_keyword'])) {
             $campaignData['campaignKeyword'] = $visit['campaign_keyword'];
         }
-        if (null !== $visit['campaign_source']) {
+        if (isset($visit['campaign_source'])) {
             $campaignData['campaignSource'] = $visit['campaign_source'];
         }
-        if (null !== $visit['campaign_medium']) {
+        if (isset($visit['campaign_medium'])) {
             $campaignData['campaignMedium'] = $visit['campaign_medium'];
         }
-        if (null !== $visit['campaign_content']) {
+        if (isset($visit['campaign_content'])) {
             $campaignData['campaignContent'] = $visit['campaign_content'];
         }
-        if (null !== $visit['campaign_id']) {
+        if (isset($visit['campaign_id'])) {
             $campaignData['campaignId'] = $visit['campaign_id'];
         }
-        if (null !== $visit['referer_name']) {
+        if (isset($visit['referer_name'])) {
             $campaignData['refererName'] = $visit['referer_name'];
         }
-        if (null !== $visit['referer_url']) {
+        if (isset($visit['referer_url'])) {
             $campaignData['refererUrl'] = $visit['referer_url'];
         }
 
@@ -232,7 +238,9 @@ class PiwikVisitService
 
     /**
      * Post an event that a visit has been added or updated.
+     *
      * Other plugins might listen to this event and publish them for example to an external SNS topic.
+     * We do not add any visit specific information here; other plugins should gather what they need on their own.
      *
      * TODO: Make sure that this method is called in all necessary places.
      * TODO: Should we add conversion information here (but based on which conversion attribution)?
@@ -241,25 +249,13 @@ class PiwikVisitService
      */
     public static function postAomVisitAddedOrUpdatedEvent($aomVisitId)
     {
-        // TODO: Make execution of this method configurable (activate AOM events for other plugins) as this adds overhead!
-        $aomVisit = Db::fetchRow('SELECT piwik_idvisit, piwik_idvisitor, date_website_timezone, channel, '
-            . ' campaign_data, platform_data, cost '
-            . ' FROM ' . Common::prefixTable('aom_visits') . ' WHERE id = ?',
-            [$aomVisitId,]
-        );
-
         Piwik::postEvent(
             'AOM.aomVisitAddedOrUpdated',
             [
                 'aomVisitId' => $aomVisitId,
-                'piwikVisitId' => $aomVisit['piwik_idvisit'],
-                'visitorId' => $aomVisit['piwik_idvisitor'],
-                'date' => $aomVisit['date_website_timezone'],
-                'channel' => $aomVisit['channel'],
-                'campaignData' => $aomVisit['campaign_data'],
-                'platformData' => $aomVisit['platform_data'],
-                'cost' => $aomVisit['cost'],
             ]
         );
+
+//        var_dump('Posted AOM.aomVisitAddedOrUpdated for aomVisitId ' . $aomVisitId . '.');
     }
 }

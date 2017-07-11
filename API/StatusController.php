@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\API;
 
@@ -14,11 +15,9 @@ use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 class StatusController
 {
     /**
-     * Returns various status information (e.g. last imports, last visits with ad params) that can be used for
-     * monitoring.
+     * Returns various status information that can be used for monitoring.
      *
-     * @param $idSite
-     *
+     * @param int $idSite
      * @return array
      */
     public static function getStatus($idSite)
@@ -54,48 +53,51 @@ class StatusController
 
             foreach (AOM::getPlatforms() as $platformName) {
 
-                $platform = AOM::getPlatformInstance($platformName);
                 $tableName = DatabaseHelperService::getTableNameByPlatformName($platformName);
 
                 $status['platforms'][$platformName] = [
                     'daysSinceLastImportWithResults' =>
                         (Db::fetchOne('SELECT COUNT(*) FROM ' . $tableName . ' WHERE idsite = ?', [$idSite]) > 0)
-                            ? intval(Db::fetchOne('SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $tableName . ' WHERE idsite = ?', [$idSite]))
+                            ? intval(Db::fetchOne(
+                                'SELECT DATEDIFF(CURDATE(), MAX(date)) FROM ' . $tableName . ' WHERE idsite = ?',
+                                [$idSite]))
                             : null,
                 ];
 
                 foreach (['Hour', 'Day'] as $period) {
 
                     $visitsWithPlatform = intval(Db::fetchOne(
-                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
-                            WHERE log_visit.idsite = ? AND log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"',
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' 
+                            WHERE idsite = ? AND visit_first_action_time >= ? 
+                            AND aom_platform = "' . $platformName . '"',
                         [
                             $idSite,
                             date('Y-m-d H:i:s', strtotime('-1 ' . $period))
                         ]));
 
                     $visitsWithAdParams = intval(Db::fetchOne(
-                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
-                            WHERE log_visit.idsite = ? AND log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"
-                            AND aom_ad_params IS NOT NULL AND aom_ad_params != "null"',
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . '
+                            WHERE idsite = ? AND visit_first_action_time >= ? 
+                            AND aom_platform = "' . $platformName . '" AND aom_ad_params IS NOT NULL 
+                            AND aom_ad_params != "null"',
                         [
                             $idSite,
                             date('Y-m-d H:i:s', strtotime('-1 ' . $period))
                         ]));
 
-                    $visitsWithAdData = intval(Db::fetchOne(
-                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
-                            WHERE log_visit.idsite = ? AND log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"
-                            AND aom_ad_data IS NOT NULL AND aom_ad_data != "null"',
+                    $visitsWithPlatformData = intval(Db::fetchOne(
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('aom_visits') . ' 
+                            WHERE idsite = ? AND channel = "' . $platformName . '" AND first_action_time_utc >= ?  
+                            AND platform_data IS NOT NULL AND platform_data != "null"',
                         [
                             $idSite,
                             date('Y-m-d H:i:s', strtotime('-1 ' . $period))
                         ]));
 
-                    $visitsWithPlatformRowId = intval(Db::fetchOne(
-                        'SELECT COUNT(*) FROM ' . Common::prefixTable('log_visit') . ' AS log_visit
-                            WHERE log_visit.idsite = ? AND log_visit.visit_first_action_time >= ? AND aom_platform = "' . $platformName . '"
-                            AND aom_platform_row_id IS NOT NULL',
+                    $visitsWithCost = intval(Db::fetchOne(
+                        'SELECT COUNT(*) FROM ' . Common::prefixTable('aom_visits') . '
+                            WHERE idsite = ? AND channel = "' . $platformName . '" AND first_action_time_utc >= ?  
+                            AND cost IS NOT NULL AND cost > 0',
                         [
                             $idSite,
                             date('Y-m-d H:i:s', strtotime('-1 ' . $period))
@@ -104,10 +106,9 @@ class StatusController
                     $status['platforms'][$platformName]['last' . $period] = [
                         'visitsWithPlatform' => $visitsWithPlatform,
                         'visitsWithAdParams' => $visitsWithAdParams,
-                        'visitsWithAdData' => $visitsWithAdData,
-                        'visitsWithPlatformRowId' => $visitsWithPlatformRowId,
+                        'visitsWithPlatformData' => $visitsWithPlatformData,
+                        'visitsWithCost' => $visitsWithCost,
                     ];
-
                 }
             }
         }
@@ -116,18 +117,18 @@ class StatusController
     }
 
     /**
-     * Returns various stats about reprocessed visits that can be used for monitoring.
+     * Returns various stats about AOM visits that can be used for monitoring.
      *
-     * @param $idSite
+     * @param int $idSite
      * @param bool $groupByChannel
-     *
      * @return array
      */
-    public static function getReprocessedVisitsStatus($idSite, $groupByChannel = false)
+    public static function getAomVisitsStatus($idSite, $groupByChannel = false)
     {
         if ($groupByChannel) {
             return Db::fetchAll(
-                'SELECT date_website_timezone, channel, COUNT(*) AS visits, SUM(conversions) AS conversions, SUM(cost) AS cost
+                'SELECT date_website_timezone, channel, COUNT(*) AS visits, SUM(conversions) AS conversions, 
+                    SUM(cost) AS cost
                     FROM piwik_aom_visits
                     WHERE idsite = ? AND date_website_timezone >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
                     GROUP BY date_website_timezone, channel',
