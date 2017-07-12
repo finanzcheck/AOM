@@ -14,6 +14,7 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
+use Piwik\Site;
 use Piwik\Tracker\Request;
 
 class AdWords extends AbstractPlatform implements PlatformInterface
@@ -87,20 +88,29 @@ class AdWords extends AbstractPlatform implements PlatformInterface
     public function isVisitComingFromPlatform(Request $request)
     {
         // Check current URL first before referrer URL
-        $urlsToCheck = [];
         if (isset($request->getParams()['url'])) {
-            $urlsToCheck[] = $request->getParams()['url'];
-        }
-        if (isset($request->getParams()['urlref'])) {
-            $urlsToCheck[] = $request->getParams()['urlref'];
-        }
-
-        foreach ($urlsToCheck as $urlToCheck) {
-            $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
+            $queryString = parse_url($request->getParams()['url'], PHP_URL_QUERY);
             parse_str($queryString, $queryParams);
 
             if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
                 return true;
+            }
+        }
+
+        // Only consider the referrer when it is an internal URL
+        if (isset($request->getParams()['urlref'])) {
+
+            $hostOfSiteUrl =
+                str_replace('www.', '', parse_url(Site::getMainUrlFor($request->getIdSite()), PHP_URL_HOST));
+            $hostOfReferrer = parse_url($request->getParams()['urlref'], PHP_URL_HOST);
+
+            if (false !== strpos($hostOfReferrer, $hostOfSiteUrl)) {
+                $queryString = parse_url($request->getParams()['urlref'], PHP_URL_QUERY);
+                parse_str($queryString, $queryParams);
+
+                if (is_array($queryParams) && array_key_exists('gclid', $queryParams)) {
+                    return true;
+                }
             }
         }
 
