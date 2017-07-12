@@ -18,10 +18,13 @@ title: Piwik AOM Plugin Documentation
     <a href="advertisers-platforms.html">additional params</a> that supply mapping-related data like campaign and ad IDs
     to the Piwik AOM plugin. This data is stored in the database columns <code>log_visit.aom_platform</code> and
     <code>log_visit.aom_ad_params</code>. When a visitor returns with other tracking params, a new visit is started
-    automatically. A copy of every single Piwik visit is written to <code>aom_visits</code>.</p>
+    automatically.</p>
 
-<p>After you have set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> background jobs will
-    work on the following two tasks:</p>
+<p>After you have set up a cronjob <code>./console aom:process</code> that gets executed every minute a copy of every
+    single Piwik visit is written (and conversions are added) to <code>aom_visits</code>.</p>
+
+<p>After you have set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> the following two
+    tasks will be executed by AOM:</p>
 
 <h4 class="sub-title">1. Import data from advertising platforms</h4>
 <p>Imported data is stored in the database table <code>aom_{platformName}</code>. Every advertising platform's data is
@@ -62,8 +65,10 @@ title: Piwik AOM Plugin Documentation
     <a href="https://dev.mysql.com/doc/refman/5.7/en/packet-too-large.html"><code>max_allowed_packet</code> size is high
     enough (this roughly depends on how much visits you have).</p>
 
-<p>You must be able to run cron jobs to set up
-    <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a>.</p>
+<p>You must be able to run cron jobs to set up both
+    <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> and the background job <code>./console
+    aom:process</code> (execution of the latter every minute) that updates visits and conversions in the
+    <code>aom_visits</code> table.</p>
 
 <p>You can install the Piwik AOM plugin from the <a href="https://plugins.piwik.org/AdvancedOnlineMarketing">Piwik
     marketplace</a>.</p>
