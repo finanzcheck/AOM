@@ -40,9 +40,9 @@ class PlatformTest extends IntegrationTestCase
 
     public function testOnNewVisitUrl()
     {
-        $entryUrl = "finanzcheck.de/lp/sofortkredit/'
-            . '?gclid=Cj0KEQjwxbDIBRCL99Wls-nLicoBEiQAWroh6pKaIMUpyFRYrL6zHTWDKPa8IpJjrWBTlPvh66TvrhsaAn9J8P8HAQ";
-        $referrer = 'google.de';
+        $entryUrl = 'http://www.example.com/lp/sofortkredit/'
+            . '?gclid=Cj0KEQjwxbDIBRCL99Wls-nLicoBEiQAWroh6pKaIMUpyFRYrL6zHTWDKPa8IpJjrWBTlPvh66TvrhsaAn9J8P8HAQ';
+        $referrer = 'http://www.google.de';
         $params = ['url' => $entryUrl, 'urlref' => $referrer, 'idsite' =>1];
 
         $request = new Request($params);
@@ -55,12 +55,12 @@ class PlatformTest extends IntegrationTestCase
 
     public function testOnNewVisitUrlReferer()
     {
-        $referrer = 'finanzcheck.de/lp/sofortkredit/'
+        $referrer = 'http://www.example.com/lp/sofortkredit/'
             . '?aom_platform=Bing&aom_campaign_id=184747916&aom_ad_group_id=9810883196&aom_feed_item_id='
             . '&aom_target_id=kwd-97675593&aom_creative=48726498716&aom_placement=&aom_target=&aom_network=g'
             . '&aom_device=m&aom_ad_position=1t1&aom_loc_physical=9042859&aom_loc_Interest=&amount=8000&term=84'
             . '&purpose=other&bid=dc0af63330ae5b1857d7862089d3fc0d&baseline=1463090434342';
-        $entryUrl = 'finanzcheck.de';
+        $entryUrl = 'http://www.example.com';
         $params = ['url' => $entryUrl, 'urlref' => $referrer, 'idsite' =>1];
 
         $request = new Request($params);

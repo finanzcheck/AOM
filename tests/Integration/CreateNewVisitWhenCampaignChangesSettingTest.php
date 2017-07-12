@@ -86,11 +86,11 @@ class CreateNewVisitWhenCampaignChangesSettingTest extends IntegrationTestCase
         $tracker->setUserId($userId);
 
         $fixture->moveTimeForward($tracker, 0.1, $dateTime);
-        $tracker->setUrl('http://example.com/?aom_platform=Criteo&aom_campaign_id=1234');
+        $tracker->setUrl('http://www.example.com/?aom_platform=Criteo&aom_campaign_id=1234');
         $tracker->doTrackPageView('Viewing homepage');
 
         $fixture->moveTimeForward($tracker, 0.1, $dateTime);
-        $tracker->setUrl('http://example.com/?aom_platform=Criteo&aom_campaign_id=9876');
+        $tracker->setUrl('http://www.example.com/?aom_platform=Criteo&aom_campaign_id=9876');
         $tracker->doTrackPageView('Viewing homepage');
     }
 }

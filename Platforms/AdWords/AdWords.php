@@ -98,15 +98,26 @@ class AdWords extends AbstractPlatform implements PlatformInterface
         }
 
         // Only consider the referrer when it is an internal URL
-        if (isset($request->getParams()['urlref'])) {
+        if (isset($request->getParams()['urlref']) && $request->getIdSite()) {
 
-            $hostOfSiteUrl =
-                str_replace('www.', '', parse_url(Site::getMainUrlFor($request->getIdSite()), PHP_URL_HOST));
+            // Site::getMainUrlFor($request->getIdSite()) does not work in tests
+            $hostOfSiteUrl = parse_url(
+                Db::fetchOne(
+                    'SELECT main_url FROM ' . Common::prefixTable('site') . ' WHERE idsite = ?',
+                    [$request->getIdSite(),]
+                ),
+                PHP_URL_HOST
+            );
+            if (!$hostOfSiteUrl) {
+                return false;
+            }
+
+            $hostOfSiteUrl = str_replace('www.', '', $hostOfSiteUrl);
 
             // TODO: Does this really cover all relevant URLs?
             $hostOfReferrer = parse_url($request->getParams()['urlref'], PHP_URL_HOST);
 
-            if (false !== strpos($hostOfReferrer, $hostOfSiteUrl)) {
+            if ($hostOfReferrer && $hostOfSiteUrl && (false !== strpos($hostOfReferrer, $hostOfSiteUrl))) {
                 $queryString = parse_url($request->getParams()['urlref'], PHP_URL_QUERY);
                 parse_str($queryString, $queryParams);
 

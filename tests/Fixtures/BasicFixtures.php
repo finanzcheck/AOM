@@ -58,7 +58,8 @@ class BasicFixtures extends Fixture
 
     protected function setUpWebsite()
     {
-        $idSite = self::createWebsite('2015-12-01 01:23:45', $ecommerce = 1);
+        $idSite =
+            self::createWebsite('2015-12-01 01:23:45', $ecommerce = 1, 'Example Website', 'http://www.example.com');
         $this->assertTrue($idSite === 1);
     }
 
