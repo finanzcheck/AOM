@@ -224,23 +224,28 @@ abstract class AbstractMerger
      */
     private function updateArtificialVisit($idsite, $date, $platformName, $platformKey, $cost)
     {
-        $result = Db::query(
-            'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
+        // This should usually be only one single artificial visit
+        $affectedVisits = Db::fetchAll(
+            'SELECT id FROM ' . Common::prefixTable('aom_visits')
                 . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
                 . ' AND piwik_idvisit IS NULL AND (cost IS NULL OR cost != ?)',
-            [$cost, $idsite, $date, $platformName, $platformKey, $cost,]
+            [$idsite, $date, $platformName, $platformKey, $cost,]
         );
 
-        if ($result->rowCount() > 0) {
+        if (count($affectedVisits) > 0) {
+
+            Db::query(
+                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
+                    . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
+                    . ' AND piwik_idvisit IS NULL AND (cost IS NULL OR cost != ?)',
+                [$cost, $idsite, $date, $platformName, $platformKey, $cost,]
+            );
+
             $this->logger->debug('Updated cost of artificial visit to ' . $cost . '.');
 
-            // Publish event for update of artificial visit (this should only be one single update)
-            foreach (Db::fetchAll(
-                'SELECT id FROM ' . Common::prefixTable('aom_visits')
-                    . ' WHERE idsite = ? AND date_website_timezone = ? AND platform_key = ?',
-                [$idsite, $date, $platformKey,]
-            ) as $updatedVisit) {
-                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($updatedVisit['id']);
+            // Publish event for every single update
+            foreach ($affectedVisits as $affectedVisit) {
+                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($affectedVisit['id']);
             }
         }
     }
@@ -255,26 +260,30 @@ abstract class AbstractMerger
      */
     private function distributeCostBetweenRealVisits($idsite, $date, $platformName, $platformKey, $costPerVisit)
     {
-        $result = Db::query(
-            'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
+        $affectedVisits = Db::fetchAll(
+            'SELECT id FROM ' . Common::prefixTable('aom_visits')
                 . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
                 . ' AND piwik_idvisit IS NOT NULL AND (cost IS NULL or cost != ?)',
-            [$costPerVisit, $idsite, $date, $platformName, $platformKey, $costPerVisit,]
+                [$idsite, $date, $platformName, $platformKey, $costPerVisit,]
         );
 
-        if ($result->rowCount() > 0) {
+        if (count($affectedVisits) > 0) {
+
+            Db::query(
+                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET cost = ?, ts_last_update = NOW() '
+                    . ' WHERE idsite = ? AND date_website_timezone = ? AND channel = ? AND platform_key = ? '
+                    . ' AND piwik_idvisit IS NOT NULL AND (cost IS NULL or cost != ?)',
+                [$costPerVisit, $idsite, $date, $platformName, $platformKey, $costPerVisit,]
+            );
+
             $this->logger->debug(
-                'Updated cost of ' . $result->rowCount() . ' real visit' . ($result->rowCount() != 1 ? 's' : '')
+                'Updated cost of ' . count($affectedVisits) . ' real visit' . (count($affectedVisits) != 1 ? 's' : '')
                     . ' to ' . number_format($costPerVisit, 4) . '.'
             );
 
-            // Publish events for every single update
-            foreach (Db::fetchAll(
-                'SELECT id FROM ' . Common::prefixTable('aom_visits')
-                . ' WHERE idsite = ? AND date_website_timezone = ? AND platform_key = ?',
-                [$idsite, $date, $platformKey,]
-            ) as $updatedVisit) {
-                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($updatedVisit['id']);
+            // Publish event for every single update
+            foreach ($affectedVisits as $affectedVisit) {
+                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($affectedVisit['id']);
             }
         }
     }
@@ -288,32 +297,29 @@ abstract class AbstractMerger
      */
     protected function updatePlatformData($idsite, $platformKey, array $platformData)
     {
-        // Remove irrelevant platform data from the array.
-        // If we don't do thins, the UPDATE would affect the same rows after every (re)import!
-        $platformData = array_diff_key(
-            $platformData,
-            array_flip(['id', 'id_account_internal', 'idsite', 'date', 'ts_created',])
+        $affectedVisits = Db::fetchAll(
+            'SELECT id FROM ' . Common::prefixTable('aom_visits')
+                . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
+            [$idsite, $platformKey, json_encode($platformData),]
         );
 
-        $affectedRows = Db::query(
-            'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
-            . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
-            [json_encode($platformData), $idsite, $platformKey, json_encode($platformData),]
-        )->rowCount();
+        if (count($affectedVisits) > 0) {
 
-        if ($affectedRows > 0) {
+            Db::query(
+                'UPDATE ' . Common::prefixTable('aom_visits') . ' SET platform_data = ?, ts_last_update = NOW() '
+                . ' WHERE idsite = ? AND platform_key = ? AND platform_data != ?',
+                [json_encode($platformData), $idsite, $platformKey, json_encode($platformData),]
+            );
+
             $this->logger->debug(
-                'Updated platform data of ' . $affectedRows . ' record' . ($affectedRows != 1 ? 's' : '')
+                'Updated platform data of ' . count($affectedVisits)
+                    . ' record' . (count($affectedVisits) != 1 ? 's' : '')
                     . ' with platform key "' . $platformKey . '" in aom_visits table.'
             );
 
-            // Publish events for every single update
-            foreach (Db::fetchAll(
-                'SELECT id FROM ' . Common::prefixTable('aom_visits')
-                . ' WHERE idsite = ? AND platform_key = ? AND platform_data = ?',
-                [$idsite, $platformKey, json_encode($platformData),]
-            ) as $updatedVisit) {
-                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($updatedVisit['id']);
+            // Publish event for every single update
+            foreach ($affectedVisits as $affectedVisit) {
+                PiwikVisitService::postAomVisitAddedOrUpdatedEvent($affectedVisit['id']);
             }
         }
     }

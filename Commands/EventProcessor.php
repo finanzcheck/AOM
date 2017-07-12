@@ -48,6 +48,8 @@ class EventProcessor extends ConsoleCommand
         // We might need a little more RAM
         ini_set('memory_limit','1024M');
 
+        $this->logger->info('Starting aom:process run.');
+
         // TODO: Update docs.
         // TODO: Make sure that this command cannot create race conditions!
         // TODO: Make this command running continuously via Supervisor as preferred method.
@@ -59,5 +61,7 @@ class EventProcessor extends ConsoleCommand
 
         // Check if new conversion have been created. If so, increment conversion counter and add revenue of visit.
         $piwikVisitService->checkForNewConversion();
+
+        $this->logger->info('Completed aom:process run.');
     }
 }

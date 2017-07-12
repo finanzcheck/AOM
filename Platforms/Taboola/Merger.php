@@ -33,7 +33,7 @@ class Merger extends AbstractMerger implements MergerInterface
                 ];
 
                 // Update visit's platform data (including historic records) and publish update events when necessary
-                $this->updatePlatformData($platformRow['idsite'], $platformKey, $platformRow);
+                $this->updatePlatformData($platformRow['idsite'], $platformKey, $platformData);
 
                 $this->allocateCostOfPlatformRow(AOM::PLATFORM_TABOOLA, $platformRow, $platformKey, $platformData);
             }
