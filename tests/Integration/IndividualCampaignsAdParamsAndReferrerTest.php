@@ -101,7 +101,7 @@ class IndividualCampaignsAdParamsAndReferrerTest extends IntegrationTestCase
 //    {
 //        $request = new Request([
 //            'idsite' => 1,
-//            'url' => 'http://example.com/?utm_campaign=newsletter-december-2015',
+//            'url' => 'http://www.example.com/?utm_campaign=newsletter-december-2015',
 //            'urlref' => 'https://www.web.de/...',
 //        ]);
 //
@@ -153,7 +153,7 @@ class IndividualCampaignsAdParamsAndReferrerTest extends IntegrationTestCase
 //    {
 //        $request = new Request([
 //            'idsite' => 1,
-//            'url' => 'http://example.com/',
+//            'url' => 'http://www.example.com/',
 //            'urlref' => 'https://www.web.de/...',
 //        ]);
 //
