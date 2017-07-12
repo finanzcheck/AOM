@@ -102,6 +102,8 @@ class AdWords extends AbstractPlatform implements PlatformInterface
 
             $hostOfSiteUrl =
                 str_replace('www.', '', parse_url(Site::getMainUrlFor($request->getIdSite()), PHP_URL_HOST));
+
+            // TODO: Does this really cover all relevant URLs?
             $hostOfReferrer = parse_url($request->getParams()['urlref'], PHP_URL_HOST);
 
             if (false !== strpos($hostOfReferrer, $hostOfSiteUrl)) {
