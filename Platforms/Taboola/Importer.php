@@ -88,23 +88,26 @@ class Importer extends AbstractImporter implements ImporterInterface
             );
         }
 
-        // Setup the placeholders - a fancy way to make the long "(?, ?, ?)..." string
-        $columns = ['id_account_internal', 'idsite', 'date', 'campaign_id', 'campaign', 'site_id', 'site',
-            'impressions', 'clicks', 'cost', 'conversions', 'ts_created'];
-        $rowPlaces = '(' . implode(', ', array_fill(0, count($columns) - 1, '?')) . ', NOW())';
-        $allPlaces = implode(', ', array_fill(0, count($reportData), $rowPlaces));
+        if (count($dataToInsert) > 0) {
 
-        $result = Db::query(
-            'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
-            . ' (' . implode(', ', $columns) . ') VALUES ' . $allPlaces,
-            $dataToInsert
-        );
+            // Setup the placeholders - a fancy way to make the long "(?, ?, ?)..." string
+            $columns = ['id_account_internal', 'idsite', 'date', 'campaign_id', 'campaign', 'site_id', 'site',
+                'impressions', 'clicks', 'cost', 'conversions', 'ts_created'];
+            $rowPlaces = '(' . implode(', ', array_fill(0, count($columns) - 1, '?')) . ', NOW())';
+            $allPlaces = implode(', ', array_fill(0, count($reportData), $rowPlaces));
 
-        $this->log(
-            Logger::DEBUG,
-            'Inserted ' . $result->rowCount() . ' records of Taboola account ' . $accountId . ' into '
-                . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '.'
-        );
+            $result = Db::query(
+                'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA)
+                . ' (' . implode(', ', $columns) . ') VALUES ' . $allPlaces,
+                $dataToInsert
+            );
+
+            $this->log(
+                Logger::DEBUG,
+                'Inserted ' . $result->rowCount() . ' records of Taboola account ' . $accountId . ' into '
+                    . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . '.'
+            );
+        }
     }
 
     /**
