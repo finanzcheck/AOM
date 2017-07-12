@@ -52,7 +52,8 @@ class TaboolaMergerTest extends IntegrationTestCase
     private function getAomVisit($id)
     {
         $data = DB::fetchRow('SELECT * FROM ' . Common::prefixTable('aom_visits') . ' WHERE piwik_idvisit = ?', [$id]);
-        return json_decode($data['platform_data'], true);
+
+        return [json_decode($data['platform_data'], true), $data['cost']];
     }
 
 
@@ -95,23 +96,24 @@ class TaboolaMergerTest extends IntegrationTestCase
 
     public function testExactMatch()
     {
-        $data = $this->getAomVisit(1);
-        $this->assertEquals('Campaign 1', $data['campaign']);
-        $this->assertEquals(36.4, $data['cost']);
+        list($platformData, $cost) = $this->getAomVisit(1);
+        $this->assertEquals('Campaign 1', $platformData['campaign']);
+        $this->assertEquals(36.4, $cost);
     }
 
 
     public function testHistoricalMatch()
     {
-        $data = $this->getAomVisit(2);
-        $this->assertEquals('Campaign 2', $data['campaign']);
-        $this->assertArrayNotHasKey('cost', $data);
+        list($platformData, $cost) = $this->getAomVisit(2);
+        $this->assertEquals('Campaign 2', $platformData['campaign']);
+        $this->assertEquals(null, $cost);
     }
 
     public function testNoMatch()
     {
-        $data = $this->getAomVisit(3);
-        $this->assertEquals(0, count($data));
+        list($platformData, $cost) = $this->getAomVisit(3);
+        $this->assertEquals(null, $platformData);
+        $this->assertEquals(null, $cost);
     }
 
     // TODO: Cost allocation

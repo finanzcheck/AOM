@@ -51,7 +51,7 @@ class Merger extends AbstractMerger implements MergerInterface
         if (count($missingParams)) {
             $this->logger->warning(
                 'Could not find ' . implode(', ', $missingParams) . ' in ad params of visit ' . $idvisit
-                . ' although platform has been identified as Bing.'
+                . ' although platform has been identified as Taboola.'
             );
             return $mergerPlatformDataOfVisit;
         }
