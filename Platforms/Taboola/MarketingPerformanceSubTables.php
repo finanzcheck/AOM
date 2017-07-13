@@ -3,6 +3,7 @@
  * AOM - Piwik Advanced Online Marketing Plugin
  *
  * @author Daniel Stonies <daniel.stonies@googlemail.com>
+ * @author André Kolell <andre.kolell@gmail.com>
  */
 namespace Piwik\Plugins\AOM\Platforms\Taboola;
 
@@ -56,7 +57,7 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
         // TODO: Use "id" in "platform_data" of aom_visits instead for merging?!
 
         // Imported data (data like impressions is not available in aom_visits table!)
-        $campaignData = Db::fetchAssoc(
+        $importedData = Db::fetchAssoc(
             'SELECT CONCAT(\'C\', campaign_id) AS campaignId, campaign, ROUND(sum(cost), 2) as cost, '
                 . 'SUM(clicks) as clicks, SUM(impressions) as impressions '
                 . 'FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . ' '
@@ -69,11 +70,13 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
             ]
         );
 
-        // Reprocessed visits data
-        // TODO: This will have bad performance when there's lots of data
-        $reprocessVisitsData = Db::fetchAssoc(
+        // TODO: This will have bad performance when there's lots of data (use platform_key or something else in future)
+        $aomVisits = Db::fetchAssoc(
             'SELECT '
-                . 'CONCAT(\'C\', SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'campaign_id\', platform_data)+CHAR_LENGTH(\'campaign_id\')+3),\'"\',1)) as campaignId, '
+                . '(CASE WHEN (LOCATE(\'campaignId\', platform_data) > 0) '
+                . 'THEN CONCAT(\'C\', SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'campaignId\', platform_data)+CHAR_LENGTH(\'campaignId\')+3),\'"\',1))'
+                . 'ELSE CONCAT(\'C\', SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'campaign_id\', platform_data)+CHAR_LENGTH(\'campaign_id\')+3),\'"\',1))'
+                . 'END) AS campaignId, '
                 . 'COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, SUM(conversions) AS conversions, SUM(revenue) AS revenue '
                 . 'FROM ' . Common::prefixTable('aom_visits') . ' '
                 . 'WHERE idsite = ? AND channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ? '
@@ -87,7 +90,7 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
         );
 
         // Merge data based on campaignId
-        foreach (array_merge_recursive($campaignData, $reprocessVisitsData) as $data) {
+        foreach (array_merge_recursive($importedData, $aomVisits) as $data) {
 
             // We might have visits that we identified as coming from this platform but that we could not merge
             if (!isset($data['campaign'])) {
@@ -126,10 +129,10 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
         // Imported data (data like impressions is not available in aom_visits table!)
         $siteData = Db::fetchAssoc(
             'SELECT site_id AS siteId, site, ROUND(sum(cost), 2) as cost, SUM(clicks) as clicks, '
-            . 'SUM(impressions) as impressions '
-            . 'FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . ' '
-            . 'WHERE idsite = ? AND date >= ? AND date <= ? AND campaign_id = ?'
-            . 'GROUP BY siteId',
+                . 'SUM(impressions) as impressions '
+                . 'FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . ' '
+                . 'WHERE idsite = ? AND date >= ? AND date <= ? AND campaign_id = ?'
+                . 'GROUP BY siteId',
             [
                 $idSite,
                 $startDate,
@@ -138,26 +141,29 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
             ]
         );
 
-        // Reprocessed visits data
-        // TODO: This will have bad performance when there's lots of data
-        $reprocessedVisitsData = Db::fetchAssoc(
+        // TODO: This will have bad performance when there's lots of data (use platform_key or something else in future)
+        $aomVisits = Db::fetchAssoc(
             'SELECT '
-            . 'CONCAT(SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'site_id\', platform_data)+CHAR_LENGTH(\'site_id\')+3),\'"\',1)) as siteId, '
-            . 'COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, SUM(conversions) AS conversions, SUM(revenue) AS revenue '
-            . 'FROM ' . Common::prefixTable('aom_visits') . ' '
-            . 'WHERE idsite = ? AND channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ? AND platform_data LIKE ?'
-            . 'GROUP BY siteId',
+                . '(CASE WHEN (LOCATE(\'siteId\', platform_data) > 0) '
+                . 'THEN CONCAT(SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'siteId\', platform_data)+CHAR_LENGTH(\'siteId\')+3),\'"\',1))'
+                . 'ELSE CONCAT(SUBSTRING_INDEX(SUBSTR(platform_data, LOCATE(\'site_id\', platform_data)+CHAR_LENGTH(\'site_id\')+3),\'"\',1))'
+                . 'END) AS siteId, '
+                . 'COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, SUM(conversions) AS conversions, SUM(revenue) AS revenue '
+                . 'FROM ' . Common::prefixTable('aom_visits') . ' '
+                . 'WHERE idsite = ? AND channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ? AND (platform_data LIKE ? OR platform_data LIKE ?)'
+                . 'GROUP BY siteId',
             [
                 $idSite,
                 AOM::PLATFORM_TABOOLA,
                 $startDate,
                 $endDate,
+                '%"campaignId":"' . $id . '"%',
                 '%"campaign_id":"' . $id . '"%',
             ]
         );
 
         // Merge data based on siteId
-        foreach (array_merge_recursive($siteData, $reprocessedVisitsData) as $data) {
+        foreach (array_merge_recursive($siteData, $aomVisits) as $data) {
 
             // Add to DataTable
             $table->addRowFromArray([
