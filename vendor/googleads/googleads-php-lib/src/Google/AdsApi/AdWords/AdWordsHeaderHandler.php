@@ -20,7 +20,6 @@ use Google\AdsApi\Common\AdsHeaderFormatter;
 use Google\AdsApi\Common\AdsHeaderHandler;
 use Google\AdsApi\Common\AdsServiceDescriptor;
 use Google\AdsApi\Common\AdsSession;
-use Google\AdsApi\Common\LibraryMetadataProvider;
 use Google\AdsApi\Common\Util\OAuth2TokenRefresher;
 use Google\AdsApi\Common\Util\Reflection;
 use InvalidArgumentException;
@@ -44,19 +43,11 @@ final class AdWordsHeaderHandler implements AdsHeaderHandler {
    */
   const DEFAULT_SOAP_HEADER_CLASS_NAME = 'cm\\SoapHeader';
 
-  /**
-   * @var string the namespace suffix of the group and class name of the express
-   *     SOAP request header object used by the AdWords API
-   */
-  const EXPRESS_SOAP_HEADER_CLASS_NAME = 'express\\ExpressSoapHeader';
-
-  private $libraryMetadataProvider;
   private $adsHeaderFormatter;
   private $reflection;
   private $oAuth2TokenRefresher;
 
   public function __construct() {
-    $this->libraryMetadataProvider = new LibraryMetadataProvider();
     $this->adsHeaderFormatter = new AdsHeaderFormatter();
     $this->reflection = new Reflection();
     $this->oAuth2TokenRefresher = new OAuth2TokenRefresher();
@@ -89,20 +80,6 @@ final class AdWordsHeaderHandler implements AdsHeaderHandler {
     $soapRequestHeader->setValidateOnly($session->isValidateOnly());
     $soapRequestHeader->setPartialFailure($session->isPartialFailure());
 
-    if ($serviceDescriptor->isExpressHeaderRequired()) {
-      $businessId = $session->getExpressBusinessId();
-      $plusPageId = $session->getExpressPlusPageId();
-      if ($businessId !== null && $plusPageId !== null
-          || $businessId === null && $plusPageId === null) {
-        throw new InvalidArgumentException(
-            'One of expressBusinessId or expressPlusPageId must be set, but '
-                . 'not both.'
-        );
-      }
-      $soapRequestHeader->setExpressBusinessId($businessId);
-      $soapRequestHeader->setPageId($plusPageId);
-    }
-
     return new SoapHeader(
         $serviceDescriptor->getSoapNamespace(),
         self::SOAP_HEADER_NAME,
@@ -126,9 +103,7 @@ final class AdWordsHeaderHandler implements AdsHeaderHandler {
     $soapHeaderClassName = sprintf(
         '%s\\%s',
         implode('\\', $namespaceParts),
-        $serviceDescriptor->isExpressHeaderRequired()
-            ? self::EXPRESS_SOAP_HEADER_CLASS_NAME
-            : self::DEFAULT_SOAP_HEADER_CLASS_NAME
+        self::DEFAULT_SOAP_HEADER_CLASS_NAME
     );
 
     return $this->reflection->createInstance($soapHeaderClassName);
@@ -139,7 +114,6 @@ final class AdWordsHeaderHandler implements AdsHeaderHandler {
     return $this->adsHeaderFormatter->formatApplicationNameForSoapHeader(
         $userAgent,
         self::PRODUCT_NAME_FOR_SOAP_HEADER,
-        $this->libraryMetadataProvider,
         $includeUtilityUsage
     );
   }

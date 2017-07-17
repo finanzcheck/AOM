@@ -158,19 +158,54 @@ final class ProductPartitions {
   }
 
   /**
-   * Creates an ad group criterion operation for the given criterion.
+   * Creates an ADD operation for the given ad group criterion.
    *
    * @param AdGroupCriterion $criterion the ad group criterion to create the
    *     ADD operation
-   * @return AdGroupCriterionOperation the ad group criterion operation
+   * @return AdGroupCriterionOperation the ADD ad group criterion operation
    */
   public static function createAddOperation(AdGroupCriterion $criterion) {
+    return self::createAdGroupCriterionOperation($criterion, Operator::ADD);
+  }
+
+  /**
+   * Creates a REMOVE operation for the given ad group criterion.
+   *
+   * @param AdGroupCriterion $criterion the ad group criterion to create the
+   *     REMOVE operation
+   * @return AdGroupCriterionOperation the REMOVE ad group criterion operation
+   */
+  public static function createRemoveOperation(AdGroupCriterion $criterion) {
+    return self::createAdGroupCriterionOperation($criterion, Operator::REMOVE);
+  }
+
+  /**
+   * Creates a SET operation for the given ad group criterion.
+   *
+   * @param AdGroupCriterion $criterion the ad group criterion to create the
+   *     SET operation
+   * @return AdGroupCriterionOperation the SET ad group criterion operation
+   */
+  public static function createSetOperation(AdGroupCriterion $criterion) {
+    return self::createAdGroupCriterionOperation($criterion, Operator::SET);
+  }
+
+  /**
+   * Creates an ad group criterion operation for the given ad group criterion.
+   *
+   * @param AdGroupCriterion $criterion the ad group criterion
+   * @param string $operator the operator for the operation
+   * @return AdGroupCriterionOperation the ad group criterion operation
+   */
+  private static function createAdGroupCriterionOperation(
+      AdGroupCriterion $criterion, $operator) {
     $operation = new AdGroupCriterionOperation();
     $operation->setOperand($criterion);
-    $operation->setOperator(Operator::ADD);
+    $operation->setOperator($operator);
 
-   return $operation;
+    return $operation;
   }
+
   /**
    * Returns the string representation of ad group criteria of the specified
    * ad group ID by showing them hierarchically.

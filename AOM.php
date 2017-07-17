@@ -17,7 +17,6 @@ use Piwik\Plugins\AOM\Platforms\AbstractImporter;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
-use Piwik\Plugins\AOM\Services\PiwikVisitService;
 use Psr\Log\LoggerInterface;
 
 class AOM extends \Piwik\Plugin
