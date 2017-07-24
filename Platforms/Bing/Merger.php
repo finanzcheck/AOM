@@ -29,11 +29,11 @@ class Merger extends AbstractMerger implements MergerInterface
                 );
 
                 $platformData = [
-                    'accountId' => $platformRow['account_id'],
+                    'accountId' => (string) $platformRow['account_id'],
                     'account' => $platformRow['account'],
-                    'campaignId' => $platformRow['campaign_id'],
+                    'campaignId' => (string) $platformRow['campaign_id'],
                     'campaign' => $platformRow['campaign'],
-                    'adGroupId' => $platformRow['ad_group_id'],
+                    'adGroupId' => (string) $platformRow['ad_group_id'],
                     'adGroup' => $platformRow['ad_group'],
                     'keywordId' => $platformRow['keyword_id'],
                     'keyword' => $platformRow['keyword'],
@@ -86,9 +86,9 @@ class Merger extends AbstractMerger implements MergerInterface
             if (!$platformRow) {
                 return $mergerPlatformDataOfVisit->setPlatformData(
                     [
-                        'campaignId' => $aomAdParams['campaignId'],
-                        'adGroupId' => $aomAdParams['adGroupId'],
-                        'keywordId' => $aomAdParams['keywordId'],
+                        'campaignId' => (string) $aomAdParams['campaignId'],
+                        'adGroupId' => (string) $aomAdParams['adGroupId'],
+                        'keywordId' => (string) $aomAdParams['keywordId'],
                     ]
                 );
             }
@@ -96,9 +96,9 @@ class Merger extends AbstractMerger implements MergerInterface
             // Historical match only
             return $mergerPlatformDataOfVisit->setPlatformData(array_merge(
                 [
-                    'campaignId' => $aomAdParams['campaignId'],
-                    'adGroupId' => $aomAdParams['adGroupId'],
-                    'keywordId' => $aomAdParams['keywordId'],
+                    'campaignId' => (string) $aomAdParams['campaignId'],
+                    'adGroupId' => (string) $aomAdParams['adGroupId'],
+                    'keywordId' => (string) $aomAdParams['keywordId'],
                 ],
                 $platformRow
             ));
@@ -108,13 +108,13 @@ class Merger extends AbstractMerger implements MergerInterface
         return $mergerPlatformDataOfVisit
             ->setPlatformData(array_merge(
                 [
-                    'campaignId' => $aomAdParams['campaignId'],
-                    'adGroupId' => $aomAdParams['adGroupId'],
-                    'keywordId' => $aomAdParams['keywordId'],
+                    'campaignId' => (string) $aomAdParams['campaignId'],
+                    'adGroupId' => (string) $aomAdParams['adGroupId'],
+                    'keywordId' => (string) $aomAdParams['keywordId'],
                 ],
                 [
                     'account' => $platformRow['account'],
-                    'accountId' => $platformRow['accountId'],
+                    'accountId' => (string) $platformRow['accountId'],
                     'campaign' => $platformRow['campaign'],
                     'adGroup' => $platformRow['adGroup'],
                     'keyword' => $platformRow['keyword'],

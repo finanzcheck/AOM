@@ -14,7 +14,6 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
 use Piwik\Plugins\AOM\Platforms\PlatformInterface;
-use Piwik\Site;
 use Piwik\Tracker\Request;
 
 class AdWords extends AbstractPlatform implements PlatformInterface
