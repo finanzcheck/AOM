@@ -286,8 +286,72 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 
 <h4>Email marketing campaign</h4>
 
-<p>Imagine you've created an email marketing campaign ...
-    <strong>This feature is work in progress and will be released soon.</strong></p>
+<p>Imagine you've created an email marketing campaign to advertise a special christmas deal which cost you $ 1000 and
+    that you are going to send out on December 1st 2017. From previous email marketing campaigns you know that about 95%
+    of visits occur within the first week after the email has been send out. You have added the
+    <a href="https://piwik.org/docs/tracking-campaigns/#tracking-campaigns-using-url-parameters" target="_blank">
+    tracking parameter</a> <code>pk_campaign=Email-December-2017</code>.</p>
+
+<p>Now, in Piwik AOM you would simply create an individual campaign before December 1st with the following data:</p>
+
+<table><thead>
+<tr>
+    <th>Begin of campaign</th>
+    <th>End of campaign</th>
+    <th>Campaign name</th>
+    <th>Params</th>
+    <th>Referrer</th>
+    <th>Total cost in website currency</th>
+</tr>
+</thead><tbody>
+<tr>
+    <td>2017-12-01</td>
+    <td>2017-12-07</td>
+    <td>E-Mail special christmas deal 2017</td>
+    <td>pk_campaign=Email-December-2017</td>
+    <td></td>
+    <td>1000</td>
+</tr>
+</tbody></table>
+
+<h4>Partnership with your friends-famous-website.com</h4>
+
+<p>Your friend offered you to place a link to your website for $ 500 for the whole month of December 2017 within one of
+    his magazine articles which is hosted at friends-famous-website.com/article-4711.html. As he does not want to add
+    any tracking params (and his visitors don't like obvious advertising), you can only identify traffic coming from him
+    by the referrer.</p>
+
+<p>In Piwik AOM you would create an individual campaign before December 1st with the following data:</p>
+
+<table><thead>
+<tr>
+    <th>Begin of campaign</th>
+    <th>End of campaign</th>
+    <th>Campaign name</th>
+    <th>Params</th>
+    <th>Referrer</th>
+    <th>Total cost in website currency</th>
+</tr>
+</thead><tbody>
+<tr>
+    <td>2017-12-01</td>
+    <td>2017-12-31</td>
+    <td>Partnership friends-famous-website.com Dec. 2017</td>
+    <td></td>
+    <td>friends-famous-website.com/article-4711.html</td>
+    <td>500</td>
+</tr>
+</tbody></table>
+
+<p><strong>We hopefully implement the possibility to add individual campaigns and distribute their cost ex post
+    soon.</strong></p>
+
+<p>As soon as you add an individual campaign like these to Piwik AOM, Piwik AOM first distributes the cost you provided
+    equally over all days within the campaign duration which you provided. Within these days, cost is equally
+    distributed between visits.</p>
+
+<p>Deleting an individual campaign currently affects only non-processed cost and visits. All visits that have already
+    been updated by the individual campaign are kept including cost that has been assigned to them.</p>
 
 <p>You cannot distribute costs to visits that have been detected by Piwik AOM, i.e. you cannot distribute (additional)
     cost for example to an AdWords campaign that already got additional data from AdWords. Piwik AOM takes care of that,

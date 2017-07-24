@@ -70,8 +70,7 @@ title: Piwik AOM Plugin Documentation
     aom:process</code> (execution of the latter every minute) that updates visits and conversions in the
     <code>aom_visits</code> table.</p>
 
-<p>You can install the Piwik AOM plugin from the <a href="https://plugins.piwik.org/AdvancedOnlineMarketing">Piwik
-    marketplace</a>.</p>
+<p>You can install the Piwik AOM plugin from the <a href="https://plugins.piwik.org/AOM">Piwik marketplace</a>.</p>
 
 <p>Set up <a href="http://piwik.org/docs/setup-auto-archiving/">auto archiving</a> to automatically import and merge
     data from the advertiser's platforms. The auto archiving cron job executes the <code>core:archive command</code>
@@ -107,6 +106,12 @@ title: Piwik AOM Plugin Documentation
 
 <!-- Changelog -->
 <h2 class="sub-title text-center">Changelog</h2>
+<p><strong>1.1.0</strong> on 24 July 2017 and afterwards</p>
+<ul>
+    <li>Introduces individual campaigns (see the
+        <a href="http://www.advanced-online-marketing.com/advertisers-platforms.html">section about individual
+        campaigns</a> for more information)</li>
+</ul>
 <p><strong>1.0.0</strong> on 11 July 2017 and afterwards</p>
 <ul>
     <li>Restructures the entire Piwik AOM plugin core from lots of batch jobs to an event oriented processing
