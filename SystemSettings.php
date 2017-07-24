@@ -9,7 +9,6 @@ namespace Piwik\Plugins\AOM;
 use Piwik\NoAccessException;
 use Piwik\Option;
 use Piwik\Piwik;
-use Piwik\Plugins\AOM\Platforms\AdWords\AdWords;
 use Piwik\Settings\FieldConfig;
 use Piwik\Settings\Plugin\SystemSetting;
 
@@ -73,9 +72,7 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
         $this->platformBingIsActive = $this->createPlatformBingIsActiveSetting();
         $this->platformCriteoIsActive = $this->createPlatformCriteoIsActiveSetting();
         $this->platformFacebookAdsIsActive = $this->createPlatformFacebookAdsIsActiveSetting();
-
-        // TODO: Activate this when other development is complete.
-//        $this->platformIndividualCampaignsIsActive = $this->createPlatformIndividualCampaignsIsActiveSetting();
+        $this->platformIndividualCampaignsIsActive = $this->createPlatformIndividualCampaignsIsActiveSetting();
         $this->platformTaboolaIsActive = $this->createPlatformTaboolaIsActiveSetting();
     }
 
@@ -215,6 +212,9 @@ class SystemSettings extends \Piwik\Settings\Plugin\SystemSettings
         return $this->configuration;
     }
 
+    /**
+     * @param array $configuration
+     */
     public function setConfiguration(array $configuration) {
         Option::set('Plugin_AOM_CustomSettings', json_encode($configuration));
         $this->configuration = $configuration;

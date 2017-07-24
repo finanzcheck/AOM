@@ -52,25 +52,25 @@ class Platform extends VisitDimension
     }
 
     /**
-     * Extracts and returns the advertising platform name (e.g. "AdWords", "Criteo", "Individual") or null when no
-     * platform could be identified from the request's URL from the request's referrer URL.
+     * Extracts and returns the advertising platform name (e.g. "AdWords", "Criteo", "IndividualCampaigns") or null
+     * when no platform could be identified from the request's URL from the request's referrer URL.
      *
      * @param Request $request
      * @return mixed Either the platform or null when no valid platform could be extracted.
      */
     public static function identifyPlatformFromRequest(Request $request)
     {
-        $identifiedPlatform = null;
-
+        // Platform names must be ordered in a way, that the last check is for individual campaigns.
+        // We should prefer other platforms!
         foreach (AOM::getPlatforms() as $platformName) {
             $platform = AOM::getPlatformInstance($platformName);
             if ($platform->isActive()) {
                 if ($platform->isVisitComingFromPlatform($request)) {
-                    $identifiedPlatform = $platformName;
+                    return $platformName;
                 }
             }
         }
 
-        return $identifiedPlatform;
+        return null;
     }
 }

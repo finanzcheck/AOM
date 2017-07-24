@@ -41,133 +41,153 @@ class IndividualCampaignsAdParamsAndReferrerTest extends IntegrationTestCase
     {
         parent::setUp();
 
-//        foreach ([
-//                     [
-//                         'date' => '2015-12-01',
-//                         'campaign' => 'Newsletter December 2015',
-//                         'dateCampaignGroup' => 'aaa',    // TODO! + TESTS
-//                         'paramsSubstring' => 'utm_campaign=newsletter-december-2015',
-//                         'referrerSubstring' => '',
-//                         'cost' => 10.00,
-//                     ],
-//                     [
-//                         'date' => '2015-12-02',
-//                         'campaign' => 'Newsletter December 2015',
-//                         'dateCampaignGroup' => 'aaa',    // TODO! + TESTS
-//                         'paramsSubstring' => 'utm_campaign=newsletter-december-2015',
-//                         'referrerSubstring' => '',
-//                         'cost' => 10.00,
-//                     ],
-//                     [
-//                         'date' => '2015-12-01',
-//                         'campaign' => 'ABC link cooperation December 2015',
-//                         'dateCampaignGroup' => 'bbb',    // TODO! + TESTS
-//                         'paramsSubstring' => '',
-//                         'referrerSubstring' => 'www.abc.com/sponsored-article',
-//                         'cost' => 80.00,
-//                     ]
-//                 ] as $individualCampaign
-//        ) {
-//            Db::query(
-//                'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
-//                . ' (id_account_internal, idsite, date, campaign, date_campaign_group, params_substring, '
-//                . 'referrer_substring, cost, created_by, ts_created) '
-//                . 'VALUES (\'...\', 1, ?, ?, ?, ?, ?, ?, 1, NOW())',
-//                [
-//                    $individualCampaign['date'],
-//                    $individualCampaign['campaign'],
-//                    $individualCampaign['dateCampaignGroup'],
-//                    $individualCampaign['paramsSubstring'],
-//                    $individualCampaign['referrerSubstring'],
-//                    $individualCampaign['cost'],
-//                ]
-//            );
-//        }
+        foreach ([
+                     [
+                         'date' => '2015-12-01',
+                         'campaign' => 'Newsletter December 2015',
+                         'campaignId' => '596cd4613fd8d3.96433311',
+                         'paramsSubstring' => 'utm_campaign=newsletter-december-2015',
+                         'referrerSubstring' => '',
+                         'cost' => 10.00,
+                     ],
+                     [
+                         'date' => '2015-12-02',
+                         'campaign' => 'Newsletter December 2015',
+                         'campaignId' => '596cd4613fd8d3.96433311',
+                         'paramsSubstring' => 'utm_campaign=newsletter-december-2015',
+                         'referrerSubstring' => '',
+                         'cost' => 10.00,
+                     ],
+                     [
+                         'date' => '2015-12-01',
+                         'campaign' => 'ABC link cooperation December 2015',
+                         'campaignId' => '596d960b633c14.64938983',
+                         'paramsSubstring' => '',
+                         'referrerSubstring' => 'www.abc.com/sponsored-article',
+                         'cost' => 80.00,
+                     ]
+                 ] as $individualCampaign
+        ) {
+            Db::query(
+                'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+                    . ' (idsite, date, campaign_id, campaign, params_substring, referrer_substring, cost, created_by, 
+                         ts_created) '
+                    . 'VALUES (1, ?, ?, ?, ?, ?, ?, 1, NOW())',
+                [
+                    $individualCampaign['date'],
+                    $individualCampaign['campaignId'],
+                    $individualCampaign['campaign'],
+                    $individualCampaign['paramsSubstring'],
+                    $individualCampaign['referrerSubstring'],
+                    $individualCampaign['cost'],
+                ]
+            );
+        }
 
         $this->adParams = new AdParams();
-    }
-
-    public function testDummy()
-    {
-        // TODO: Implement tests...
-
-        $this->assertTrue(true);
     }
 
     /**
      * Test exactly one match based on params substring
      */
-//    public function testOnNewVisitParamsSubstringMatch()
-//    {
-//        $request = new Request([
-//            'idsite' => 1,
-//            'url' => 'http://www.example.com/?utm_campaign=newsletter-december-2015',
-//            'urlref' => 'https://www.web.de/...',
-//        ]);
-//
-//        // The fixtures are long ago in the past, i.e. we must create a request at that time to get a match
-//        $request->setCurrentTimestamp(strtotime('2015-12-01 09:00:00'));
-//
-//        $visitor = new Visitor(new VisitProperties());
-//        /** @var Action $action */
-//        $action = Action::factory($request);
-//
-//        $result = $this->adParams->onNewVisit($request, $visitor, $action);
-//
-//        $this->assertEquals(
-//            '{"platform":"IndividualCampaigns","individualCampaignRowId":"1","campaignName":"Newsletter December 2015"}',
-//            $result
-//        );
-//    }
+    public function testOnNewVisitParamsSubstringMatch()
+    {
+        $request = new Request([
+            'idsite' => 1,
+            'url' => 'http://www.example.com/?utm_campaign=newsletter-december-2015',
+            'urlref' => 'https://www.web.de/...',
+        ]);
+
+        // The fixtures are long ago in the past, i.e. we must create a request at that time to get a match
+        $request->setCurrentTimestamp(strtotime('2015-12-01 09:00:00'));
+
+        $visitor = new Visitor(new VisitProperties());
+        /** @var Action $action */
+        $action = Action::factory($request);
+
+        $result = $this->adParams->onNewVisit($request, $visitor, $action);
+
+        $this->assertEquals(
+            '{"platform":"IndividualCampaigns","campaignId":"596cd4613fd8d3.96433311","campaignName":"Newsletter December 2015"}',
+            $result
+        );
+    }
 
     /**
      * Test exactly one match based on referrer substring
      */
-//    public function testOnNewVisitReferrerSubstringMatch()
-//    {
-//        $request = new Request([
-//            'idsite' => 1,
-//            'url' => 'http://www.example.com/lp',
-//            'urlref' => 'https://www.abc.com/sponsored-article?utm_source=ABC',
-//        ]);
-//
-//        // The fixtures are long ago in the past, i.e. we must create a request at that time to get a match
-//        $request->setCurrentTimestamp(strtotime('2015-12-01 09:00:00'));
-//
-//        $visitor = new Visitor(new VisitProperties());
-//        /** @var Action $action */
-//        $action = Action::factory($request);
-//
-//        $result = $this->adParams->onNewVisit($request, $visitor, $action);
-//
-//        $this->assertEquals(
-//            '{"platform":"IndividualCampaigns","individualCampaignRowId":"3","campaignName":"ABC link cooperation December 2015"}',
-//            $result
-//        );
-//    }
+    public function testOnNewVisitReferrerSubstringMatch()
+    {
+        $request = new Request([
+            'idsite' => 1,
+            'url' => 'http://www.example.com/lp',
+            'urlref' => 'https://www.abc.com/sponsored-article?utm_source=ABC',
+        ]);
+
+        // The fixtures are long ago in the past, i.e. we must create a request at that time to get a match
+        $request->setCurrentTimestamp(strtotime('2015-12-01 09:00:00'));
+
+        $visitor = new Visitor(new VisitProperties());
+        /** @var Action $action */
+        $action = Action::factory($request);
+
+        $result = $this->adParams->onNewVisit($request, $visitor, $action);
+
+        $this->assertEquals(
+            '{"platform":"IndividualCampaigns","campaignId":"596d960b633c14.64938983","campaignName":"ABC link cooperation December 2015"}',
+            $result
+        );
+    }
 
     /**
      * Test no match
      */
-//    public function testOnNewVisitNoMatch()
-//    {
-//        $request = new Request([
-//            'idsite' => 1,
-//            'url' => 'http://www.example.com/',
-//            'urlref' => 'https://www.web.de/...',
-//        ]);
-//
-//        // The fixtures are long ago in the past, i.e. we must create a request at that time to get a match
-//        $request->setCurrentTimestamp(strtotime('2015-12-01 09:00:00'));
-//
-//        $visitor = new Visitor(new VisitProperties());
-//        /** @var Action $action */
-//        $action = Action::factory($request);
-//
-//        $result = $this->adParams->onNewVisit($request, $visitor, $action);
-//
-//        $this->assertEquals(null, $result);
-//    }
+    public function testOnNewVisitNoMatch()
+    {
+        $request = new Request([
+            'idsite' => 1,
+            'url' => 'http://www.example.com/',
+            'urlref' => 'https://www.web.de/...',
+        ]);
+
+        // The fixtures are long ago in the past, i.e. we must create a request at that time to get a match
+        $request->setCurrentTimestamp(strtotime('2015-12-01 09:00:00'));
+
+        $visitor = new Visitor(new VisitProperties());
+        /** @var Action $action */
+        $action = Action::factory($request);
+
+        $result = $this->adParams->onNewVisit($request, $visitor, $action);
+
+        $this->assertEquals('null', $result);
+    }
+
+    /**
+     * Tests that other platforms are checked for matches before individual campaigns are
+     */
+    public function testOnNewVisitParamsSubstringMatchOtherPlatformsHaveHigherPriority()
+    {
+        $request = new Request([
+            'idsite' => 1,
+            'url' => 'http://www.example.com/?aom_platform=Taboola&aom_campaign_id=1&aom_site_id=2'
+                . '&utm_campaign=newsletter-december-2015',
+            'urlref' => 'https://www.web.de/...',
+        ]);
+
+        // The fixtures are long ago in the past, i.e. we must create a request at that time to get a match
+        $request->setCurrentTimestamp(strtotime('2015-12-01 09:00:00'));
+
+        $visitor = new Visitor(new VisitProperties());
+        /** @var Action $action */
+        $action = Action::factory($request);
+
+        $result = $this->adParams->onNewVisit($request, $visitor, $action);
+
+        $this->assertEquals(
+            '{"platform":"Taboola","campaignId":"1","siteId":"2"}',
+            $result
+        );
+    }
 }
 
 IndividualCampaignsAdParamsAndReferrerTest::$fixture = new Piwik\Plugins\AOM\tests\Fixtures\BasicFixtures();

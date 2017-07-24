@@ -1,0 +1,72 @@
+{% extends 'admin.twig' %}
+
+{% set title %}{{ 'AOM_Settings_IndividualCampaigns_Title'|translate }}{% endset %}
+
+{% block content %}
+
+    {% import 'ajaxMacros.twig' as ajax %}
+
+    <h2 piwik-enriched-headline>{{ title }}</h2>
+    <p>{{ 'AOM_Settings_IndividualCampaigns_Introduction'|translate|raw }}
+
+    <div class="ui-confirm" id="confirmCampaignRemove">
+        <h2>{{ 'AOM_Settings_IndividualCampaigns_ConfirmCampaignRemove'|translate }}</h2>
+        <input role="yes" type="button" value="{{ 'General_Yes'|translate }}"/>
+        <input role="no" type="button" value="{{ 'General_No'|translate }}"/>
+    </div>
+
+    {{ ajax.errorDiv('ajaxErrorAOM') }}
+    {{ ajax.loadingDiv('ajaxLoadingAOM') }}
+
+
+    <div class="individualCampaigns entityContainer" style="margin-top: 15px; margin-bottom:50px;">
+        <table class="entityTable dataTable" id="individualCampaigns">
+            <thead>
+            <tr>
+                <th>{{ 'AOM_Settings_WebsiteId'|translate }}</th>
+                <th>{{ 'AOM_Settings_IndividualCampaigns_StartDate'|translate }}</th>
+                <th>{{ 'AOM_Settings_IndividualCampaigns_EndDate'|translate }}</th>
+                <th>{{ 'AOM_Settings_IndividualCampaigns_Campaign'|translate }}</th>
+                <th>{{ 'AOM_Settings_IndividualCampaigns_Params'|translate }}</th>
+                <th>{{ 'AOM_Settings_IndividualCampaigns_Referrer'|translate }}</th>
+                <th>{{ 'AOM_Settings_IndividualCampaigns_Cost'|translate }}</th>
+                {#<th>{{ 'General_Edit'|translate }}</th>#}
+                <th>{{ 'General_Delete'|translate }}</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% if campaigns is defined %}
+                {% for id, campaign in campaigns %}
+                    <tr class="editable" id="{{ id }}">
+                        <td id="websiteId" class="editable">{{ campaign.websiteId }}</td>
+                        <td id="dateStart" class="editable">{{ campaign.startDate }}</td>
+                        <td id="dateEnd" class="editable">{{ campaign.endDate }}</td>
+                        <td id="campaign" class="editable">{{ campaign.campaign }}</td>
+                        <td id="params" class="editable">{{ campaign.params }}</td>
+                        <td id="referrer" class="editable">{{ campaign.referrer }}</td>
+                        <td id="cost" class="editable">{{ campaign.cost }}</td>
+                        {#<td class="text-center">#}
+                        {#<button class="editFacebookAdsAccount btn btn-flat" id="{{ id }}" title="{{ 'General_Edit'|translate }}">#}
+                        {#<span class="icon-edit"></span>#}
+                        {#</button>#}
+                        {#</td>#}
+                        <td class="text-center">
+                            <button class="deleteCampaign btn btn-flat" id="{{ id }}" title="{{ 'General_Delete'|translate }}">
+                                <span class="icon-delete"></span>
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+            </tbody>
+        </table>
+        <p>
+            <button class="addIndividualCampaign btn btn-lg btn-flat">
+                <span class="icon-add"></span>
+                {{ 'AOM_Settings_IndividualCampaigns_Add'|translate }}
+            </button>
+        </p>
+    </div>
+
+{% endblock %}

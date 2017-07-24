@@ -8,7 +8,6 @@ namespace Piwik\Plugins\AOM;
 
 use Piwik\Common;
 use Piwik\Piwik;
-use Piwik\Plugins\AOM\Platforms\ControllerInterface;
 
 class Controller extends \Piwik\Plugin\ControllerAdmin
 {
@@ -34,7 +33,7 @@ class Controller extends \Piwik\Plugin\ControllerAdmin
     }
 
     /**
-     * This method routes method call to the advertising platform's individual controllers.
+     * This method routes method calls to the advertising platform's individual controllers.
      *
      * @throws \Exception
      */
@@ -50,7 +49,6 @@ class Controller extends \Piwik\Plugin\ControllerAdmin
 
         $className = 'Piwik\\Plugins\\AOM\\Platforms\\' . $platform . '\\Controller';
 
-        /** @var ControllerInterface $controller */
         $controller = new $className($platform);
 
         // Does method exist?

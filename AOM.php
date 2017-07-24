@@ -13,9 +13,9 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Piwik\Common;
 use Piwik\Db;
-use Piwik\Plugins\AOM\Platforms\AbstractImporter;
-use Piwik\Plugins\AOM\Platforms\AbstractPlatform;
+use Piwik\Plugins\AOM\Platforms\ImporterInterface;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
+use Piwik\Plugins\AOM\Platforms\PlatformInterface;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Psr\Log\LoggerInterface;
 
@@ -34,7 +34,9 @@ class AOM extends \Piwik\Plugin
     const PLATFORM_TABOOLA = 'Taboola';
 
     /**
-     * @return array All supported platforms
+     * Returns all supported platforms.
+     *
+     * @return array
      */
     public static function getPlatforms()
     {
@@ -42,9 +44,11 @@ class AOM extends \Piwik\Plugin
             self::PLATFORM_AD_WORDS,
             self::PLATFORM_BING,
             self::PLATFORM_CRITEO,
-//            self::PLATFORM_INDIVIDUAL_CAMPAIGNS,  // TODO: Activate when development is done.
             self::PLATFORM_FACEBOOK_ADS,
             self::PLATFORM_TABOOLA,
+
+            // Order matters, as visits should only be checked for individual campaigns when there is no other match!
+            self::PLATFORM_INDIVIDUAL_CAMPAIGNS,
         ];
     }
 
@@ -109,8 +113,8 @@ class AOM extends \Piwik\Plugin
                 cost DECIMAL(10,4),
                 conversions INTEGER,
                 revenue DECIMAL(14,4),
-                ts_created TIMESTAMP,
-                ts_last_update TIMESTAMP
+                ts_last_update TIMESTAMP,
+                ts_created TIMESTAMP
             )  DEFAULT CHARSET=utf8');
 
         // Use piwik_idvisit as unique key to avoid race conditions (manually created visits would have null here)
@@ -169,6 +173,23 @@ class AOM extends \Piwik\Plugin
     public function getJsFiles(&$jsFiles)
     {
         $jsFiles[] = 'plugins/AOM/javascripts/AOM.js';
+
+        // Platforms might add additional JavaScripts
+        foreach (AOM::getPlatforms() as $platformName) {
+            /** @var PlatformInterface $platform */
+            $platform = AOM::getPlatformInstance($platformName);
+            if ($platform->isActive()) {
+
+                // If this file exists, it is automatically loaded by naming convention.
+                if (file_exists('plugins/AOM/Platforms/' . $platformName . '/javascripts/' . $platformName . '.js')) {
+                    $jsFiles[] = 'plugins/AOM/Platforms/' . $platformName . '/javascripts/' . $platformName . '.js';
+                }
+
+                foreach ($platform->getJsFiles() as $file) {
+                    $jsFiles[] = $file;
+                }
+            }
+        }
     }
 
     /**
@@ -200,7 +221,7 @@ class AOM extends \Piwik\Plugin
      *
      * @param string $platform
      * @param null|string $class
-     * @return AbstractPlatform|AbstractImporter|MergerInterface    // TODO: Return interfaces instead of abstract
+     * @return PlatformInterface|ImporterInterface|MergerInterface    // TODO: Return interfaces instead of abstract
      * @throws \Exception
      */
     public static function getPlatformInstance($platform, $class = null)
