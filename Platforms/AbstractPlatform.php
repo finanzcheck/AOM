@@ -10,6 +10,7 @@ namespace Piwik\Plugins\AOM\Platforms;
 use Exception;
 use Piwik\Common;
 use Piwik\Db;
+use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 use Piwik\Plugins\AOM\SystemSettings;
@@ -63,7 +64,7 @@ abstract class AbstractPlatform
      */
     public function isActive()
     {
-        return $this->settings->{'platform' . $this->getUnqualifiedClassName() . 'IsActive'}->getValue();
+        return $this->settings->{'platform' . $this->getName() . 'IsActive'}->getValue();
     }
 
     /**
@@ -84,6 +85,16 @@ abstract class AbstractPlatform
     public function uninstallPlugin()
     {
         $this->getInstaller()->uninstallPlugin();
+    }
+
+    /**
+     * Returns the translated localized name of the platform.
+     *
+     * @return string
+     */
+    public function getLocalizedPlatformName()
+    {
+        return Piwik::translate('AOM_Platform_Name_' . $this->getName());
     }
 
     /**
@@ -145,10 +156,11 @@ abstract class AbstractPlatform
             $queryString = parse_url($urlToCheck, PHP_URL_QUERY);
             parse_str($queryString, $queryParams);
 
+            // Individual campaigns return false but no missing params
             list($success, $params) = $platform->getAdParamsFromUrl($urlToCheck, $queryParams, $paramPrefix, $request);
             if ($success) {
                 return $params;
-            } else {
+            } elseif (false === $success && count($params) > 0) {
                 $failures[] = ['url' => $urlToCheck, 'missingParams' => $params];
             }
         }
@@ -217,6 +229,27 @@ abstract class AbstractPlatform
                 $this->merge($date, $date);
             }
         }
+    }
+
+    /**
+     * Platforms can add items to the admin menu. By default, no menu items are being added.
+     *
+     * @return array
+     */
+    public function getMenuAdminItems()
+    {
+        return [];
+    }
+
+    /**
+     * Platforms can load additional JS files in the admin view. Be default, no additional JS files are being loaded.
+     * The JS file AOM/Platform/{PlatformName}javascripts/{PlatformName}.js is loaded by naming convention.
+     *
+     * @return array
+     */
+    public function getJsFiles()
+    {
+        return [];
     }
 
     public function merge($startDate, $endDate)
@@ -288,14 +321,6 @@ abstract class AbstractPlatform
     {
         return Common::prefixTable('aom_' . strtolower($this->getName()));
     }
-
-    /**
-     * Returns an instance of MarketingPerformanceSubTables when drill down through Piwik UI is supported.
-     * Returns false, if not.
-     *
-     * @return MarketingPerformanceSubTablesInterface|false
-     */
-    abstract public function getMarketingPerformanceSubTables();
 
     /**
      * Returns a platform-specific description of a specific visit optimized for being read by humans or false when no

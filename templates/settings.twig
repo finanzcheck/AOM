@@ -1,7 +1,5 @@
 {% extends 'admin.twig' %}
 
-{#{% import '@CorePluginsAdmin/macros.twig' as plugins %}#}
-
 {% set title %}{{ 'AOM_Settings_Title'|translate }}{% endset %}
 
 {% block content %}
@@ -23,7 +21,7 @@
 
     {# AdWords #}
     {% if adWordsIsActive %}
-        <h2>{{ 'AOM_Settings_AdWords'|translate }}</h2>
+        <h2>{{ 'AOM_Settings_AdWords_Title'|translate }}</h2>
         <p>{{ 'AOM_Settings_AdWords_Introduction'|translate|raw }}</p>
 
         <div class="adWordsAccounts entityContainer" style="margin-bottom:50px;">
@@ -86,7 +84,7 @@
 
     {# Bing #}
     {% if bingIsActive %}
-        <h2>{{ 'AOM_Settings_Bing'|translate }}</h2>
+        <h2>{{ 'AOM_Settings_Bing_Title'|translate }}</h2>
         <p>{{ 'AOM_Settings_Bing_Introduction'|translate|raw }}</p>
         
         <div class="bingAccounts entityContainer" style="margin-bottom:50px;">
@@ -155,7 +153,7 @@
 
     {# Criteo #}
     {% if criteoIsActive %}
-        <h2>{{ 'AOM_Settings_Criteo'|translate }}</h2>
+        <h2>{{ 'AOM_Settings_Criteo_Title'|translate }}</h2>
         <p>{{ 'AOM_Settings_Criteo_Introduction'|translate }}</p>
 
         <div class="criteoAccounts entityContainer" style="margin-bottom:50px;">
@@ -207,7 +205,7 @@
 
     {# Facebook Ads #}
     {% if facebookAdsIsActive %}
-        <h2>{{ 'AOM_Settings_FacebookAds'|translate }}</h2>
+        <h2>{{ 'AOM_Settings_FacebookAds_Title'|translate }}</h2>
         <p>{{ 'AOM_Settings_FacebookAds_Introduction'|translate }}</p>
 
         <div class="facebookAdsAccounts entityContainer" style="margin-bottom:50px;">
@@ -268,7 +266,7 @@
 
     {# Taboola #}
     {% if taboolaIsActive %}
-        <h2>{{ 'AOM_Settings_Taboola'|translate }}</h2>
+        <h2>{{ 'AOM_Settings_Taboola_Title'|translate }}</h2>
         <p>{{ 'AOM_Settings_Taboola_Introduction'|translate }}</p>
 
         <div class="TaboolaAccounts entityContainer" style="margin-bottom:50px;">

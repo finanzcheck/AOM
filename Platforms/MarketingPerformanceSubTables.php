@@ -37,8 +37,7 @@ abstract class MarketingPerformanceSubTables implements MarketingPerformanceSubT
             'cost_per_conversion' => (array_key_exists('cost', $data) && $data['cost'] > 0
                 && array_key_exists('conversions', $data) && $data['conversions'] > 0)
                 ? $formatter->getPrettyMoney($data['cost'] / $data['conversions'], $idSite) : null,
-            'revenue' => (array_key_exists('revenue', $data) && $data['revenue'] > 0)
-                ? $formatter->getPrettyMoney($data['revenue'], $idSite) : null,
+            'revenue' => (array_key_exists('revenue', $data) && $data['revenue'] > 0) ? $data['revenue'] : null,
             'return_on_ad_spend' => (array_key_exists('revenue', $data) && $data['revenue'] > 0
                 && array_key_exists('cost', $data) && $data['cost'] > 0)
                 ? $formatter->getPrettyPercentFromQuotient($data['revenue'] / $data['cost']) : null,
@@ -60,7 +59,7 @@ abstract class MarketingPerformanceSubTables implements MarketingPerformanceSubT
         $summaryRow['nb_visits'] += array_key_exists('visits', $data) ? $data['visits'] : 0;
         $summaryRow['nb_uniq_visitors'] += array_key_exists('unique_visitors', $data) ? (int) $data['unique_visitors'] : 0;
         $summaryRow['nb_conversions'] += array_key_exists('conversions', $data) ? $data['conversions'] : 0;
-        $summaryRow['revenue'] += array_key_exists('revenue', $data) ? $data['revenue'] : 0;
+        $summaryRow['revenue'] += (array_key_exists('revenue', $data) && $data['revenue'] > 0) ? $data['revenue'] : 0;
 
         return $summaryRow;
     }

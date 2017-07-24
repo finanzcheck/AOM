@@ -17,7 +17,7 @@
 namespace Google\AdsApi\AdWords;
 
 use Google\AdsApi\Common\AdsBuilder;
-use Google\AdsApi\Common\AdsLoggerConfig;
+use Google\AdsApi\Common\AdsHeaderFormatter;
 use Google\AdsApi\Common\AdsLoggerFactory;
 use Google\AdsApi\Common\Configuration;
 use Google\AdsApi\Common\ConfigurationLoader;
@@ -26,7 +26,6 @@ use Google\AdsApi\Common\SoapSettingsBuilder;
 use Google\Auth\FetchAuthTokenInterface;
 use InvalidArgumentException;
 use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -63,12 +62,11 @@ final class AdWordsSessionBuilder implements AdsBuilder {
   private $oAuth2Credential;
   private $soapSettings;
   private $clientCustomerId;
-  private $expressBusinessId;
-  private $expressPlusPageId;
   private $isValidateOnly;
   private $isPartialFailure;
   private $isIncludeUtilitiesInUserAgent;
   private $reportSettings;
+  private $adsHeaderFormatter;
 
   private $soapLogger;
   private $reportDownloaderLogger;
@@ -82,7 +80,16 @@ final class AdWordsSessionBuilder implements AdsBuilder {
   }
 
   /**
-   * @see AdsBuilder::fromFile()
+   * Reads configuration settings from the specified filepath. The filepath is
+   * optional, and if omitted, it will look for the default configuration
+   * filename in the home directory of the user running PHP.
+   *
+   * @see AdsBuilder::DEFAULT_CONFIGURATION_FILENAME
+   *
+   * @param string $path the filepath
+   * @return AdWordsSessionBuilder this builder populated from the configuration
+   * @throws InvalidArgumentException if the configuration file could not be
+   *     found
    */
   public function fromFile($path = null) {
     if ($path === null) {
@@ -134,7 +141,7 @@ final class AdWordsSessionBuilder implements AdsBuilder {
     $this->batchJobsUtilLogger = $this->adsLoggerFactory->createLogger(
         self::$DEFAULT_BJ_UTIL_LOGGER_CHANNEL,
         $configuration->getConfiguration('batchJobsUtilLogFilePath', 'LOGGING'),
-        $configuration->getConfiguration('batchJobsLogLevel', 'LOGGING')
+        $configuration->getConfiguration('batchJobsUtilLogLevel', 'LOGGING')
     );
 
     return $this;
@@ -242,6 +249,18 @@ final class AdWordsSessionBuilder implements AdsBuilder {
   }
 
   /**
+   * Includes ads header formatter. This is optional.
+   *
+   * @param AdsHeaderFormatter|null $adsHeaderFormatter
+   * @return AdWordsSessionBuilder this builder
+   */
+  public function withAdsHeaderFormatter(
+      AdsHeaderFormatter $adsHeaderFormatter) {
+    $this->adsHeaderFormatter = $adsHeaderFormatter;
+    return $this;
+  }
+
+  /**
    * Includes report settings. This is optional.
    *
    * @see ReportSettingsBuilder::defaultOptionals()
@@ -317,6 +336,10 @@ final class AdWordsSessionBuilder implements AdsBuilder {
 
     if ($this->isIncludeUtilitiesInUserAgent === null) {
       $this->isIncludeUtilitiesInUserAgent = true;
+    }
+
+    if ($this->adsHeaderFormatter === null) {
+      $this->adsHeaderFormatter = new AdsHeaderFormatter();
     }
 
     if ($this->reportSettings === null) {
@@ -438,6 +461,14 @@ final class AdWordsSessionBuilder implements AdsBuilder {
    */
   public function isIncludeUtilitiesInUserAgent() {
     return $this->isIncludeUtilitiesInUserAgent;
+  }
+
+  /**
+   * Gets ads header formatter.
+   * @return AdsHeaderFormatter
+   */
+  public function getAdsHeaderFormatter() {
+    return $this->adsHeaderFormatter;
   }
 
   /**

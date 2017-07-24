@@ -162,7 +162,7 @@ class MarketingPerformanceController
                     . ' WHERE idsite = ? AND channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ?',
                 [
                     $idSite,
-                    $platformName,
+                    $platform->getName(),
                     $startDate,
                     $endDate,
                 ]
@@ -171,7 +171,7 @@ class MarketingPerformanceController
             // Add to DataTable
             $row = [
                 Row::COLUMNS => [
-                    'label' => $platformName,
+                    'label' => $platform->getLocalizedPlatformName(),
                     'platform_impressions' => $platformData['impressions'],
                     'platform_clicks' => $platformData['clicks'],
                     'platform_cost' => ($platformData['cost'] > 0)
@@ -185,19 +185,17 @@ class MarketingPerformanceController
                     'nb_conversions' => $reprocessedVisitsData['conversions'],
                     'cost_per_conversion' => ($platformData['cost'] > 0 && $reprocessedVisitsData['conversions'] > 0)
                         ? $formatter->getPrettyMoney($platformData['cost'] / $reprocessedVisitsData['conversions'], $idSite) : null,
-
-                    // TODO: Fix
-//                    'revenue' => ($reprocessedVisitsData['revenue'] > 0)
-//                        ? $formatter->getPrettyMoney($reprocessedVisitsData['revenue'], $idSite) : null,
+                    'revenue' => ($reprocessedVisitsData['revenue'] > 0 ? $reprocessedVisitsData['revenue'] : 0),
                     'return_on_ad_spend' => ($reprocessedVisitsData['revenue'] > 0 && $platformData['cost'] > 0)
                         ? $formatter->getPrettyPercentFromQuotient($reprocessedVisitsData['revenue'] / $platformData['cost']) : null,
                 ],
             ];
 
             // TODO: Add drill-down only when data is not null!
-            if ($platform->getMarketingPerformanceSubTables()) {
+            $marketingPerformanceSubTables = $platform->getMarketingPerformanceSubTables();
+            if ($marketingPerformanceSubTables) {
                 $row[Row::DATATABLE_ASSOCIATED] = $platformName . '_'
-                    . $platform->getMarketingPerformanceSubTables()->getMainSubTableId();
+                    . $marketingPerformanceSubTables->getMainSubTableId();
             }
             $table->addRowFromArray($row);
 
@@ -208,9 +206,7 @@ class MarketingPerformanceController
             $summaryRow['nb_visits'] += $reprocessedVisitsData['visits'];
             $summaryRow['nb_uniq_visitors'] += (int) $reprocessedVisitsData['unique_visitors'];
             $summaryRow['nb_conversions'] += $reprocessedVisitsData['conversions'];
-
-            // TODO: Fix
-//            $summaryRow['revenue'] += $reprocessedVisitsData['revenue'];
+            $summaryRow['revenue'] += ($reprocessedVisitsData['revenue'] > 0 ? $reprocessedVisitsData['revenue'] : 0);
 
         }
 
@@ -254,9 +250,7 @@ class MarketingPerformanceController
                     'nb_uniq_visitors' => $row['unique_visitors'],
                     'conversion_rate' => $formatter->getPrettyPercentFromQuotient($row['conversions'] / $row['visits']),
                     'nb_conversions' => $row['conversions'],
-
-// TODO: Fix
-//                    'revenue' => $formatter->getPrettyMoney($row['revenue'], $idSite),
+                    'revenue' => ($row['revenue'] > 0 ? $row['revenue'] : 0),
                 ]
             ]);
 
@@ -264,9 +258,7 @@ class MarketingPerformanceController
             $summaryRow['nb_visits'] += $row['visits'];
             $summaryRow['nb_uniq_visitors'] += (int) $row['unique_visitors'];
             $summaryRow['nb_conversions'] += $row['conversions'];
-
-            // TODO: Fix
-//            $summaryRow['revenue'] += $row['revenue'];
+            $summaryRow['revenue'] += ($row['revenue'] > 0 ? $row['revenue'] : 0);
         }
 
         return [$table, $summaryRow];

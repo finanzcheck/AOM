@@ -26,9 +26,6 @@ class AbstractObjectNormalizerTest extends TestCase
         $this->assertSame('baz', $normalizedData->baz);
     }
 
-    /**
-     * @group legacy
-     */
     public function testInstantiateObjectDenormalizer()
     {
         $data = array('foo' => 'foo', 'bar' => 'bar', 'baz' => 'baz');
@@ -38,6 +35,21 @@ class AbstractObjectNormalizerTest extends TestCase
         $normalizer = new AbstractObjectNormalizerDummy();
 
         $this->assertInstanceOf(__NAMESPACE__.'\Dummy', $normalizer->instantiateObject($data, $class, $context, new \ReflectionClass($class), array()));
+    }
+
+    /**
+     * @expectedException \Symfony\Component\Serializer\Exception\ExtraAttributesException
+     * @expectedExceptionMessage Extra attributes are not allowed ("fooFoo", "fooBar" are unknown).
+     */
+    public function testDenormalizeWithExtraAttributes()
+    {
+        $normalizer = new AbstractObjectNormalizerDummy();
+        $normalizer->denormalize(
+            array('fooFoo' => 'foo', 'fooBar' => 'bar'),
+            __NAMESPACE__.'\Dummy',
+            'any',
+            array('allow_extra_attributes' => false)
+        );
     }
 }
 

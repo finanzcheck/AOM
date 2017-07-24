@@ -10,7 +10,7 @@ use Piwik\Piwik;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\SystemSettings;
 
-abstract class Controller
+abstract class Controller extends \Piwik\Plugin\ControllerAdmin
 {
     private $platform;
 
@@ -26,6 +26,8 @@ abstract class Controller
         }
 
         $this->platform = $platform;
+
+        parent::__construct();
     }
 
     /**

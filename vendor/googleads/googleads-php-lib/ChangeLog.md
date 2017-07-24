@@ -1,3 +1,70 @@
+### 28.0.0
+
+##### AdWords
+
+*   Added support for redacting access tokens in SOAP body.
+*   Added support for overriding report settings in each report download
+    request.
+*   Fixed
+    [issue #247](https://github.com/googleads/googleads-php-lib/issues/247).
+
+##### Common
+
+*   Fixed
+    [issue #226](https://github.com/googleads/googleads-php-lib/issues/226).
+*   Fixed
+    [issue #244](https://github.com/googleads/googleads-php-lib/issues/244).
+*   Fixed
+    [issue #254](https://github.com/googleads/googleads-php-lib/issues/254).
+*   Fixed
+    [issue #261](https://github.com/googleads/googleads-php-lib/issues/261).
+*   Fixed
+    [issue #292](https://github.com/googleads/googleads-php-lib/issues/292).
+*   Fixed
+    [issue #306](https://github.com/googleads/googleads-php-lib/issues/306).
+
+### 27.1.0
+
+##### AdWords
+
+*   Added support and examples for v201705.
+*   Removed support for AdWords Express (AWX) API.
+*   Updated AddShoppingCampaign.php to include an option of creating an optional
+    default partition.
+
+##### Common
+
+*   Fixed issues #287 and #298 related to too many open file descriptors.
+
+### 27.0.0
+
+##### DFP
+
+*   Added support and examples for v201705.
+
+##### Common
+
+*   Added GuzzleLogMessageFormatter and refactored the Guzzle logging handler.
+*   Made user agents sent by non-SOAP utilities more informative.
+
+### 26.0.0
+
+##### AdWords
+
+*   Added support for specifying addtional request options for reporting.
+*   Fixed
+    [issue #246](https://github.com/googleads/googleads-php-lib/issues/246).
+*   Accepted [PR #251](https://github.com/googleads/googleads-php-lib/pull/251).
+*   Accepted [PR #253](https://github.com/googleads/googleads-php-lib/pull/253).
+*   Accepted [PR #256](https://github.com/googleads/googleads-php-lib/pull/256).
+*   Updated AddSiteLinksUsingFeeds examples to use field and constant names
+    that are consistent with the field names of SitelinkFeedItem.
+
+##### Common
+
+*   Added `AdsGuzzleHttpClientFactory` to create Guzzle HTTP clients for
+    non-SOAP calls.
+
 ### 25.4.0
 
 ##### DFP

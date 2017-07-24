@@ -25,24 +25,26 @@ class Installer implements InstallerInterface
         // TODO: Do we really need id_account_internal?!
 
         DatabaseHelperService::addTable(
-            'CREATE TABLE ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . ' (
+            'CREATE TABLE ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+            . ' (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                id_account_internal VARCHAR(50) NOT NULL,
                 idsite INTEGER NOT NULL,
                 date DATE NOT NULL,
+                campaign_id VARCHAR(255) NOT NULL,
                 campaign VARCHAR(255) NOT NULL,
-                date_campaign_group VARCHAR(255) NOT NULL,
                 params_substring TEXT NOT NULL,
                 referrer_substring TEXT NOT NULL,
                 cost FLOAT NOT NULL,
-                created_by INTEGER NOT NULL,
+                created_by VARCHAR(255) NOT NULL,
+                ts_last_update TIMESTAMP,
                 ts_created TIMESTAMP
             )  DEFAULT CHARSET=utf8');
 
         // Optimize for queries from MarketingPerformanceController.php
         DatabaseHelperService::addIndex(
             'CREATE INDEX index_aom_individiual_campaigns ON '
-            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . ' (idsite, date)');
+            . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+            . ' (idsite, date)');
     }
 
     /**

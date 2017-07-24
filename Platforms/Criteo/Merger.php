@@ -7,12 +7,12 @@
  */
 namespace Piwik\Plugins\AOM\Platforms\Criteo;
 
-use Piwik\Common;
 use Piwik\Db;
 use Piwik\Plugins\AOM\AOM;
 use Piwik\Plugins\AOM\Platforms\AbstractMerger;
 use Piwik\Plugins\AOM\Platforms\MergerInterface;
 use Piwik\Plugins\AOM\Platforms\MergerPlatformDataOfVisit;
+use Piwik\Plugins\AOM\Services\DatabaseHelperService;
 
 class Merger extends AbstractMerger implements MergerInterface
 {
@@ -75,10 +75,10 @@ class Merger extends AbstractMerger implements MergerInterface
 
         // Exact match
         return $mergerPlatformDataOfVisit
-            ->setPlatformData(array_merge(
-                ['campaignId' => $aomAdParams['campaignId']],
-                ['campaign' => $platformRow['campaign']]
-            ))
+            ->setPlatformData([
+                'campaignId' => $aomAdParams['campaignId'],
+                'campaign' => $platformRow['campaign'],
+            ])
             ->setPlatformRowId($platformRow['platformRowId']);
     }
 
@@ -95,7 +95,8 @@ class Merger extends AbstractMerger implements MergerInterface
     private function getExactMatchPlatformRow($idsite, $date, $campaignId)
     {
         $result = Db::fetchRow(
-            'SELECT id AS platformRowId, campaign FROM ' . Common::prefixTable('aom_criteo')
+            'SELECT id AS platformRowId, campaign '
+                . ' FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO)
                 . ' WHERE idsite = ? AND date = ? AND campaign_id = ?',
             [$idsite, $date, $campaignId,]
         );
@@ -123,7 +124,8 @@ class Merger extends AbstractMerger implements MergerInterface
     private function getHistoricalMatchPlatformRow($idsite, $campaignId)
     {
         $result = Db::fetchRow(
-            'SELECT campaign FROM ' . Common::prefixTable('aom_criteo') . ' WHERE idsite = ? AND campaign_id = ?',
+            'SELECT campaign FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_CRITEO)
+                . ' WHERE idsite = ? AND campaign_id = ?',
             [$idsite, $campaignId,]
         );
 
