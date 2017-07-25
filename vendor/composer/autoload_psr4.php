@@ -19,8 +19,6 @@ return array(
     'Google\\Auth\\' => array($vendorDir . '/google/auth/src'),
     'Google\\AdsApi\\' => array($vendorDir . '/googleads/googleads-php-lib/src/Google/AdsApi'),
     'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
-    'Facebook\\' => array($vendorDir . '/facebook/php-sdk-v4/src/Facebook'),
-    'FacebookAds\\' => array($vendorDir . '/facebook/php-ads-sdk/src/FacebookAds'),
     'Bramus\\Monolog\\' => array($vendorDir . '/bramus/monolog-colored-line-formatter/src'),
     'Bramus\\Ansi\\' => array($vendorDir . '/bramus/ansi-php/src'),
 );
