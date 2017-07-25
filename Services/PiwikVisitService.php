@@ -51,10 +51,15 @@ class PiwikVisitService
             Db::fetchOne('SELECT MAX(piwik_idvisit) FROM ' . Common::prefixTable('aom_visits'));
 
         return Db::fetchAll(
-            'SELECT *, conv(hex(idvisitor), 16, 10) AS idvisitor '
-                . ' FROM ' . Common::prefixTable('log_visit')
-                . ' WHERE idvisit > ' . ($latestProcessedPiwikVisit > 0 ? $latestProcessedPiwikVisit : 0)
-                . ' ORDER BY idvisit ASC'
+            'SELECT v.*, conv(hex(v.idvisitor), 16, 10) AS idvisitor, entry_url.name AS entry_url, '
+                . ' entry_name.name AS entry_name '
+                . ' FROM ' . Common::prefixTable('log_visit') . ' AS v '
+                . ' LEFT JOIN ' . Common::prefixTable('log_action') . ' AS entry_name '
+                . ' ON v.visit_entry_idaction_name = entry_name.idaction'
+                . ' LEFT JOIN ' . Common::prefixTable('log_action') . ' AS entry_url '
+                . ' ON v.visit_entry_idaction_url = entry_url.idaction'
+                . ' WHERE v.idvisit > ' . ($latestProcessedPiwikVisit > 0 ? $latestProcessedPiwikVisit : 0)
+                . ' ORDER BY v.idvisit ASC'
         );
     }
 
@@ -208,29 +213,21 @@ class PiwikVisitService
     {
         $campaignData = [];
 
-        if (isset($visit['campaign_name'])) {
-            $campaignData['campaignName'] = $visit['campaign_name'];
-        }
-        if (isset($visit['campaign_keyword'])) {
-            $campaignData['campaignKeyword'] = $visit['campaign_keyword'];
-        }
-        if (isset($visit['campaign_source'])) {
-            $campaignData['campaignSource'] = $visit['campaign_source'];
-        }
-        if (isset($visit['campaign_medium'])) {
-            $campaignData['campaignMedium'] = $visit['campaign_medium'];
-        }
-        if (isset($visit['campaign_content'])) {
-            $campaignData['campaignContent'] = $visit['campaign_content'];
-        }
-        if (isset($visit['campaign_id'])) {
-            $campaignData['campaignId'] = $visit['campaign_id'];
-        }
-        if (isset($visit['referer_name'])) {
-            $campaignData['refererName'] = $visit['referer_name'];
-        }
-        if (isset($visit['referer_url'])) {
-            $campaignData['refererUrl'] = $visit['referer_url'];
+        foreach ([
+                     'referer_name' => 'refererName',
+                     'referer_url' => 'refererUrl',
+                     'entry_name' => 'entryName',
+                     'entry_url' => 'entryUrl',
+                     'campaign_name' => 'campaignName',
+                     'campaign_keyword' => 'campaignKeyword',
+                     'campaign_source' => 'campaignSource',
+                     'campaign_medium' => 'campaignMedium',
+                     'campaign_content' => 'campaignContent',
+                     'campaign_id' => 'campaignId',
+                 ] as $key => $camelCaseKey) {
+            if (isset($visit[$key])) {
+                $campaignData[$camelCaseKey] = $visit[$key];
+            }
         }
 
         return $campaignData;
