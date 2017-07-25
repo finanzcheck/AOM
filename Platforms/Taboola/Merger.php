@@ -26,9 +26,9 @@ class Merger extends AbstractMerger implements MergerInterface
 
                 $platformKey = $this->getPlatformKey($platformRow['campaign_id'], $platformRow['site_id']);
                 $platformData = [
-                    'campaignId' => $platformRow['campaign_id'],
+                    'campaignId' => (string) $platformRow['campaign_id'],
                     'campaign' => $platformRow['campaign'],
-                    'siteId' => $platformRow['site_id'],
+                    'siteId' => (string) $platformRow['site_id'],
                     'site' => $platformRow['site'],
                 ];
 
@@ -73,13 +73,13 @@ class Merger extends AbstractMerger implements MergerInterface
             // Neither exact nor historical match with platform data found
             if (!$platformRow) {
                 return $mergerPlatformDataOfVisit->setPlatformData(
-                    ['campaignId' => $aomAdParams['campaignId'], 'siteId' => $aomAdParams['siteId']]
+                    ['campaignId' => (string) $aomAdParams['campaignId'], 'siteId' => (string) $aomAdParams['siteId']]
                 );
             }
 
             // Historical match only
             return $mergerPlatformDataOfVisit->setPlatformData(array_merge(
-                ['campaignId' => $aomAdParams['campaignId'], 'siteId' => $aomAdParams['siteId']],
+                ['campaignId' => (string) $aomAdParams['campaignId'], 'siteId' => (string) $aomAdParams['siteId']],
                 $platformRow
             ));
         }
@@ -87,7 +87,7 @@ class Merger extends AbstractMerger implements MergerInterface
         // Exact match
         return $mergerPlatformDataOfVisit
             ->setPlatformData(array_merge(
-                ['campaignId' => $aomAdParams['campaignId'], 'siteId' => $aomAdParams['siteId']],
+                ['campaignId' => (string) $aomAdParams['campaignId'], 'siteId' => (string) $aomAdParams['siteId']],
                 ['campaign' => $platformRow['campaign'], 'site' => $platformRow['site']]
             ))
             ->setPlatformRowId($platformRow['platformRowId']);

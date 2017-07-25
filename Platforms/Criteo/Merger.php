@@ -26,7 +26,7 @@ class Merger extends AbstractMerger implements MergerInterface
 
                 $platformKey = $platformRow['campaign_id'];
                 $platformData = [
-                    'campaignId' => $platformRow['campaign_id'],
+                    'campaignId' => (string) $platformRow['campaign_id'],
                     'campaign' => $platformRow['campaign'],
                 ];
 
@@ -68,7 +68,7 @@ class Merger extends AbstractMerger implements MergerInterface
 
             // Historical match only
             return $mergerPlatformDataOfVisit->setPlatformData(array_merge(
-                ['campaignId' => $aomAdParams['campaignId']],
+                ['campaignId' => (string) $aomAdParams['campaignId']],
                 $platformRow
             ));
         }
@@ -76,7 +76,7 @@ class Merger extends AbstractMerger implements MergerInterface
         // Exact match
         return $mergerPlatformDataOfVisit
             ->setPlatformData([
-                'campaignId' => $aomAdParams['campaignId'],
+                'campaignId' => (string) $aomAdParams['campaignId'],
                 'campaign' => $platformRow['campaign'],
             ])
             ->setPlatformRowId($platformRow['platformRowId']);

@@ -558,106 +558,6 @@
         ]
     },
     {
-        "name": "facebook/php-sdk-v4",
-        "version": "5.5.0",
-        "version_normalized": "5.5.0.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/facebook/php-graph-sdk.git",
-            "reference": "93d7dc87e55a541d2e27d38f3aed40abbffdf6e1"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/facebook/php-graph-sdk/zipball/93d7dc87e55a541d2e27d38f3aed40abbffdf6e1",
-            "reference": "93d7dc87e55a541d2e27d38f3aed40abbffdf6e1",
-            "shasum": ""
-        },
-        "require": {
-            "php": "^5.4|^7.0"
-        },
-        "require-dev": {
-            "guzzlehttp/guzzle": "~5.0",
-            "mockery/mockery": "~0.8",
-            "phpunit/phpunit": "~4.0"
-        },
-        "suggest": {
-            "guzzlehttp/guzzle": "Allows for implementation of the Guzzle HTTP client",
-            "paragonie/random_compat": "Provides a better CSPRNG option in PHP 5"
-        },
-        "time": "2017-04-20T14:15:02+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "5.x-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "Facebook\\": "src/Facebook/"
-            },
-            "files": [
-                "src/Facebook/polyfills.php"
-            ]
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "Facebook Platform"
-        ],
-        "authors": [
-            {
-                "name": "Facebook",
-                "homepage": "https://github.com/facebook/php-graph-sdk/contributors"
-            }
-        ],
-        "description": "Facebook SDK for PHP",
-        "homepage": "https://github.com/facebook/php-graph-sdk",
-        "keywords": [
-            "facebook",
-            "sdk"
-        ],
-        "abandoned": "facebook/graph-sdk"
-    },
-    {
-        "name": "facebook/php-ads-sdk",
-        "version": "2.9.2",
-        "version_normalized": "2.9.2.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/facebook/facebook-php-ads-sdk.git",
-            "reference": "d7fefc0b3da320d0d6255eaadc937a2bc30bb30b"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/facebook/facebook-php-ads-sdk/zipball/d7fefc0b3da320d0d6255eaadc937a2bc30bb30b",
-            "reference": "d7fefc0b3da320d0d6255eaadc937a2bc30bb30b",
-            "shasum": ""
-        },
-        "require-dev": {
-            "phpunit/phpunit": "~4.6",
-            "symfony/finder": "~2.6"
-        },
-        "time": "2017-06-23T19:10:23+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "FacebookAds\\": "src/FacebookAds/"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "Facebook Platform"
-        ],
-        "description": "PHP SDK for Facebook ads",
-        "homepage": "https://developers.facebook.com/",
-        "keywords": [
-            "ads",
-            "facebook",
-            "sdk"
-        ]
-    },
-    {
         "name": "guzzlehttp/guzzle",
         "version": "6.3.0",
         "version_normalized": "6.3.0.0",
@@ -901,85 +801,6 @@
         "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock."
     },
     {
-        "name": "symfony/serializer",
-        "version": "v3.3.4",
-        "version_normalized": "3.3.4.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/symfony/serializer.git",
-            "reference": "419d82243c0f9b4978d780c31f39163770e4436b"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/symfony/serializer/zipball/419d82243c0f9b4978d780c31f39163770e4436b",
-            "reference": "419d82243c0f9b4978d780c31f39163770e4436b",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.5.9"
-        },
-        "conflict": {
-            "symfony/dependency-injection": "<3.2",
-            "symfony/property-access": ">=3.0,<3.0.4|>=2.8,<2.8.4",
-            "symfony/property-info": "<3.1",
-            "symfony/yaml": "<3.3"
-        },
-        "require-dev": {
-            "doctrine/annotations": "~1.0",
-            "doctrine/cache": "~1.0",
-            "phpdocumentor/reflection-docblock": "~3.0",
-            "symfony/cache": "~3.1",
-            "symfony/config": "~2.8|~3.0",
-            "symfony/dependency-injection": "~3.2",
-            "symfony/http-foundation": "~2.8|~3.0",
-            "symfony/property-access": "~2.8|~3.0",
-            "symfony/property-info": "~3.1",
-            "symfony/yaml": "~3.3"
-        },
-        "suggest": {
-            "doctrine/annotations": "For using the annotation mapping. You will also need doctrine/cache.",
-            "doctrine/cache": "For using the default cached annotation reader and metadata cache.",
-            "psr/cache-implementation": "For using the metadata cache.",
-            "symfony/config": "For using the XML mapping loader.",
-            "symfony/http-foundation": "To use the DataUriNormalizer.",
-            "symfony/property-access": "For using the ObjectNormalizer.",
-            "symfony/property-info": "To deserialize relations.",
-            "symfony/yaml": "For using the default YAML mapping loader."
-        },
-        "time": "2017-07-04T05:29:22+00:00",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "3.3-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "Symfony\\Component\\Serializer\\": ""
-            },
-            "exclude-from-classmap": [
-                "/Tests/"
-            ]
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Fabien Potencier",
-                "email": "fabien@symfony.com"
-            },
-            {
-                "name": "Symfony Community",
-                "homepage": "https://symfony.com/contributors"
-            }
-        ],
-        "description": "Symfony Serializer Component",
-        "homepage": "https://symfony.com"
-    },
-    {
         "name": "googleads/googleads-php-lib",
         "version": "28.0.0",
         "version_normalized": "28.0.0.0",
@@ -1031,5 +852,184 @@
         ],
         "description": "Google Ads APIs Client Library for PHP (AdWords and DFP)",
         "homepage": "https://github.com/googleads/googleads-php-lib"
+    },
+    {
+        "name": "facebook/php-sdk-v4",
+        "version": "5.6.0",
+        "version_normalized": "5.6.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/facebook/php-graph-sdk.git",
+            "reference": "34f5e5993c67acd264017373f23848961585dcac"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/facebook/php-graph-sdk/zipball/34f5e5993c67acd264017373f23848961585dcac",
+            "reference": "34f5e5993c67acd264017373f23848961585dcac",
+            "shasum": ""
+        },
+        "require": {
+            "php": "^5.4|^7.0"
+        },
+        "require-dev": {
+            "guzzlehttp/guzzle": "~5.0",
+            "mockery/mockery": "~0.8",
+            "phpunit/phpunit": "~4.0"
+        },
+        "suggest": {
+            "guzzlehttp/guzzle": "Allows for implementation of the Guzzle HTTP client",
+            "paragonie/random_compat": "Provides a better CSPRNG option in PHP 5"
+        },
+        "time": "2017-07-23T14:06:52+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "5.x-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Facebook\\": "src/Facebook/"
+            },
+            "files": [
+                "src/Facebook/polyfills.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "Facebook Platform"
+        ],
+        "authors": [
+            {
+                "name": "Facebook",
+                "homepage": "https://github.com/facebook/php-graph-sdk/contributors"
+            }
+        ],
+        "description": "Facebook SDK for PHP",
+        "homepage": "https://github.com/facebook/php-graph-sdk",
+        "keywords": [
+            "facebook",
+            "sdk"
+        ],
+        "abandoned": "facebook/graph-sdk"
+    },
+    {
+        "name": "facebook/php-ads-sdk",
+        "version": "2.10.1",
+        "version_normalized": "2.10.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/facebook/facebook-php-ads-sdk.git",
+            "reference": "bfea2cc94565283476ed689889486f9fa305d604"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/facebook/facebook-php-ads-sdk/zipball/bfea2cc94565283476ed689889486f9fa305d604",
+            "reference": "bfea2cc94565283476ed689889486f9fa305d604",
+            "shasum": ""
+        },
+        "require-dev": {
+            "phpunit/phpunit": "~4.6",
+            "symfony/finder": "~2.6"
+        },
+        "time": "2017-07-18T21:11:11+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "FacebookAds\\": "src/FacebookAds/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "Facebook Platform"
+        ],
+        "description": "PHP SDK for Facebook ads",
+        "homepage": "https://developers.facebook.com/",
+        "keywords": [
+            "ads",
+            "facebook",
+            "sdk"
+        ]
+    },
+    {
+        "name": "symfony/serializer",
+        "version": "v3.3.5",
+        "version_normalized": "3.3.5.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/symfony/serializer.git",
+            "reference": "cca77dd2eb9abc0411c98ba448b3a1e92816bbe1"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/symfony/serializer/zipball/cca77dd2eb9abc0411c98ba448b3a1e92816bbe1",
+            "reference": "cca77dd2eb9abc0411c98ba448b3a1e92816bbe1",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.5.9"
+        },
+        "conflict": {
+            "symfony/dependency-injection": "<3.2",
+            "symfony/property-access": ">=3.0,<3.0.4|>=2.8,<2.8.4",
+            "symfony/property-info": "<3.1",
+            "symfony/yaml": "<3.3"
+        },
+        "require-dev": {
+            "doctrine/annotations": "~1.0",
+            "doctrine/cache": "~1.0",
+            "phpdocumentor/reflection-docblock": "~3.0",
+            "symfony/cache": "~3.1",
+            "symfony/config": "~2.8|~3.0",
+            "symfony/dependency-injection": "~3.2",
+            "symfony/http-foundation": "~2.8|~3.0",
+            "symfony/property-access": "~2.8|~3.0",
+            "symfony/property-info": "~3.1",
+            "symfony/yaml": "~3.3"
+        },
+        "suggest": {
+            "doctrine/annotations": "For using the annotation mapping. You will also need doctrine/cache.",
+            "doctrine/cache": "For using the default cached annotation reader and metadata cache.",
+            "psr/cache-implementation": "For using the metadata cache.",
+            "symfony/config": "For using the XML mapping loader.",
+            "symfony/http-foundation": "To use the DataUriNormalizer.",
+            "symfony/property-access": "For using the ObjectNormalizer.",
+            "symfony/property-info": "To deserialize relations.",
+            "symfony/yaml": "For using the default YAML mapping loader."
+        },
+        "time": "2017-07-11T07:17:58+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "3.3-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Symfony\\Component\\Serializer\\": ""
+            },
+            "exclude-from-classmap": [
+                "/Tests/"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Fabien Potencier",
+                "email": "fabien@symfony.com"
+            },
+            {
+                "name": "Symfony Community",
+                "homepage": "https://symfony.com/contributors"
+            }
+        ],
+        "description": "Symfony Serializer Component",
+        "homepage": "https://symfony.com"
     }
 ]

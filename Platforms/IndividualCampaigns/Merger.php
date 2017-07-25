@@ -36,7 +36,7 @@ class Merger extends AbstractMerger implements MergerInterface
         // Exact match
         return $mergerPlatformDataOfVisit
             ->setPlatformData(array_merge(
-                ['campaignId' => $aomAdParams['campaignId']],
+                ['campaignId' => (string) $aomAdParams['campaignId']],
                 ['campaign' => $platformRow['campaign']]
             ))
             ->setPlatformRowId($platformRow['platformRowId']);

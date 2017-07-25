@@ -90,16 +90,16 @@
         },
         {
             "name": "facebook/php-ads-sdk",
-            "version": "2.9.2",
+            "version": "2.10.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/facebook/facebook-php-ads-sdk.git",
-                "reference": "d7fefc0b3da320d0d6255eaadc937a2bc30bb30b"
+                "reference": "bfea2cc94565283476ed689889486f9fa305d604"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/facebook/facebook-php-ads-sdk/zipball/d7fefc0b3da320d0d6255eaadc937a2bc30bb30b",
-                "reference": "d7fefc0b3da320d0d6255eaadc937a2bc30bb30b",
+                "url": "https://api.github.com/repos/facebook/facebook-php-ads-sdk/zipball/bfea2cc94565283476ed689889486f9fa305d604",
+                "reference": "bfea2cc94565283476ed689889486f9fa305d604",
                 "shasum": ""
             },
             "require-dev": {
@@ -123,20 +123,20 @@
                 "facebook",
                 "sdk"
             ],
-            "time": "2017-06-23T19:10:23+00:00"
+            "time": "2017-07-18T21:11:11+00:00"
         },
         {
             "name": "facebook/php-sdk-v4",
-            "version": "5.5.0",
+            "version": "5.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/facebook/php-graph-sdk.git",
-                "reference": "93d7dc87e55a541d2e27d38f3aed40abbffdf6e1"
+                "reference": "34f5e5993c67acd264017373f23848961585dcac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/facebook/php-graph-sdk/zipball/93d7dc87e55a541d2e27d38f3aed40abbffdf6e1",
-                "reference": "93d7dc87e55a541d2e27d38f3aed40abbffdf6e1",
+                "url": "https://api.github.com/repos/facebook/php-graph-sdk/zipball/34f5e5993c67acd264017373f23848961585dcac",
+                "reference": "34f5e5993c67acd264017373f23848961585dcac",
                 "shasum": ""
             },
             "require": {
@@ -182,7 +182,7 @@
                 "sdk"
             ],
             "abandoned": "facebook/graph-sdk",
-            "time": "2017-04-20T14:15:02+00:00"
+            "time": "2017-07-23T14:06:52+00:00"
         },
         {
             "name": "firebase/php-jwt",
@@ -876,16 +876,16 @@
         },
         {
             "name": "symfony/serializer",
-            "version": "v3.3.4",
+            "version": "v3.3.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/serializer.git",
-                "reference": "419d82243c0f9b4978d780c31f39163770e4436b"
+                "reference": "cca77dd2eb9abc0411c98ba448b3a1e92816bbe1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/serializer/zipball/419d82243c0f9b4978d780c31f39163770e4436b",
-                "reference": "419d82243c0f9b4978d780c31f39163770e4436b",
+                "url": "https://api.github.com/repos/symfony/serializer/zipball/cca77dd2eb9abc0411c98ba448b3a1e92816bbe1",
+                "reference": "cca77dd2eb9abc0411c98ba448b3a1e92816bbe1",
                 "shasum": ""
             },
             "require": {
@@ -949,7 +949,7 @@
             ],
             "description": "Symfony Serializer Component",
             "homepage": "https://symfony.com",
-            "time": "2017-07-04T05:29:22+00:00"
+            "time": "2017-07-11T07:17:58+00:00"
         },
         {
             "name": "webmozart/assert",

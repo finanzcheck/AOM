@@ -38,11 +38,11 @@ class Merger extends AbstractMerger implements MergerInterface
 
                 $platformData = [
                     'account' => $platformRow['account'],
-                    'campaignId' => $platformRow['campaign_id'],
+                    'campaignId' => (string) $platformRow['campaign_id'],
                     'campaign' => $platformRow['campaign'],
-                    'adGroupId' => $platformRow['ad_group_id'],
+                    'adGroupId' => (string) $platformRow['ad_group_id'],
                     'adGroup' => $platformRow['ad_group'],
-                    'keywordId' => $platformRow['keyword_id'],
+                    'keywordId' => (string) $platformRow['keyword_id'],
                     'keywordPlacement' => $platformRow['keyword_placement'],
                     'network' => $platformRow['network'],
                 ];
