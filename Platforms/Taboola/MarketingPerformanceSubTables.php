@@ -131,7 +131,7 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
             'SELECT site_id AS siteId, site, ROUND(sum(cost), 2) as cost, SUM(clicks) as clicks, '
                 . 'SUM(impressions) as impressions '
                 . 'FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_TABOOLA) . ' '
-                . 'WHERE idsite = ? AND date >= ? AND date <= ? AND campaign_id = ?'
+                . 'WHERE idsite = ? AND date >= ? AND date <= ? AND campaign_id = ? '
                 . 'GROUP BY siteId',
             [
                 $idSite,
@@ -150,7 +150,7 @@ class MarketingPerformanceSubTables extends \Piwik\Plugins\AOM\Platforms\Marketi
                 . 'END) AS siteId, '
                 . 'COUNT(*) AS visits, COUNT(DISTINCT(piwik_idvisitor)) AS unique_visitors, SUM(conversions) AS conversions, SUM(revenue) AS revenue '
                 . 'FROM ' . Common::prefixTable('aom_visits') . ' '
-                . 'WHERE idsite = ? AND channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ? AND (platform_data LIKE ? OR platform_data LIKE ?)'
+                . 'WHERE idsite = ? AND channel = ? AND date_website_timezone >= ? AND date_website_timezone <= ? AND (platform_data LIKE ? OR platform_data LIKE ?) '
                 . 'GROUP BY siteId',
             [
                 $idSite,
