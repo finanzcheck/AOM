@@ -51,10 +51,10 @@ class IndividualCampaigns extends AbstractPlatform implements PlatformInterface
         // TODO: Support more than simple substring matching
         $matches = Db::fetchAll(
             'SELECT campaign_id AS campaignId, campaign '
-            . ' FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
-            . ' WHERE idsite = ? AND date = ? AND '
-            . ' ((params_substring <> \'\' AND ? LIKE CONCAT("%",params_substring,"%")) '
-            . ' OR (referrer_substring <> \'\' AND ? LIKE CONCAT("%",referrer_substring,"%")))',
+                . ' FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+                . ' WHERE idsite = ? AND date = ? AND obsolete = 0 AND '
+                . ' ((params_substring <> \'\' AND ? LIKE CONCAT("%",params_substring,"%")) '
+                . ' OR (referrer_substring <> \'\' AND ? LIKE CONCAT("%",referrer_substring,"%")))',
                 [
                     $request->getIdSite(),
                     date('Y-m-d', $request->getCurrentTimestamp()),

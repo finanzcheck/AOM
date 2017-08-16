@@ -373,13 +373,15 @@ abstract class AbstractMerger
             [$date, $platformName,]
         );
 
-        if (0 === $visits['piwikVisits'] && $visits['artificialVisits'] > 0) {
-            $this->logger->error('Got ' . $visits['artificialVisits'] . ' artificial visits but no Piwik visits!');
+        if (0 == $visits['piwikVisits'] && $visits['artificialVisits'] > 0) {
+            $this->logger->error(
+                'Got ' . $visits['artificialVisits'] . ' artificial visits but no Piwik visits at ' . $date . '!'
+            );
         } elseif ($visits['artificialVisits'] > 0) {
             $percentageOfArtificialVisits = ($visits['piwikVisits'] > 0)
                 ? ($visits['artificialVisits'] / $visits['piwikVisits'] * 100) : INF;
             $message = 'Got ' . number_format($percentageOfArtificialVisits, 2) . '% (' . $visits['artificialVisits']
-                . ') artificial visits (' . $visits['piwikVisits'] . ' Piwik visits).';
+                . ') artificial visits (' . $visits['piwikVisits'] . ' Piwik visits) at ' . $date . '.';
 
             if ($percentageOfArtificialVisits > 10) {
                 $this->logger->error($message);

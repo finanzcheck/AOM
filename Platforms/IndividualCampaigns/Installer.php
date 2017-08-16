@@ -36,6 +36,8 @@ class Installer implements InstallerInterface
                     referrer_substring TEXT NOT NULL,
                     cost FLOAT NOT NULL,
                     created_by VARCHAR(255) NOT NULL,
+                    obsolete TINYINT(1) NOT NULL,
+                    synced TINYINT(1) NOT NULL,
                     ts_last_update TIMESTAMP,
                     ts_created TIMESTAMP
                 )  DEFAULT CHARSET=utf8');
