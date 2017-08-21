@@ -13,7 +13,7 @@
         "Taboola"
     ],
     "homepage": "http://www.advanced-online-marketing.com",
-    "description": "Integrate additional data like costs from advertising platforms like AdWords, Bing, Criteo, Facebook and Taboola into Piwik.",
+    "description": "Integrate additional data like costs and campaign names from advertising platforms like AdWords, Bing, Criteo, Facebook, Taboola as well as your individual campaigns into Piwik.",
     "license": "GPL v3+",
     "authors": [
         {
