@@ -112,7 +112,11 @@ abstract class AbstractPlatform
         if (isset($request->getParams()['url'])) {
             $urlsToCheck[] = $request->getParams()['url'];
         }
-        if (isset($request->getParams()['urlref'])) {
+
+        // Only consider the referrer when it is an internal URL
+        if (isset($request->getParams()['urlref']) && $request->getIdSite()
+            && $this->isReferrerAnInternalUrl($request->getParams()['urlref'], $request->getIdSite())
+        ) {
             $urlsToCheck[] = $request->getParams()['urlref'];
         }
 
@@ -364,5 +368,34 @@ abstract class AbstractPlatform
             && array_key_exists($paramPrefix . '_platform', $queryParams)
             && $this->getName() === $queryParams[$paramPrefix . '_platform']
         );
+    }
+
+    /**
+     * Returns true if the given referrer is an internal URL with the same host as the Piwik site. False otherwise.
+     *
+     * @param string $referrerUrl
+     * @param int $idSite
+     * @return bool
+     */
+    protected function isReferrerAnInternalUrl($referrerUrl, $idSite)
+    {
+        // Site::getMainUrlFor($request->getIdSite()) does not work in tests
+        $hostOfSiteUrl = parse_url(
+            Db::fetchOne(
+                'SELECT main_url FROM ' . Common::prefixTable('site') . ' WHERE idsite = ?',
+                [$idSite,]
+            ),
+            PHP_URL_HOST
+        );
+        if (!$hostOfSiteUrl) {
+            return false;
+        }
+
+        $hostOfSiteUrl = str_replace('www.', '', $hostOfSiteUrl);
+
+        // TODO: Does this really cover all relevant URLs?
+        $hostOfReferrer = parse_url($referrerUrl, PHP_URL_HOST);
+
+        return ($hostOfReferrer && $hostOfSiteUrl && (false !== strpos($hostOfReferrer, $hostOfSiteUrl)));
     }
 }

@@ -25,6 +25,7 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller
         foreach (Db::fetchAll(
             'SELECT DISTINCT campaign_id AS campaignId FROM '
                 . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
+                . ' WHERE obsolete = 0'
                 . ' ORDER BY date ASC'
         ) as $row) {
             $campaigns[$row['campaignId']] = Db::fetchRow(
@@ -67,9 +68,9 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller
         foreach ($dates as $date) {
             Db::query(
                 'INSERT INTO ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS)
-                    . ' (idsite, date, campaign_id, campaign, params_substring, referrer_substring, cost, '
-                    . ' created_by, ts_created)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                    . ' (idsite, date, campaign_id, campaign, params_substring, referrer_substring, cost, obsolete, '
+                    . ' synced, created_by, ts_created)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
                 [
                     $websiteId,
                     $date,
@@ -78,6 +79,8 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller
                     $params,
                     $referrer,
                     $cost / count($dates),
+                    0,
+                    0,
                     Piwik::getCurrentUserLogin(),
                 ]
             );
@@ -97,8 +100,9 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller
     public function deleteCampaign($campaignId)
     {
         Db::query(
-            'DELETE FROM ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . ' 
-                 WHERE campaign_id = ?',
+            'UPDATE ' . DatabaseHelperService::getTableNameByPlatformName(AOM::PLATFORM_INDIVIDUAL_CAMPAIGNS) . '
+                SET obsolete = 1, synced = 0 
+                WHERE campaign_id = ?',
             [$campaignId,]
         );
 
