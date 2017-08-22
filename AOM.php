@@ -178,16 +178,17 @@ class AOM extends \Piwik\Plugin
         foreach (AOM::getPlatforms() as $platformName) {
             /** @var PlatformInterface $platform */
             $platform = AOM::getPlatformInstance($platformName);
-            if ($platform->isActive()) {
 
-                // If this file exists, it is automatically loaded by naming convention.
-                if (file_exists('plugins/AOM/Platforms/' . $platformName . '/javascripts/' . $platformName . '.js')) {
-                    $jsFiles[] = 'plugins/AOM/Platforms/' . $platformName . '/javascripts/' . $platformName . '.js';
-                }
+            // We load all platform's JS files independent of whether the platform is active or not to avoid issues
+            // with Piwik's internal JS cache.
 
-                foreach ($platform->getJsFiles() as $file) {
-                    $jsFiles[] = $file;
-                }
+            // If this file exists, it is automatically loaded by naming convention.
+            if (file_exists('plugins/AOM/Platforms/' . $platformName . '/javascripts/' . $platformName . '.js')) {
+                $jsFiles[] = 'plugins/AOM/Platforms/' . $platformName . '/javascripts/' . $platformName . '.js';
+            }
+
+            foreach ($platform->getJsFiles() as $file) {
+                $jsFiles[] = $file;
             }
         }
     }
