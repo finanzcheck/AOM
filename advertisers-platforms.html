@@ -316,12 +316,11 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 
 <h4>Partnership with your friends-famous-website.com</h4>
 
-<p>Your friend offered you to place a link to your website for $ 500 for the whole month of December 2017 within one of
-    his magazine articles which is hosted at friends-famous-website.com/article-4711.html. As he does not want to add
+<p>Your friend offered you to place a link to your website for the whole month of December 2017 within one of his
+    magazine articles which is hosted at friends-famous-website.com/article-4711.html. As he does not want to add
     any tracking params (and his visitors don't like obvious advertising), you can only identify traffic coming from him
-    by the referrer.</p>
-
-<p>In Piwik AOM you would create an individual campaign before December 1st with the following data:</p>
+    by the referrer. You agreed to pay 10 Cents per article visit. In January 2018 he informs you that there have been
+    5,000 visits, thus you create ex post - in January 2018 - the following individual campaign:</p>
 
 <table><thead>
 <tr>
@@ -343,15 +342,10 @@ title: Piwik AOM Plugin Documentation - Advertiser's Platforms
 </tr>
 </tbody></table>
 
-<p><strong>We hopefully implement the possibility to add individual campaigns and distribute their cost ex post
-    soon.</strong></p>
 
-<p>As soon as you add an individual campaign like these to Piwik AOM, Piwik AOM first distributes the cost you provided
+<p>As soon as you add individual campaigns like these to Piwik AOM, Piwik AOM first distributes the cost you provided
     equally over all days within the campaign duration which you provided. Within these days, cost is equally
     distributed between visits.</p>
-
-<p>Deleting an individual campaign currently affects only non-processed cost and visits. All visits that have already
-    been updated by the individual campaign are kept including cost that has been assigned to them.</p>
 
 <p>You cannot distribute costs to visits that have been detected by Piwik AOM, i.e. you cannot distribute (additional)
     cost for example to an AdWords campaign that already got additional data from AdWords. Piwik AOM takes care of that,
