@@ -54,12 +54,16 @@ class Controller extends \Piwik\Plugins\AOM\Platforms\Controller
      * @param string $referrer
      * @param float $cost
      * @return bool
+     * @throws \Exception
      */
     public function addCampaign($websiteId, $startDate, $endDate, $campaign, $params, $referrer, $cost)
     {
         Piwik::checkUserHasAdminAccess($idSites = [$websiteId]);
 
         // TODO: Validate input data
+        if (!$params && !$referrer) {
+            throw new \Exception('Invalid input data.');
+        }
 
         // We create our own campaign ID (e.g. to be used in the platform_key)
         $campaignId = uniqid('', true);
