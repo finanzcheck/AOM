@@ -51,8 +51,8 @@ class PiwikVisitService
             Db::fetchOne('SELECT MAX(piwik_idvisit) FROM ' . Common::prefixTable('aom_visits'));
 
         return Db::fetchAll(
-            'SELECT v.*, conv(hex(v.idvisitor), 16, 10) AS idvisitor, entry_url.name AS entry_url, '
-                . ' entry_name.name AS entry_name '
+            'SELECT v.*, conv(hex(v.idvisitor), 16, 10) AS idvisitor, v.external_visit_id, '
+                . ' entry_url.name AS entry_url, entry_name.name AS entry_name '
                 . ' FROM ' . Common::prefixTable('log_visit') . ' AS v '
                 . ' LEFT JOIN ' . Common::prefixTable('log_action') . ' AS entry_name '
                 . ' ON v.visit_entry_idaction_name = entry_name.idaction'
@@ -147,12 +147,13 @@ class PiwikVisitService
         $platformData = ($mergerPlatformDataOfVisit ? $mergerPlatformDataOfVisit->getPlatformData() : null);
         Db::query(
             'INSERT INTO ' . Common::prefixTable('aom_visits')
-                . ' (idsite, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, '
+                . ' (idsite, external_visit_id, piwik_idvisit, piwik_idvisitor, unique_hash, first_action_time_utc, '
                 . ' date_website_timezone, channel, campaign_data, platform_data, platform_key, ts_created, '
                 . ' ts_last_update) '
-                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
             [
                 $idsite,
+                $visit['external_visit_id'],
                 $visit['idvisit'],
                 $visit['idvisitor'],
                 'piwik-visit-' . $visit['idvisit'],
