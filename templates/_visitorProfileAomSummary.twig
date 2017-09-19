@@ -1,0 +1,9 @@
+<div class="visitor-profile-summary visitor-profile-resume">
+    <h1>{{ 'AOM_VisitorProfile_Summary'|translate }}</h1>
+
+    <p>{{ 'AOM_VisitorProfile_TotalCost'|translate(totalVisits, totalCost) }}</p>
+    {% if totalConversions > 0 %}
+        <p>{{ 'AOM_VisitorProfile_TotalRevenue'|translate(totalRevenue, totalConversions) }}</p>
+        <p><strong>{{ 'AOM_VisitorProfile_TotalReturnOnInvest'|translate(ratio, totalRevenue, totalCost) }}</strong></p>
+    {% endif %}
+</div>

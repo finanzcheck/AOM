@@ -138,6 +138,11 @@ class AOM extends \Piwik\Plugin
             'CREATE INDEX index_aom_visits_marketing_performance ON ' . Common::prefixTable('aom_visits')
                 . ' (idsite, channel, date_website_timezone)');
 
+        // Optimize for queries in visitor profile
+        DatabaseHelperService::addIndex(
+            'CREATE INDEX index_aom_visits_visitor_profile ON ' . Common::prefixTable('aom_visits')
+                . ' (idsite, piwik_idvisitor)');
+
         $this->getLogger()->debug('Installed AOM.');
     }
 
@@ -161,7 +166,6 @@ class AOM extends \Piwik\Plugin
     {
         return [
             'AssetManager.getJavaScriptFiles' => 'getJsFiles',
-            'Controller.Live.getVisitorProfilePopup.end' => 'enrichVisitorProfilePopup',
         ];
     }
 
@@ -191,20 +195,6 @@ class AOM extends \Piwik\Plugin
                 $jsFiles[] = $file;
             }
         }
-    }
-
-    /**
-     * Modifies the visitor profile popup's HTML.
-     *
-     * TODO: Check if this still works (for all platforms, including individual campaigns).
-     *
-     * @param $result
-     * @param $parameters
-     * @return string
-     */
-    public function enrichVisitorProfilePopup(&$result, $parameters)
-    {
-        VisitorProfilePopup::enrich($result);
     }
 
     /**
