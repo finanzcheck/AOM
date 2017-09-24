@@ -23,7 +23,7 @@ class Tasks extends \Piwik\Plugin\Tasks
      */
     public function __construct(LoggerInterface $logger)
     {
-        // Create are more convenient environment
+        // Create a more convenient environment
         ini_set('memory_limit', '1024M');
         set_time_limit(0);
 

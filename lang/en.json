@@ -88,6 +88,9 @@
         "Settings_Taboola_AccountName": "Account-Name",
         "Settings_Taboola_ClientId": "Client-ID",
         "Settings_Taboola_ClientSecret": "Client-Secret",
-        "BrowserFamilies": "BrowserFamilies"
+        "VisitorProfile_Summary": "Visitor acquisition",
+        "VisitorProfile_TotalCost": "Total acquisition cost for %1$s visits of %2$s.",
+        "VisitorProfile_TotalRevenue": "Total revenue of %1$s from %2$s conversions.",
+        "VisitorProfile_TotalReturnOnInvest": "Visitor RoI: %1$s (%2$s/%3$s)"
     }
 }
